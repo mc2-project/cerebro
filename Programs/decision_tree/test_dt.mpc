@@ -1,0 +1,27 @@
+NUM_PARTIES = 3
+SGD_ITERS = 10
+data_sizes = [10, 10, 10]
+total_samples = sum(data_sizes)
+dim = 10
+BATCH_SIZE = 5
+
+TREE_LEVELS = 5
+TOTAL_NODES = 2 ** 5 - 1
+
+sfix.set_precision(32)
+
+tree = sfixMatrix(TOTAL_NODES, 4)
+
+w = tree[0]
+
+for i in range(LEVELS):
+    index = w[0]
+    split = w[1]
+    left_child = w[2]
+    right_child = w[3]
+
+    f = array_index_secret(index)
+    cond = f < split
+    w = array_index_secret_if(f, l, left_child, right_child)
+
+print_ln("Final classification: %s", w[0].reveal())

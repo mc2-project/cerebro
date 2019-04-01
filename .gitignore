@@ -1,3 +1,7 @@
 *.pyc
 *.x
 *.o
+*.txt
+*.bc
+*.sch
+.*.py
