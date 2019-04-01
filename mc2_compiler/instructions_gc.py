@@ -1,3 +1,5 @@
+# (C) 2017 University of Bristol. See License.txt
+
 import Compiler.instructions_base as base
 import Compiler.instructions as spdz
 import Compiler.tools as tools
