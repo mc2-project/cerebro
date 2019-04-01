@@ -3,7 +3,7 @@ from Compiler.config import *
 from Compiler.exceptions import *
 import instructions, instructions_base, types, comparison, library
 
-from compiler.program_gc import ProgramGC
+from Compiler.program_gc import ProgramGC
 import instructions_gc, types_gc
 
 import random

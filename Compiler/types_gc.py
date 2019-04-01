@@ -676,3 +676,11 @@ class sintMatrixGC(MatrixGC):
             self.data = [sbits() for i in range(rows * columns)]
         else:
             self.data = values
+
+class sfixMatrixGC(MatrixGC):
+    def __init__(self, rows, columns, values=None):
+        super(sintMatrixGC, self).__init__(rows, columns)
+        if values is None:
+            self.data = [sbits() for i in range(rows * columns)]
+        else:
+            self.data = values

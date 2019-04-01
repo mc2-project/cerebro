@@ -116,7 +116,7 @@ def _matmul(A, B, C, D, int_type, nparallel=1):
 
     return C
 
-
+# Not parallelized
 def _matmul_mix(A, B, nparallel=1):
     C = MixMatrix(A.rows, B.columns)
     print(A.rows, B.columns)
@@ -151,6 +151,10 @@ def matmul(A, B, nparallel=1):
         C = sfixMatrix(A.rows, B.columns)
         D = sfixArray(A.rows * B.columns * A.columns)
         return _matmul(A, B, C, D, sfix, nparallel)
+    elif isinstance(A, sintMatrixGC) and isinstance(B, sintMatrixGC):
+        C = sintMatrixGC(A.rows, B.columns)
+        _matmul_gc(A, B, C)
+        return C
     elif isinstance(A, sintMatrixGC) and isinstance(B, sintMatrixGC):
         C = sintMatrixGC(A.rows, B.columns)
         _matmul_gc(A, B, C)
