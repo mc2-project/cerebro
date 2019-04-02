@@ -1,18 +1,24 @@
-from Compiler.program import Program
-from Compiler.config import *
-from Compiler.exceptions import *
-import instructions, instructions_base, types, comparison, library
-
-from Compiler.program_gc import ProgramGC
-import instructions_gc, types_gc
-
 import random
 import time
 import sys
 
-
 def run_arithmetic(args, options, param=-1, merge_opens=True, \
                    reallocate=True, debug=False):
+    
+    from Compiler.program import Program
+    from Compiler.config import *
+    from Compiler.exceptions import *
+    import instructions, instructions_base, types, comparison, library
+
+    import interface
+    import inspect
+
+    interface.mpc_type = interface.SPDZ
+
+    _interface = [t[1] for t in inspect.getmembers(interface, inspect.isclass)]
+    for op in _interface:
+        VARS[op.__name__] = op    
+    
     """ Compile a file and output a Program object.
     
     If merge_opens is set to True, will attempt to merge any parallelisable open
@@ -59,16 +65,25 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
 # Similar 
 def run_gc(args, options, param=-1, merge_opens=True, \
            reallocate=True, debug=False):
+
+    from Compiler.program_gc import ProgramGC
+    import instructions_gc, types_gc
+    import interface
+    import inspect
+
+    interface.mpc_type = interface.GC
+
+    _interface = [t[1] for t in inspect.getmembers(interface, inspect.isclass)]
+    for op in _interface:
+        VARS[op.__name__] = op
     
     prog = ProgramGC(args, options, param)
     instructions_gc.program_gc = prog
     types_gc.program_gc = prog
     VARS['program_gc'] = prog
-    
-    print 'Compiling file', prog.infile
 
+    print 'Compiling file', prog.infile
     execfile(prog.infile, VARS)
-    
     return prog
 
 
@@ -81,6 +96,3 @@ def run(args, options, param=-1, merge_opens=True, \
         return run_gc(args, options, param, merge_opens=merge_opens, debug=debug)
     else:
         raise ValueError("Must choose either arithmetic (a) or GC (b)")
-    
-        
-    

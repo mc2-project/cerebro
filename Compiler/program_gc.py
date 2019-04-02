@@ -74,6 +74,8 @@ class ProgramGC(object):
         if outfile is not None:
             fname = outfile
 
+        print "[GC compilation] Writing to file"
+
         f = open(fname, 'w')
 
         f.write("{} {}\n".format(len(self.activeblock.instructions) + 1 + len(self.output_wires), self.total_wires + 1 + len(self.output_wires)))
