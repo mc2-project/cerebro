@@ -51,7 +51,6 @@ class SecretFixedPointFactory(object):
         else:
             return sint_gc(Params.intp, party)
 
-
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()
 SecretFixedPoint = SecretFixedPointFactory()

@@ -13,11 +13,9 @@ y = sfixMatrix(total_samples, 1)
 offset = regint(0)
 for i in range(NUM_PARTIES):
     data_size = data_sizes[i]
-    total_read = regint(0)
-    @for_range(data_size)
-    def b(j):
-        @for_range(dim)
-        def c(k):
+    total_samples_read = cint(0)
+    for j in range(0, data_size):
+        for k in range(0, dim):
             v = sint.get_private_input_from(i)
             X[offset + j][k] = sfix.load_sint(v)
         total_samples_read += 1
@@ -25,9 +23,8 @@ for i in range(NUM_PARTIES):
 
 for i in range(NUM_PARTIES):
     data_size = data_sizes[i]
-    total_read = regint(0)
-    @for_range(data_size)
-    def b(j):
+    total_samples_read = cint(0)
+    for j in range(0, data_size):
         v = sint.get_private_input_from(i)
         y[offset + j][0] = sfix.load_sint(v)
         total_samples_read += 1
@@ -45,9 +42,9 @@ def f(i):
     XB = sfixMatrix(BATCH_SIZE, dim)
     yB = sfixMatrix(BATCH_SIZE, 1)
 
-    @for_range()
+    @for_range(BATCH_SIZE)
     def a(i):
-        @for_range(DIM)
+        @for_range(dim)
         def b(d):
             XB[i][d] = X[batch_low + i][d]
         yB[i][0] = y[batch_low + i][0]
@@ -55,12 +52,14 @@ def f(i):
     w_ret = matmul(XB, yB)
     w_sigmoid = sigmoid(w_ret)
     w_sub = matsub(w_sigmoid, yB)
-    w_1 = matmul(XB, w_sub)
+    XB_T = transpose(XB)
+    w_1 = matmul(XB_T, w_sub)
     w_2 = mat_const_mul(alpha_B, w_1)
-    w_res = matsub(w, w_1)
+    w_res = matsub(w, w_2)
     mat_assign(w, w_res)
 
 @for_range(w.rows)
 def a(i):
     print_ln("w[%s] = %s", i, w[i][0].reveal())
     
+

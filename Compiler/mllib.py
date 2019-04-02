@@ -1,5 +1,5 @@
 from Compiler.types import cint,sint,pint,cfix,sfix,sfloat,cfloat,MPCThread,Array,MemValue,_number,_mem,_register,regint,Matrix,_types
-from Compiler.types import sintArray, sintMatrix, cintArray, cintMatrix, MixMatrix
+from Compiler.types import sintArray, sintMatrix, cintArray, cintMatrix, MixMatrix, sfixMatrix, sfixArray
 from Compiler.instructions import *
 from Compiler.util import tuplify,untuplify
 from Compiler import instructions,instructions_base,comparison,program
@@ -7,6 +7,8 @@ import inspect,math
 import random
 import collections
 from Compiler.library import *
+
+from Compiler.types_gc import *
 
 from operator import itemgetter
 
@@ -88,11 +90,11 @@ def _transpose(A, B):
 
 def transpose(A):
     if not isinstance(A, Matrix):
-        raise ValueError("Matrix can only be ")
+        raise ValueError("Only matrix can be transposed")
     
     B = A.__class__(A.columns, A.rows)
-    
-    return _transpose(A, B)
+    _transpose(A, B)
+    return B
 
 
 def _matmul(A, B, C, D, int_type, nparallel=1):
@@ -162,7 +164,7 @@ def matmul(A, B, nparallel=1):
     elif isinstance(A, MixMatrix) and isinstance(B, MixMatrix):
         return _matmul_mix(A, B, nparallel)
     else:
-        return NotImplemented
+        raise NotImplementedError
 
 def _matadd(A, B, C, int_type, nparallel=1):
     @for_range_multithread(nparallel, nparallel, A.rows * A.columns)
@@ -189,7 +191,7 @@ def _matsub(A, B, C, int_type, nparallel=1):
         i_index = i / A.columns
         j_index = i % A.columns
         
-        C[i_index][j_index] = A[i_index][j_index] - B[i_index][j_index]
+        C[i_index][j_index] = A[i_index][j_index] - B[i_index][j_index]        
         
 def matsub(A, B, nparallel=1):
     if A.rows != B.rows or A.columns != B.columns:
@@ -197,13 +199,16 @@ def matsub(A, B, nparallel=1):
     
     if isinstance(A, cintMatrix) and isinstance(B, cintMatrix):
         C = cintMatrix(A.rows, A.columns)
-        return _matsub(A, B, C, cint, nparallel)
+        _matsub(A, B, C, cint, nparallel)
+        return C
     elif isinstance(A, sintMatrix) and isinstance(B, sintMatrix):
         C = sintMatrix(A.rows, A.columns)
-        return _matsub(A, B, C, sint, nparallel)
+        _matsub(A, B, C, sint, nparallel)
+        return C
     elif isinstance(A, sfixMatrix) and isinstance(B, sfixMatrix):
         C = sfixMatrix(A.rows, A.columns)
-        return _matsub(A, B, C, sfix, nparallel)
+        _matsub(A, B, C, sfix, nparallel)
+        return C
     else:
         return NotImplemented
 
@@ -280,21 +285,22 @@ def mat_const_mul(c, m, nparallel=1):
         res = sfixMatrix(m.rows, m.columns)
         @for_range_multithread(m.rows, nparallel, nparallel)
         def f(i):
-            @for_range_multithread(m.columns, nparallel, nparalle)
+            @for_range_multithread(m.columns, nparallel, nparallel)
             def g(j):
                 res[i][j] = c * m[i][j]
+        return res
     else:
-        return NotImplemented
+        raise NotImplementedError
 
 def mat_assign(o, i, nparallel=1):
     if o.rows != i.rows or o.columns != i.columns:
         raise ValueError("Matrices must be of the same sizes")
     
     @for_range_multithread(i.rows, nparallel, nparallel)
-    def f(i):
-        @for_range_multithread(i.columns, nparallel, nparalle)
-        def g(j):
-            o[i][j] = i[i][j]
+    def f(u):
+        @for_range_multithread(i.columns, nparallel, nparallel)
+        def g(v):
+            o[u][v] = i[u][v]
 
 def array_index_secret(l, index, nparallel=1):
     if instance(l, Array) and isinstance(index, sint):

@@ -65,7 +65,6 @@ class StraightlineAllocator:
             self.defined[reg] = inst
 
     def process(self, program, alloc_pool):
-        print(program)
         for k,i in enumerate(reversed(program)):
             unused_regs = []
             for j in i.get_def():
