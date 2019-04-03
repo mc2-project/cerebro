@@ -552,16 +552,13 @@ class sfix_gc(object):
         else:
             cls.k = k
 
-    def __init__(self, v=None, scale=True):
+    def __init__(self, v=None, input_party=-1):
         if v is not None and isinstance(v, int_gc):
-            if scale:
-                self.v = v << sfix_gc.f
-            else:
-                self.v = v
+            self.v = v << sfix_gc.f
         else:
-            self.v = sint_gc(sfix_gc.k)
+            self.v = sint_gc(sfix_gc.k, input_party)
 
-    def load_int(self, v):
+    def load_sint(self, v):
         self.v = v
 
     def __add__(self, other):
@@ -650,37 +647,52 @@ class sfix_gc(object):
     def __gt__(self, other):
         return ~(self <= other)
 
+class ArrayGC(object):
+    def __init__(self, length):
+        self.length = length
+        self.data = [None for i in range(length)]
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __setitem__(self, index, value):
+        self.data[index] = value
+
 class MatrixGC(object):
     def __init__(self, rows, columns):
         self.rows = rows
         self.columns = columns
+        self.data = [ArrayGC(columns) for r in range(rows)]
 
-    def get(self, r, c):
-        return self.data[r * self.columns + c]
+    def __getitem__(self, index):
+        return self.data[index]
 
-    def set(self, r, c, v):
-        self.data[r * self.columns + c] = v
+class cintArrayGC(ArrayGC):
+    def __init__(self, length):
+        super(self, cintArrayGC).__init__(length)
+        self.data = [cint_gc(0) for i in range(length)]
 
 class cintMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, values=None):
+    def __init__(self, rows, columns):
         super(cintMatrixGC, self).__init__(rows, columns)
-        if values is None:
-            self.data = [cbits(0) for i in range(rows * columns)]
-        else:
-            self.data = values
+        self.data = [cintArrayGC(columns) for i in range(rows)]
+
+class sintArrayGC(ArrayGC):
+    def __init__(self, length):
+        super(sintArrayGC, self).__init__(length)
+        self.data = [sint_gc(32) for i in range(length)]
 
 class sintMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, values=None):
+    def __init__(self, rows, columns):
         super(sintMatrixGC, self).__init__(rows, columns)
-        if values is None:
-            self.data = [sbits() for i in range(rows * columns)]
-        else:
-            self.data = values
+        self.data = [sintArrayGC(columns) for i in range(rows)]
+
+class sfixArrayGC(ArrayGC):
+    def __init__(self, length):
+        super(sfixArrayGC, self).__init__(length)
+        self.data = [sfix_gc(0) for i in range(length)]
 
 class sfixMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, values=None):
-        super(sintMatrixGC, self).__init__(rows, columns)
-        if values is None:
-            self.data = [sbits() for i in range(rows * columns)]
-        else:
-            self.data = values
+    def __init__(self, rows, columns):
+        super(sfixMatrixGC, self).__init__(rows, columns)
+        self.data = [sfixArrayGC(columns) for i in range(rows)]

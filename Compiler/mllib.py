@@ -176,7 +176,7 @@ def _matadd(A, B, C, int_type, nparallel=1):
     
 def matadd(A, B, nparallel=1):
     if A.rows != B.rows or A.columns != B.columns:
-        raise NotImplemented
+        raise NotImplementedError
     
     if isinstance(A, cintMatrix) and isinstance(B, cintMatrix):
         C = cintMatrix(A.rows, A.columns)
@@ -210,7 +210,7 @@ def matsub(A, B, nparallel=1):
         _matsub(A, B, C, sfix, nparallel)
         return C
     else:
-        return NotImplemented
+        raise NotImplementedError
 
 
 # horizontally stack the input matrices
@@ -278,7 +278,7 @@ def sigmoid(v, nparallel=1):
                 res[i][j] = _sigmoid_sfix(v[i][j])
         return res
     else:
-        return NotImplemented
+        raise NotImplementedError
 
 def mat_const_mul(c, m, nparallel=1):
     if isinstance(m, sfixMatrix):
@@ -315,13 +315,21 @@ def array_index_secret(l, index, nparallel=1):
         def f(i):
             res += res_list[i]
         return res
-    
+    elif isinstance(l, sintArrayGC) and isinstance(index, sint_gc):
+        res_list = sintArrayGC(l.length)
+        for i in range(l.length):
+            v = sint_gc(i).__eq__(index)
+            res_list[i] = v * l[i]
+        res = res_list[0]
+        for i in range(1, l.length):
+            res += res_list[i]
+        return res
     else:
-        return NotImplemented
+        raise NotImplementedError
 
 def array_index_secret_if(condition, l, index_1, index_2, nparallel=1):
     if isinstance(index_1, sint) and isinstance(index_2, sint): 
         index = condition * index_1 + (1 - condition) * index_2
         return array_index_secret(l, index, nparallel)
     else:
-        return NotImplemented
+        raise NotImplementedError

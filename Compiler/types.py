@@ -2366,7 +2366,6 @@ class SubMultiArray(object):
             return SubMultiArray(self.sizes[1:], self.value_type, \
                                  self.address, index)
 
-
 class MultiArray(object):
     def __init__(self, sizes, value_type):
         self.sizes = sizes

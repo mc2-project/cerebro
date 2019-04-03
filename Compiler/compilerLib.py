@@ -11,6 +11,7 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     import instructions, instructions_base, types, comparison, library
 
     import interface
+    from interface import ASTParser as ASTParser
     import inspect
 
     interface.mpc_type = interface.SPDZ
@@ -44,8 +45,10 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     # make compiler modules directly accessible
     sys.path.insert(0, 'Compiler')
     # create the tapes
-    execfile(prog.infile, VARS)
-    #exec("a = pint(0, 123)\nb = pint(1, 234)\nc = a + b\n", VARS)
+    print 'Compiling file', prog.infile
+    a = ASTParser(prog.infile, debug=True)
+    a.parse()
+    a.execute(VARS)    
 
     # optimize the tapes
     for tape in prog.tapes:
@@ -69,6 +72,7 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     from Compiler.program_gc import ProgramGC
     import instructions_gc, types_gc
     import interface
+    from interface import ASTParser as ASTParser
     import inspect
 
     interface.mpc_type = interface.GC
@@ -83,7 +87,10 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     VARS['program_gc'] = prog
 
     print 'Compiling file', prog.infile
-    execfile(prog.infile, VARS)
+    a = ASTParser(prog.infile, debug=True)
+    a.parse()
+    a.execute(VARS)
+
     return prog
 
 
