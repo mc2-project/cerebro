@@ -1,1 +1,10 @@
 MC2: A Coopetitive Learning Platform
+
+## Installing emp-agmpc (semi-honest version)
+
+1. Create a directory for EMP toolkit.
+
+2. Run the following script to install the prerequisite:
+`wget https://goo.gl/wmt4KB -O install.sh && bash install.sh`
+
+3. `cd emp-agmpc && cmake . && make`
