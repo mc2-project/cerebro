@@ -303,11 +303,16 @@ def mat_assign(o, i, nparallel=1):
             o[u][v] = i[u][v]
 
 def array_index_secret(l, index, nparallel=1):
-    if instance(l, Array) and isinstance(index, sint):
+    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
         res_list = type(l).__init__(l.length)
         @for_range_multithread(l.length, nparallel, nparallel)
         def f(i):
-            v = sint(i).__eq__(index)
+            v = None
+            if isinstance(index, sfix):
+                v = sfix().load_int(i).__eq__(index)
+            else:
+                v = sint(i).__eq__(index)
+            assert(v is not None)
             res_list[i] = v * l[i]
 
         res = l.value_type(0)
@@ -315,11 +320,15 @@ def array_index_secret(l, index, nparallel=1):
         def f(i):
             res += res_list[i]
         return res
-    elif isinstance(l, sintArrayGC) and isinstance(index, sint_gc):
-        res_list = sintArrayGC(l.length)
+    elif isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
+        res_list = sfixArrayGC(l.length)
         for i in range(l.length):
-            v = sint_gc(i).__eq__(index)
-            res_list[i] = v * l[i]
+            if isinstance(index, sfix_gc):
+                v = cfix_gc()
+            else:
+                v = sint_gc(index.length, i)
+            test = v.__eq__(index)
+            res_list[i] = test & l[i] 
         res = res_list[0]
         for i in range(1, l.length):
             res += res_list[i]
@@ -330,6 +339,6 @@ def array_index_secret(l, index, nparallel=1):
 def array_index_secret_if(condition, l, index_1, index_2, nparallel=1):
     if isinstance(index_1, sint) and isinstance(index_2, sint): 
         index = condition * index_1 + (1 - condition) * index_2
-        return array_index_secret(l, index, nparallel)
+        return array_index_secret(l, index, nparallel=nparallel)
     else:
         raise NotImplementedError

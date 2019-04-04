@@ -11,11 +11,13 @@ class Params(object):
     k = 32
 
     @classmethod
-    def set_params(cls, int_precision=32, f=32, k=64):
+    def set_params(cls, int_precision=32, f=32, k=64, parallelism=1):
         cls.intp = int_precision
         cls.f = f
         cls.k = k
+        cfix.set_precision(f, k)
         sfix.set_precision(f, k)
+        cfix_gc.set_precision(f, k)        
         sfix_gc.set_precision(f, k)
 
 class ClearIntegerFactory(object):
@@ -53,6 +55,30 @@ class SecretFixedPointFactory(object):
         else:
             return sfix_gc(v=None, input_party=party)
 
+class SecretFixedPointArrayFactory(object):
+    def __call__(self, length):
+        if mpc_type == SPDZ:
+            return sfixArray(length)
+        else:
+            return sfixArrayGC(length)
+
+    @classmethod
+    def read_input(self, length, party):
+        if mpc_type == SPDZ:
+            ret = sfixArray(length)
+            @for_range(ret.length)
+            def f(i):
+                v = sint.get_private_input_from(party)
+                ret[i] = sfix.load_sint(v)
+            return ret
+        else:
+            ret = sfixArrayGC(length)
+            for i in range(ret.length):
+                v = sint_gc(Params.intp, party)
+                ret[i] = sfix_gc.load_sint(v)
+            return ret
+
+
 class SecretFixedPointMatrixFactory(object):
     def __call__(self, rows, columns):
         if mpc_type == SPDZ:
@@ -60,33 +86,36 @@ class SecretFixedPointMatrixFactory(object):
         else:
             return sfixMatrixGC(rows, columns)
 
-def forloop(start, stop=None, step=None):
-    def decorator(func):
+    @classmethod
+    def read_input(self, rows, columns, party):
         if mpc_type == SPDZ:
-            return library.for_range(start, stop, step)(func)
+            ret = sfixMatrix(rows, columns)
+            @for_range(ret.rows)
+            def f(i):
+                @for_range(ret.columns)
+                def g(j):
+                    v = sint.get_private_input_from(party)
+                    ret[i][j] = sfix.load_sint(v)
+            return ret
         else:
-            if stop is None:
-                for i in range(start):
-                    func(i)
-            elif step is None:
-                for i in range(start, stop):
-                    func(i)
-            else:
-                for i in range(start, stop, step):
-                    func(i)
-    return decorator
-    
+            ret = sfixMatrixGC(rows, columns)
+            for i in range(ret.rows):
+                for j in range(ret.columns):
+                    v = sint_gc(Params.intp, party)
+                    ret[i][j] = sfix_gc.load_sint(v)
+            return ret
 
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()
 SecretFixedPoint = SecretFixedPointFactory()
+SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["s_int"] = SecretInteger
 compilerLib.VARS["s_fix"] = SecretFixedPoint
+compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
-compilerLib.VARS["forloop"] = forloop
 
 import ast
 import astor
@@ -109,11 +138,9 @@ class ASTParser(ast.NodeTransformer):
         if self.debug:
             print(source)
         exec(compile(self.tree, filename="<ast>", mode="exec"), context)
-        
-    def visit_For(self, node):
-        self.generic_visit(node)
 
-        dec = ast.Call(func=ast.Name(id="forloop", ctx=ast.Load()), args=node.iter.args, keywords=[])
+    def parse_for(self, node):
+        dec = ast.Call(func=ast.Name(id="for_range", ctx=ast.Load()), args=node.iter.args, keywords=[])
         new_node = ast.FunctionDef(name="for{}".format(self.forloop_counter),
                                    args=ast.arguments(args=[node.target], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
                                    body=node.body,
@@ -124,3 +151,18 @@ class ASTParser(ast.NodeTransformer):
         ast.fix_missing_locations(new_node)
         
         return new_node
+
+    def visit_For(self, node):
+        self.generic_visit(node)
+
+        if isinstance(node.iter, ast.Call):
+            if node.iter.func.id == "range":
+                if mpc_type == SPDZ:
+                    return self.parse_for(node)
+                else:
+                    return node
+
+        raise ValueError("For loop only supports style 'for i in range(...)'")
+
+    def visit_If(self, node):
+        raise ValueError("Currently, control flow logic like if/else is not supported. Please use alternative conditionals like array_index_secret_if")
