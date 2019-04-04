@@ -57,6 +57,8 @@ class SecretFixedPointFactory(object):
 
 class SecretFixedPointArrayFactory(object):
     def __call__(self, length):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
         if mpc_type == SPDZ:
             return sfixArray(length)
         else:
@@ -64,6 +66,8 @@ class SecretFixedPointArrayFactory(object):
 
     @classmethod
     def read_input(self, length, party):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
         if mpc_type == SPDZ:
             ret = sfixArray(length)
             @for_range(ret.length)
@@ -81,6 +85,8 @@ class SecretFixedPointArrayFactory(object):
 
 class SecretFixedPointMatrixFactory(object):
     def __call__(self, rows, columns):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
         if mpc_type == SPDZ:
             return sfixMatrix(rows, columns)
         else:
@@ -88,6 +94,8 @@ class SecretFixedPointMatrixFactory(object):
 
     @classmethod
     def read_input(self, rows, columns, party):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
         if mpc_type == SPDZ:
             ret = sfixMatrix(rows, columns)
             @for_range(ret.rows)
@@ -121,24 +129,10 @@ import ast
 import astor
 from pprint import pprint
 
-class ASTParser(ast.NodeTransformer):
-    
-    def __init__(self, fname, debug=False):
-        f = open(fname, 'r')
-        self.tree = ast.parse(f.read())
-        f.close()
+class ForLoopParser(ast.NodeTransformer):
+    def __init__(self):
         self.forloop_counter = 0
-        self.debug = debug
-
-    def parse(self):
-        self.visit(self.tree)
-
-    def execute(self, context):
-        source = astor.to_source(self.tree)
-        if self.debug:
-            print(source)
-        exec(compile(self.tree, filename="<ast>", mode="exec"), context)
-
+    
     def parse_for(self, node):
         dec = ast.Call(func=ast.Name(id="for_range", ctx=ast.Load()), args=node.iter.args, keywords=[])
         new_node = ast.FunctionDef(name="for{}".format(self.forloop_counter),
@@ -164,5 +158,27 @@ class ASTParser(ast.NodeTransformer):
 
         raise ValueError("For loop only supports style 'for i in range(...)'")
 
+class ASTChecks(ast.NodeTransformer):
     def visit_If(self, node):
         raise ValueError("Currently, control flow logic like if/else is not supported. Please use alternative conditionals like array_index_secret_if")
+
+
+class ASTParser(object):
+    
+    def __init__(self, fname, debug=False):
+        f = open(fname, 'r')
+        self.tree = ast.parse(f.read())
+        f.close()
+
+        self.debug = debug
+
+    def parse(self):
+        # Run through a bunch of parsers
+        self.tree = ForLoopParser().visit(self.tree)
+        self.tree = ASTChecks().visit(self.tree)
+
+    def execute(self, context):
+        source = astor.to_source(self.tree)
+        if self.debug:
+            print(source)
+        exec(compile(self.tree, filename="<ast>", mode="exec"), context)

@@ -4,6 +4,7 @@ from Compiler.types import MemValue, read_mem_value, regint, Array
 from Compiler.program import Tape, Program
 from Compiler.instructions_gc import *
 import operator
+import mllib
 
 # Logic copied from AG-MPC
 # https://github.com/emp-toolkit/emp-tool/blob/stable/emp-tool/circuits/integer.hpp
@@ -109,7 +110,7 @@ class sbits(bits):
         elif isinstance(other, sbits):
             return self._and(other)
         else:
-            return NotImplemented
+            return other.__and__(self)
 
     def __or__(self, other):
         a = self & other
@@ -360,8 +361,8 @@ class int_gc(object):
     def __eq__(self, other):
         self.test_instance(other)
         r = cbits(1)
-        for i in range(0, op1.length):
-            r = r & (op1.bits[i] == op2.bits[i])
+        for i in range(0, self.length):
+            r = r & (self.bits[i] == other.bits[i])
         return r
 
     def __ne__(self, other):
@@ -647,7 +648,7 @@ class cfix_gc(object):
             other_sfix = sfix_gc(v=other, scale=True)
             return (other_sfix == self)
         else:
-            return NotImplemented
+            return other.__eq__(self)
 
     def __ne__(self, other):
         return ~(self == other)
@@ -703,6 +704,26 @@ class sfix_gc(object):
         ret = cls()
         ret.v = v
         return ret
+
+    def __and__(self, other):
+        if isinstance(other, bits):
+            res = sfix_gc()
+            for i in range(res.v.length):
+                res.v.bits[i] = res.v.bits[i] & other
+            return res
+        elif isinstance(other, (cfix_gc, sfix_gc)):
+            res = sfix_gc()
+            for i in range(res.v.length):
+                res.v.bits[i] = res.v.bits[i] & other.v.bits[i]
+            return res
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return self.__and__(other_cfix)
+        elif isinstance(other, sint_gc):
+            other_sfix = sfix_gc(v=other, scale=True)
+            return self.__and__(other_sfix)
+        else:
+            raise NotImplementedError
 
     def __add__(self, other):
         if isinstance(other, (cfix_gc, sfix_gc)):
@@ -818,10 +839,20 @@ class ArrayGC(object):
         self.data = [None for i in range(length)]
 
     def __getitem__(self, index):
-        return self.data[index]
+        if isinstance(index, (sint_gc, sfix_gc)):
+            return mllib.array_index_secret_load(self, index)
+        elif isinstance(index, int):
+            return self.data[index]
+        else:
+            raise NotImplementedError
 
     def __setitem__(self, index, value):
-        self.data[index] = value
+        if isinstance(index, (sint_gc, sfix_gc)):
+            mllib.array_index_secret_store(self, index, value)
+        elif isinstance(index, int):
+            self.data[index] = value
+        else:
+            raise NotImplementedError
 
 class MatrixGC(object):
     def __init__(self, rows, columns):

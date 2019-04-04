@@ -302,7 +302,7 @@ def mat_assign(o, i, nparallel=1):
         def g(v):
             o[u][v] = i[u][v]
 
-def array_index_secret(l, index, nparallel=1):
+def array_index_secret_load(l, index, nparallel=1):
     if isinstance(l, Array) and isinstance(index, (sint, sfix)):
         res_list = type(l).__init__(l.length)
         @for_range_multithread(l.length, nparallel, nparallel)
@@ -336,9 +336,33 @@ def array_index_secret(l, index, nparallel=1):
     else:
         raise NotImplementedError
 
-def array_index_secret_if(condition, l, index_1, index_2, nparallel=1):
+def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
     if isinstance(index_1, sint) and isinstance(index_2, sint): 
         index = condition * index_1 + (1 - condition) * index_2
         return array_index_secret(l, index, nparallel=nparallel)
+    else:
+        raise NotImplementedError
+
+def array_index_secret_store(l, index, value, nparallel=1):
+    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
+        @for_range_multithread(l.length, nparallel, nparallel)
+        def f(i):
+            v = None
+            if isinstance(index, sfix):
+                test = sfix().load_int(i)
+            else:
+                test = sint(i)
+            test = v.__eq__(index)
+            l[i] = (test * value) + ((sint(1) - test) * l[i])
+    elif isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
+        for i in range(l.length):
+            if isinstance(index, sfix_gc):
+                v = cfix_gc()
+            else:
+                v = sint_gc(index.length, i)
+            test = v.__eq__(index)
+            print(type(v), type(index))
+            print(type(test))
+            l[i] = (test & value) + (~test & l[i])
     else:
         raise NotImplementedError

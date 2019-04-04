@@ -19,3 +19,7 @@ Params.set_params(int_precision=3, f=3,k=3)
 #     for j in range(2):
 #         a[i][j] = sint_gc(3, input_party=0)
 
+a = s_fix_array(20)
+b = s_fix_array(20)
+a[0] = s_fix.read_input(0)
+b[a[0]] = s_fix.read_input(0)
