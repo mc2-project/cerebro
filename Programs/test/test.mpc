@@ -1,8 +1,21 @@
-Params.set_params(int_precision=3)
+Params.set_params(int_precision=3, f=3,k=3)
 
-a = s_int.read_input(0)
-b = s_int.read_input(1)
-c = a + b
-print(type(c))
-c.reveal()
+# a = s_fix_mat(2, 2)
+# for i in range(a.rows):
+#     for j in range(a.columns):
+#         a[i][j] = s_fix.read_input(0)
+
+# a = sfixMatrix(2, 2)
+# @for_range(a.rows)
+# def f(i):
+#     @for_range(a.columns)
+#     def g(j):
+#         v = sint.get_private_input_from(0)
+#         a[i][j] = sfix.load_sint(v)
+
+# sfix_gc.set_precision(2, k=3)
+# a = sintMatrixGC(2, 2)
+# for i in range(2):
+#     for j in range(2):
+#         a[i][j] = sint_gc(3, input_party=0)
 

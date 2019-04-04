@@ -1,4 +1,6 @@
+Params.set_params(int_precision=32, f=32, k=64)
 NUM_PARTIES = 3
+
 SGD_ITERS = 10
 data_sizes = [10, 10, 10]
 total_samples = sum(data_sizes)
@@ -8,11 +10,15 @@ BATCH_SIZE = 5
 LEVELS = 5
 TOTAL_NODES = 2 ** 5 - 1
 
-sfix.set_precision(32)
-
-tree = sfixMatrix(TOTAL_NODES, 4)
+# The columns are:
+# feature index
+# split value
+# index of left child (or prediction value, if the it's a leaf node)
+# index of right child
+tree = s_fix_mat(TOTAL_NODES, 4)
 
 w = tree[0]
+x = s_fix_array.read_input(dim, 0)
 
 for i in range(LEVELS):
     index = w[0]
@@ -20,8 +26,9 @@ for i in range(LEVELS):
     left_child = w[2]
     right_child = w[3]
 
-    f = array_index_secret(index)
-    cond = f < split
+    f = array_index_secret(x, index)
+    cond = (f < split)
+    print(type(cond))
     w = array_index_secret_if(f, l, left_child, right_child)
 
-print_ln("Final classification: %s", w[0].reveal())
+w[0].reveal()

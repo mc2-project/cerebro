@@ -270,6 +270,12 @@ class int_gc(object):
             raise ValueError("Integer lengths must match")
 
     def __and__(self, other):
+        if isinstance(other, bits):
+            dest = int_gc(self.length)
+            for i in range(self.length):
+                dest.bits[i] = self.bits[i] & other
+            return dest
+        
         self.test_instance(other)
         dest = int_gc(self.length)
         for i in range(self.length):
@@ -277,6 +283,12 @@ class int_gc(object):
         return dest
             
     def __xor__(self, other):
+        if isinstance(other, bits):
+            dest = int_gc(self.length)
+            for i in range(self.length):
+                dest.bits[i] = self.bits[i] ^ other
+            return dest
+
         self.test_instance(other)
         dest = int_gc(self.length)
         for i in range(self.length):
@@ -537,6 +549,131 @@ class sint_gc(int_gc):
         self.length = length
         self.bits = [sbits(input_party) for i in range(length)]
 
+class cfix_gc(object):
+    __slots__ = ['v', 'f', 'k', 'size']
+            
+    @classmethod
+    def set_precision(cls, f, k=None):
+        cls.f = f
+        if k is None:
+            cls.k = 2 * f
+        else:
+            cls.k = k
+
+    def __init__(self, v=None, scale=False):
+        if isinstance(v, int):
+            if scale: 
+                self.v = cint(cfix_gc.k, value=v * (2 ** cfix_gc.f))
+            else:
+                self.v = cint(cfix_gc.k, value=v)
+        elif isinstance(v, float):
+            if scale:
+                self.__init__(int(v * (2 ** cfix_gc.f)))
+            else:
+                self.__init__(int(v))
+        elif isinstance(v, cint_gc):
+            if scale:
+                self.v = v << cfix_gc.f
+            else:
+                self.v = v
+        else:
+            self.v = cint_gc(cfix_gc.k, 0)
+
+        assert(isinstance(self.v, cint_gc))
+
+    @classmethod
+    def load_int(cls, v):
+        ret = cls()
+        ret.v = v
+        return ret
+
+    def __add__(self, other):
+        if isinstance(other, cfix_gc):
+            intv = self.v + other.v
+            return cfix_gc(v=intv)
+        elif isinstance(other, cint_gc):
+            other_fix = cfix_gc(v=other, scale=True)
+            return (self + other_fix)
+        elif isinstance(other, sint_gc):
+            return self + sfix_gc(v=other, scale=True)
+        else:
+            return NotImplemented
+    
+    def __sub__(self, other):
+        if isinstance(other, cfix_gc):
+            intv = self.v - other.v
+            return cfix_gc(v=intv)
+        elif isinstance(other, cint_gc):
+            other_fix = cfix_gc(v=other, scale=True)
+            return (self - other_fix)
+        elif isinstance(other, sint_gc):
+            return self - sfix_gc(v=other, scale=True)
+        else:
+            return other.__sub__(self, reverse=True)
+
+    def __mul__(self, other):
+        if isinstance(other, cfix_gc):
+            v = (self.v * other.v) >> cfix_gc.f
+            return cfix_gc(v=v, scale=False)
+        elif isinstance(other, cint_gc):
+            return cfix_gc(v=(self.v * other), scale=False)
+        elif isinstance(other, sint_gc):
+            return (self * sfix_gc(v=other, scale=True))
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
+        if isinstance(other, cfix_gc):
+            ret_cint = (self.v << cfix_gc.f) / other.v
+            return cfix_gc(v=ret_cint, scale=False)
+        elif isinstance(other, cint_gc):
+            ret_v = self.v / other
+            ret = cfix_gc()
+            ret.load_int(ret_v)
+            return ret
+        elif isinstance(other, sint_gc):
+            other_sfix = sfix_gc(other, scale=True)
+            return (self / other_sfix)
+        else:
+            return other.__div__(self, reverse=True)
+
+    def __eq__(self, other):
+        if isinstance(other, cfix_gc):
+            return (self.v == other.v)
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return (self == other_cfix)
+        elif isinstance(other, sint_gc):
+            other_sfix = sfix_gc(v=other, scale=True)
+            return (other_sfix == self)
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return ~(self == other)
+
+    def __ge__(self, other):
+        if isinstance(other, cfix_gc):
+            return (self.v >= other.v)
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return (self >= other_cfix)
+        elif isinstance(other, sint_gc):
+            other_sfix = sfix_gc(v=other, scale=True)
+            return (other_sfix >= self)
+        else:
+            return NotImplemented
+
+    def __lt__(self, other):
+        return ~(self >= other)
+
+    def __le__(self, other):
+        return (other >= self)
+
+    def __gt__(self, other):
+        return ~(self <= other)
+
+
 # This is a wrapper around sint
 # Implementes fixed point logic
 # f = number of bits in the decimal position
@@ -552,74 +689,100 @@ class sfix_gc(object):
         else:
             cls.k = k
 
-    def __init__(self, v=None, input_party=-1):
+    def __init__(self, v=None, input_party=-1, scale=False):
         if v is not None and isinstance(v, int_gc):
-            self.v = v << sfix_gc.f
+            if scale:
+                self.v = v << sfix_gc.f
+            else:
+                self.v = v
         else:
             self.v = sint_gc(sfix_gc.k, input_party)
 
-    def load_sint(self, v):
-        self.v = v
+    @classmethod
+    def load_sint(cls, v):
+        ret = cls()
+        ret.v = v
+        return ret
 
     def __add__(self, other):
-        if isinstance(other, sfix_gc):
+        if isinstance(other, (cfix_gc, sfix_gc)):
             intv = self.v + other.v
             return sfix_gc(v=intv)
+        elif isinstance(other, cint_gc):
+            other_fix = cfix_gc(v=other, scale=True)
+            return (self + other_fix)
         elif isinstance(other, sint_gc):
             other_fix = sfix_gc(v=other, scale=True)
             return (self + other_fix)
         else:
             return NotImplemented
     
-    def __sub__(self, other):
-        if isinstance(other, sfix_gc):
+    def __sub__(self, other, reverse=False):
+        if isinstance(other, cfix_gc):
+            ret_v = self.v - other.v
+            if reverse:
+                ret_v = other.v - self.v
+            return sfix_gc(v=ret_v, scale=False)
+        elif isinstance(other, sfix_gc):
             intv = self.v - other.v
             return sfix_gc(v=intv)
+        elif isinstance(other, cint_gc):
+            v = cfix_gc(v=other.v, scale=True)
+            return self.__sub__(v, reverse=reverse)
         elif isinstance(other, sint_gc):
-            other_fix = sfix_gc(v=other, scale=True)
-            return (self - other_fix)
+            v = sfix_gc(v=other.v, scale=True)
+            return self.__sub__(v, reverse=reverse)
         else:
             return NotImplemented
 
     def __mul__(self, other):
-        if isinstance(other, sfix_gc):
+        if isinstance(other, (cfix_gc, sfix_gc)):
             v_ex = self.v.convert(sfix_gc.k * 2)
             ov_ex = other.v.convert(sfix_gc.k * 2)
             ret_v = v_ex * ov_ex
             ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
             ret = sfix_gc()
-            ret.load_int(ret_v)
+            ret.load_sint(ret_v)
             return ret
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return self * other_cfix
         elif isinstance(other, sint_gc):
-            ret_v = v_ex * other
-            ret = sfix_gc()
-            ret.load_int(ret_v)
-            return ret       
+            other_sfix = sfix_gc(other, scale=True)
+            return (ret * other_sfix)
         else:
             return NotImplemented
 
-    def __div__(self, other):
-        if isinstance(other, sfix_gc):
-            v_ex = self.v.convert(sfix_gc.k * 2)
-            ov_ex = other.v.convert(sfix_gc.k * 2)
+    def __div__(self, other, reverse=False):
+        if isinstance(other, (cfix_gc, sfix_gc)):
+            numerator = self
+            denominator = other
+            if reverse:
+                numerator = other
+                denominator = self
+            v_ex = numerator.v.convert(sfix_gc.k * 2)
+            ov_ex = denominator.v.convert(sfix_gc.k * 2)
             ret_v = v_ex / ov_ex
             ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
             ret = sfix_gc()
             ret.load_int(ret_v)
             return ret
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return self.__div__(other_cfix, reverse=reverse)
         elif isinstance(other, sint_gc):
-            ret_v = v_ex / sint_gc
-            ret = sfix_gc()
-            ret.load_int(ret_v)
-            return ret       
+            other_sfix = sfix_gc(v=other, scale=True)
+            return self.__div__(other_sfix, reverse=reverse)
         else:
             return NotImplemented
 
     def __eq__(self, other):
-        if isinstance(other, sfix_gc):
-            return sint_gc(self.v == other.v)
+        if isinstance(other, cfix_gc):
+            return (self.v == other.v)
+        elif isinstance(other, sfix_gc):
+            return (self.v == other.v)
         elif isinstance(other, sint_gc):
             other_fix = sfix_gc(other.length, other)
             return (self == other_fix)
@@ -630,14 +793,16 @@ class sfix_gc(object):
         return ~(self == other)
 
     def __ge__(self, other):
-        if isinstance(other, sfix_gc):
+        if isinstance(other, cfix_gc):
+            return (self.v >= other.v)
+        elif isinstance(other, sfix_gc):
             return (self.v >= other.v)
         elif isinstance(other, sint_gc):
             other_fix = sfix_gc(other.length, other)
             return (self >= other_fix)
         else:
             return NotImplemented
-
+        
     def __lt__(self, other):
         return ~(self >= other)
 
