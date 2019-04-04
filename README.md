@@ -1,6 +1,6 @@
 MC2: A Coopetitive Learning Platform
 
-## Installing emp-agmpc (semi-honest version)
+### Installing emp-agmpc (semi-honest version)
 
 1. Create a directory for EMP toolkit.
 
@@ -8,3 +8,7 @@ MC2: A Coopetitive Learning Platform
 `wget https://goo.gl/wmt4KB -O install.sh && bash install.sh`
 
 3. `cd emp-agmpc && cmake . && make`
+
+### Install SCALE-MAMBA (semi-honest version)
+
+1. Follow the instruction in this PDF file:  

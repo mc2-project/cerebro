@@ -1,0 +1,226 @@
+
+\mainsection{Changes}
+This section documents changes made since the ``last'' release of
+the software. 
+
+\vspace{5mm}
+
+\noindent
+This is currently {\bf version 1.3} of the SCALE and MAMBA software.
+There are two main components to the system, a run time system called
+SCALE,
+\begin{center}
+  Secure Computation Algorithms from LEuven
+\end{center}
+and a Python-like programming language called MAMBA
+\begin{center}
+  Multiparty AlgorithMs Basic Argot
+\end{center}
+Note, that MAMBA is a type of snake (like a Python), a snake
+has scales, and an argot is a ``secret language''.
+
+\vspace{5mm}
+
+\noindent
+The software is a major modification of the earlier SPDZ software. 
+You {\em should not} assume it works the same so please read
+the documentation fully before proceeding.
+
+\subsection{Changes in version 1.3 from 1.2}
+\begin{enumerate}
+\item New offline phase for full threshold called TopGear has been
+implemented \cite{TopGear}. This means we have changed a number
+of FHE related security parameters. In particular the new parameter
+sets are {\em more} secure.
+{\bf But} they are likely to be different from the ones you have
+been using. Thus you will need to generate again FHE parameters
+(using \verb+Setup.x+).
+\item Bug fixed when using Shamir with a large number of parties
+and very very low threshold value.
+\item Renaming of some bytecodes to make their meaning clearer.
+\item Floating point operations are now (almost) fully supported.
+We have basic operations on floating point \verb+sfloat+ variables
+supported, as well as basic trigonometric functions. Still to
+be completed are the square root, logarithm and exponential functions.
+Note that, the implementation of floating point numbers is
+different from that in the original SPDZ compiler. The main alteration
+is an additional variable to signal error conditions within the
+number, and secure processing of this signal.
+\end{enumerate}
+
+
+\subsection{Changes in version 1.2 from 1.1}
+
+\begin{enumerate}
+\item A lot of internal re-writing to make things easier to maintain.
+\item There are more configuration options in \verb+config.h+ to enable;
+      e.g. you can now give different values to the different places
+      we use statistical security parameters.
+\item Minor correction to how FHE parameters are created. This means
+      that the FHE parameters are a bit bigger than they were before.
+      Probably a good idea to re-run setup to generate new keys etc
+      in the Full Threshold case.
+\item Minor change to how \verb+CRASH+ works. If the IO handler returns, 
+      then the \verb+RESTART+ instruction is automatically called.
+\item There is a new run time switch \verb+maxI+ for use when performing
+      timings etc. This is only for use when combined with the \verb+max+
+      switch below.
+\item Two new instructions \verb+CLEAR_MEMORY+ and \verb+CLEAR_REGISTERS+
+      have been added. 
+      These are called from MAMBA via \verb+clear_memory()+ and \verb+clear_registers()+.
+      The first can only be called with compilation is done with the flag \verb+-M+, whilst
+      the second {\em may} issue out of order (consider it experimental at present).
+\item Bug fix for \verb+sfix+ version of \verb+arcsin/arccos+ functions.
+\item When running Shamir with a large number of parties we now move to using
+      an interactive method to produce the PRSS as opposed to the non-interactive
+      method which could have exponential complexity. This means we can now cope
+      with larger numbers of parties in the Shamir sharing case. An example
+      ten party example is included to test these routines.
+\end{enumerate}
+
+
+\subsection{Changes in version 1.1 from 1.0}
+
+\begin{enumerate}
+\item Major bug fix to IO processing of private input and output.
+This has resulted in a change to the bytecodes for these instructions.
+\item We now support multiple FHE Factory threads, the precise number
+is controlled from a run-time switch.
+\item The restart methodology now allows the use to programmatically
+create new schedules and program tapes if so desired. The
+``demo'' functionality is however exactly as it was before.
+Please see the example functionality in the file
+\verb+src/Input_Output/Input_Output_Simple.cpp+
+\item We have added in some extra verbose output to enable timing of the
+offline phase. To time the offline phase, on say bit production,
+you can now use the program \verb+Program/do_nothing.mpc+, and then
+execute the command for player zero.
+\begin{verbatim}
+   ./Player.x -verbose 1 -max 1,1,10000000  0 Programs/do_nothing/
+\end{verbatim}
+Note square production on its own is deliberately throttled
+so that when run in a real execution bit production is preferred
+over squares.
+By altering the constant in the program  \verb+Program/do_nothing.mpc+
+you can also alter the number of threads used for this timing operation.
+If you enter a negative number for verbose then verbose output
+is given for the online phase; i.e. it prints the bytecodes being
+executed.
+\item The fixed point square root functions have now been extended to
+cope with full precision fixed point numbers.
+\item The \verb+PRINTxxx+ bytecodes now pass their output via the
+\verb+Input_Output+ functionality. These bytecodes are meant for
+debugging purposes, and hence catching them via the IO functionality
+makes most sense. The relevant function in the IO class
+is \verb+debug_output+.
+\item We have added the ability to now also input and output \verb+regint+
+values via the IO functionality, with associated additional bytecodes
+added to enable this.
+\item The IO class now allows one to control the opening and closing of
+channels, this is aided by two new bytecodes for this purpose
+called \verb+OPEN_CHAN+ and \verb+CLOSE_CHAN+.
+\item Input of clear values via the IO functionality (i.e.
+for \verb+cint+ and \verb+regint+ values) is now internally checked to ensure that
+all players enter the same clear values.
+Note, this requires modification to any user defined 
+derived classes from \verb+Input_Output_Base+.
+See the chapter on IO for more details on this.
+\item The way the chosen IO functionality is bound with the main program
+has now also been altered. See the chapter on IO for more details on this.
+\item These changes have meant there are a number of changes to the
+specific byte codes, so you will need to recompile MAMBA programs.
+If you generate your own bytecodes then your backend will need to
+change as well.
+\end{enumerate}
+
+
+\subsection{Changes From SPDZ}
+Apart from the way the system is configured and run there are
+a number of functionality changes which we outline below.
+
+\subsubsection{Things no longer supported}
+\begin{enumerate}
+\item We do not support any $GF(2^n)$ arithmetic in the run time 
+environment. The compiler will no longer compile your programs.
+\item There are much fewer switches in the main program, as we want
+to produce a system which is easier to support and more useful in
+building applications.
+\item Socket connections, file, and other forms of IO to the main MPC
+engine is now unified into a single location. This allows {\em you} to
+extend the functionality without altering the compiler or
+run-time in any way (bar changing which IO class you load
+at compile time). See Section \ref{sec:IO} for details.
+\end{enumerate}
+
+\subsubsection{Additions}
+\begin{enumerate}
+\item The offline and online phases are now fully integrated.
+This means that run-times will be slower than you would have got
+with SPDZ, but the run-times obtained are closer to what you would
+expect in a ``real'' system.
+{\bf Both} the online and offline phases are {\bf actively} secure
+with abort.
+\item Due to this change it can be slow to start a new instance
+and run a new program. So we provide a new (experimental) operation which 
+``restarts'' the run-time. This is described in Section \ref{sec:restart}.
+This operation is likely to be revamped and improved in the next
+release as we get more feedback on its usage.
+\item We support various Q2 access structures now, which can be
+defined in various ways: Shamir threshold, via Replicated sharing,
+or via a general Monotone Span Programme (MSP).
+For replicated sharing you can define the structure
+via either the minimally qualified sets, or the maximally unqualified
+sets.
+For general Q2-MSPs you can input a non-multiplicative MSP and the
+system will find an equivalent multiplicative one for you using the
+method of \cite{CDM00}.
+\item Offline generation for Q2 is done via Maurer's method \cite{Maurer}, but
+for Replicated you can choose between Maurer and the reduced communication
+method of Keller, Rotaru, Smart and Wood \cite{KRSW}.
+For general Q2-MSPs, and Shamir sharing, the online phase is the method described in Smart and Wood \cite{SW18},
+with ({\em currently}) the offline phase utilizing Maurer's multiplication method \cite{Maurer}.
+\item All player connections are now via SSL, this is not strictly
+needed for full threshold but is needed for the other access structures
+we now support.
+\item We now have implemented more higher level mathematical functions for
+the \verb+sfix+ datatype, and corrected a number of bugs. 
+A similar upgrade is expected in the next release for the \verb+sfloat+ type.
+\end{enumerate}
+
+\subsubsection{Changes}
+\begin{enumerate}
+\item The {\bf major} change is that the offline and online phases are now integrated.
+This means that to run quick test runs, using full threshold is going to take
+ages to set up the offline data. Thus for test runs of programs in the online
+phase it is best to test using one of the many forms of Q2 access structures.
+For example by using Shamir with three players and threshold one. Then once your
+online program is tested you can move to a production system with two players
+and full threshold if desired.
+\item You now compile a program by executing
+\begin{verbatim}
+      ./compile.py Programs/tutorial
+\end{verbatim}
+where \verb+Programs/tutorial+ is a {\em directory} which contains
+a file called \verb+tutorial.mpc+. Then the compiler puts all of the
+compiled tapes etc {\em into this directory}.
+This produces a much cleaner directory output etc.
+By typing \verb+make pclean+ you can clean up all pre-compiled directorys
+into their initial state.
+\item The compiler picks up the prime being used for secret sharing
+after running the second part of \verb+Setup.x+. So you need to recompile
+the \verb+.mpc+ files if  you change the prime used in secret sharing, and you
+should not compile any SCALE \verb+.mpc+ programs before running \verb+Setup.x+.
+\item Internally (i.e. in the C++ code), a lot has been re-organized. The major simplification
+is removal of the \verb+octetstream+ class, and it's replacement by a combination
+of \verb+stringstream+ and \verb+string+ instead. This makes readibility
+much easier.
+\item All opcodes in the range \verb+0xB*+ have been changed, so any byte codes
+you have generated from outside the python system will need to be changed.
+\item We have tried to reduce dependencies between classes in the 
+C++ code a lot more. Thus making the code easier to manage.
+\item Security-wise we use the latest FHE security estimates for the
+FHE-based part, and this can be easily updated. See Chapter \ref{sec:fhe} on FHE
+security later.
+\end{enumerate}
+
+
