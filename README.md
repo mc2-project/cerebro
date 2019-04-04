@@ -11,4 +11,4 @@ MC2: A Coopetitive Learning Platform
 
 ### Install SCALE-MAMBA (semi-honest version)
 
-1. Follow the instruction in this PDF file:  
+1. Follow the instruction in this PDF file:  https://github.com/wzheng/mc2/blob/master/SCALE-MAMBA/Documentation/Documentation.pdf
