@@ -66,6 +66,6 @@ void SystemData::init(unsigned int numplayers, const string &RootCertName,
   IP= IP_Numbers;
   PlayerCRT= PlayerCertFiles;
   PlayerCN= PlayerNames;
-  fake_offline= fake_off;
-  fake_sacrifice= fake_sac;
+  fake_offline= 1;
+  fake_sacrifice= 1;
 }
