@@ -121,7 +121,6 @@ def _matmul(A, B, C, D, int_type, nparallel=1):
 # Not parallelized
 def _matmul_mix(A, B, nparallel=1):
     C = MixMatrix(A.rows, B.columns)
-    print(A.rows, B.columns)
     @for_range(A.rows * B.columns)
     def f(i):
         @for_range(A.columns)
@@ -324,22 +323,43 @@ def array_index_secret_load(l, index, nparallel=1):
         res_list = sfixArrayGC(l.length)
         for i in range(l.length):
             if isinstance(index, sfix_gc):
-                v = cfix_gc()
+                v = cfix_gc(v=i)
             else:
-                v = sint_gc(index.length, i)
+                v = cint_gc(index.length, i)
             test = v.__eq__(index)
-            res_list[i] = test & l[i] 
+            res_list[i] = test & l[i]
         res = res_list[0]
         for i in range(1, l.length):
-            res += res_list[i]
+            res = res + res_list[i]
+        return res
+    elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
+        res_mat = sfixMatrixGC(l.rows, l.columns)
+        for i in range(l.rows):
+            if isinstance(index, sfix_gc):
+                v = cfix_gc(v=i)
+            else:
+                v = cint_gc(index.length, i)
+            test = v.__eq__(index)
+            for j in range(l.columns):
+                res_mat[i][j] = test & l[i][j]
+
+        res = res_mat[0]
+        for j in range(l.columns):
+            for i in range(1, l.rows):
+                res[j] = res[j] + res_mat[i][j]
         return res
     else:
         raise NotImplementedError
 
 def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
-    if isinstance(index_1, sint) and isinstance(index_2, sint): 
-        index = condition * index_1 + (1 - condition) * index_2
+    supported_types_a = (sint, sfix)
+    supported_types_b = (sint_gc, sfix_gc)
+    if isinstance(index_1, supported_types_a) and isinstance(index_2, supported_types_a): 
+        index = (condition * index_1) + ((1 - condition) * index_2)
         return array_index_secret(l, index, nparallel=nparallel)
+    elif isinstance(index_1, supported_types_b) and isinstance(index_2, supported_types_b): 
+        index = (condition & index_1) + ((~condition) & index_2)
+        return array_index_secret_load(l, index, nparallel=nparallel)
     else:
         raise NotImplementedError
 
@@ -361,8 +381,6 @@ def array_index_secret_store(l, index, value, nparallel=1):
             else:
                 v = sint_gc(index.length, i)
             test = v.__eq__(index)
-            print(type(v), type(index))
-            print(type(test))
             l[i] = (test & value) + (~test & l[i])
     else:
         raise NotImplementedError

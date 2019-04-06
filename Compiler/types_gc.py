@@ -25,6 +25,8 @@ class bits(object):
             program_gc.total_inputs += 1
 
     def set_gid(self):
+        if self.gid is not None:
+            return 
         self.gid = bits.global_gid
         bits.global_gid += 1
         program_gc.total_wires += 1
@@ -32,82 +34,47 @@ class bits(object):
     def __str__(self):
         return str(self.gid)
 
-class cbits(bits):
-    def __init__(self, value):
-        super(cbits, self).__init__()
-        if (value != 0) and (value != 1):
-            raise ValueError("cbits must have a value of 0 or 1")
-        self.value = value
-
-    def __invert__(self):
-        return cbits((self.value + 1) % 2)
-
-    def __xor__(self, other):
-        if isinstance(other, cbits):
-            return cbits(self.value ^ other.value)
-        else:
-            return NotImplemented
-
-    def __and__(self, other):
-        if isinstance(other, cbits):
-            return cbits(self.value & other.value)
-        else:
-            return NotImplemented
-
-    def __str__(self):
-        return str("{}: v = {}".format(self.gid, self.value))
-
-    __rxor__ = __xor__
-    __rand__ = __and__
-    
-            
-class sbits(bits):
-    def __init__(self, input_party=-1):
-        super(sbits, self).__init__(input_party)
-    
-    def test_instance(self, other):
-        if not isinstance(other, sbits):
-            raise ValueError("requires type sbits")
-
     def _and(self, other):
-        res = sbits()
+        res = bits()
         and_gc(res, self, other)
         res.set_gid()
         return res
 
     def _xor(self, other):
-        res = sbits()
+        res = bits()
         xor_gc(res, self, other)
         res.set_gid()
         return res
 
     def _invert(self):
-        res = sbits()
+        res = bits()
         invert_gc(res, self)
         res.set_gid()
         return res
-    
+
     def __invert__(self):
         return self._invert()
 
     def __xor__(self, other):
         if isinstance(other, cbits):
             if other.value == 0:
+                self.set_gid()
                 return self
             else:
-                return self.__invert__()
-        elif isinstance(other, sbits):
+                return self._invert()
+        elif isinstance(other, (bits, sbits)):
             return self._xor(other)
         else:
-            return NotImplemented
+            return other.__xor__(self)
 
     def __and__(self, other):
         if isinstance(other, cbits):
             if other.value == 0:
                 return cbits(0)
             else:
+                self.set_gid()
                 return self
-        elif isinstance(other, sbits):
+        elif isinstance(other, (bits, sbits)):
             return self._and(other)
         else:
             return other.__and__(self)
@@ -123,7 +90,53 @@ class sbits(bits):
     __ror__ = __or__
 
     def __eq__(self, other):
-        return ~(self ^ other)
+        res = self ^ other
+        res = ~res
+        return res
+
+class cbits(bits):
+    def __init__(self, value):
+        super(cbits, self).__init__()
+        if (value != 0) and (value != 1):
+            raise ValueError("cbits must have a value of 0 or 1")
+        self.value = value
+
+    def __invert__(self):
+        return cbits((self.value + 1) % 2)
+
+    def __xor__(self, other):
+        if isinstance(other, cbits):
+            return cbits(self.value ^ other.value)
+        else:
+            return other.__xor__(self)
+
+    def __and__(self, other):
+        if isinstance(other, cbits):
+            return cbits(self.value & other.value)
+        else:
+            return other.__and__(self)
+
+    def __str__(self):
+        return str("{}: v = {}".format(self.gid, self.value))
+
+    __rxor__ = __xor__
+    __rand__ = __and__
+
+    def reveal(self):
+        # cbits does not need to be revealed
+        pass
+    
+            
+class sbits(bits):
+    def __init__(self, input_party=-1):
+        super(sbits, self).__init__(input_party)
+    
+    def test_instance(self, other):
+        if not isinstance(other, sbits):
+            raise ValueError("requires type sbits")
+    
+    def reveal(self):
+        program_gc.output_wires.append(self.gid)
 
 def add_full(dest, op1, op2, size, carry_in=None, carry_out=None):
     if size == 0:
@@ -353,7 +366,7 @@ class int_gc(object):
         return ~(self >= other)
 
     def __le__(self, other):
-        return (other >= self)
+        return other.__ge__(self)
 
     def __gt__(self, other):
         return ~(self <= other)
@@ -422,7 +435,7 @@ class int_gc(object):
     def reveal(self):
         for b in self.bits:
             if isinstance(b, sbits):
-                program_gc.output_wires.append(b.gid)
+                b.reveal()
             
     def __str__(self):
         s = ""
@@ -564,9 +577,9 @@ class cfix_gc(object):
     def __init__(self, v=None, scale=False):
         if isinstance(v, int):
             if scale: 
-                self.v = cint(cfix_gc.k, value=v * (2 ** cfix_gc.f))
+                self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
             else:
-                self.v = cint(cfix_gc.k, value=v)
+                self.v = cint_gc(cfix_gc.k, value=v)
         elif isinstance(v, float):
             if scale:
                 self.__init__(int(v * (2 ** cfix_gc.f)))
@@ -709,12 +722,12 @@ class sfix_gc(object):
         if isinstance(other, bits):
             res = sfix_gc()
             for i in range(res.v.length):
-                res.v.bits[i] = res.v.bits[i] & other
+                res.v.bits[i] = self.v.bits[i] & other
             return res
         elif isinstance(other, (cfix_gc, sfix_gc)):
             res = sfix_gc()
             for i in range(res.v.length):
-                res.v.bits[i] = res.v.bits[i] & other.v.bits[i]
+                res.v.bits[i] = self.v.bits[i] & other.v.bits[i]
             return res
         elif isinstance(other, cint_gc):
             other_cfix = cfix_gc(v=other, scale=True)
@@ -832,6 +845,9 @@ class sfix_gc(object):
 
     def __gt__(self, other):
         return ~(self <= other)
+
+    def reveal(self):
+        return self.v.reveal()
 
 class ArrayGC(object):
     def __init__(self, length):

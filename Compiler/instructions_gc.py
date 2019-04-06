@@ -25,8 +25,12 @@ opcodes_gc = dict(
 class InstructionGC(object):
     def __init__(self, *args):
         self.args = args
-
         program_gc.curr_block.instructions.append(self)
+        
+    def check_args(self):
+        for arg in self.args:
+            #assert(arg.gid is not None)
+            pass
 
 class invert_gc(InstructionGC):
     __slots__ = []
@@ -34,6 +38,7 @@ class invert_gc(InstructionGC):
     arg_format = ['sb', 'sb']
 
     def __str__(self):
+        self.check_args()
         return "1 1 {} {} INV".format(self.args[1], self.args[0])
 
 class xor_gc(InstructionGC):
@@ -42,6 +47,7 @@ class xor_gc(InstructionGC):
     arg_format = ['sb', 'sb', 'sb']
 
     def __str__(self):
+        self.check_args()
         return "2 1 {} {} {} XOR".format(self.args[1], self.args[2], self.args[0])
 
 class and_gc(InstructionGC):
@@ -50,8 +56,10 @@ class and_gc(InstructionGC):
     arg_format = ['sb', 'sb', 'sb']
 
     def __str__(self):
+        self.check_args()
         return "2 1 {} {} {} AND".format(self.args[1], self.args[2], self.args[0])
 
+# Used for debugging circuit files
 class gc_nop(InstructionGC):
     def __str__(self):
         return "{}".format(self.args[0])

@@ -40,13 +40,14 @@ class SecretIntegerFactory(object):
         else:
             return sint_gc(Params.intp, input_party=party)
 
-class SecretFixedPointFactory(object):
-    def __call__(self, party):
+class ClearFixedPointFactory(object):
+    def __call__(self, value):
         if mpc_type == SPDZ:
-            return sint.get_private_input_from(party)
+            return cfix(value)
         else:
-            return sint_gc(Params.intp, party)
-    
+            return cfix_gc(v=value, scale=True)
+
+class SecretFixedPointFactory(object):
     def read_input(self, party):
         if mpc_type == SPDZ:
             v = sint.get_private_input_from(party)
@@ -56,21 +57,12 @@ class SecretFixedPointFactory(object):
             return sfix_gc(v=None, input_party=party)
 
 class SecretFixedPointArrayFactory(object):
-    def __call__(self, length):
-        if not isinstance(length, int):
-            raise ValueError("Array length must be a publicly known integer")
-        if mpc_type == SPDZ:
-            return sfixArray(length)
-        else:
-            return sfixArrayGC(length)
-
-    @classmethod
     def read_input(self, length, party):
         if not isinstance(length, int):
             raise ValueError("Array length must be a publicly known integer")
         if mpc_type == SPDZ:
             ret = sfixArray(length)
-            @for_range(ret.length)
+            @library.for_range(ret.length)
             def f(i):
                 v = sint.get_private_input_from(party)
                 ret[i] = sfix.load_sint(v)
@@ -82,25 +74,15 @@ class SecretFixedPointArrayFactory(object):
                 ret[i] = sfix_gc.load_sint(v)
             return ret
 
-
 class SecretFixedPointMatrixFactory(object):
-    def __call__(self, rows, columns):
-        if not isinstance(rows, int) or not isinstance(columns, int):
-            raise ValueError("Matrix sizes must be publicly known integers")
-        if mpc_type == SPDZ:
-            return sfixMatrix(rows, columns)
-        else:
-            return sfixMatrixGC(rows, columns)
-
-    @classmethod
     def read_input(self, rows, columns, party):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
         if mpc_type == SPDZ:
             ret = sfixMatrix(rows, columns)
-            @for_range(ret.rows)
+            @library.for_range(ret.rows)
             def f(i):
-                @for_range(ret.columns)
+                @library.for_range(ret.columns)
                 def g(j):
                     v = sint.get_private_input_from(party)
                     ret[i][j] = sfix.load_sint(v)
@@ -115,12 +97,14 @@ class SecretFixedPointMatrixFactory(object):
 
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()
+ClearFixedPoint = ClearFixedPointFactory()
 SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["s_int"] = SecretInteger
+compilerLib.VARS["c_fix"] = ClearFixedPoint
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix

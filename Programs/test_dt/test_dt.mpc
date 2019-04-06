@@ -1,4 +1,4 @@
-Params.set_params(int_precision=32, f=32, k=64)
+Params.set_params(int_precision=32, f=16, k=32)
 NUM_PARTIES = 3
 
 SGD_ITERS = 10
@@ -8,14 +8,14 @@ dim = 10
 BATCH_SIZE = 5
 
 LEVELS = 5
-TOTAL_NODES = 2 ** 5 - 1
+TOTAL_NODES = (2 ** LEVELS) - 1
 
 # The columns are:
 # feature index
 # split value
 # index of left child (or prediction value, if the it's a leaf node)
 # index of right child
-tree = s_fix_mat(TOTAL_NODES, 4)
+tree = s_fix_mat.read_input(TOTAL_NODES, 4, 0)
 
 w = tree[0]
 x = s_fix_array.read_input(dim, 0)
@@ -26,9 +26,8 @@ for i in range(LEVELS):
     left_child = w[2]
     right_child = w[3]
 
-    f = array_index_secret(x, index)
+    f = x[index]
     cond = (f < split)
-    print(type(cond))
-    w = array_index_secret_if(f, l, left_child, right_child)
+    w = array_index_secret_load_if(cond, tree, left_child, right_child)
 
 w[0].reveal()
