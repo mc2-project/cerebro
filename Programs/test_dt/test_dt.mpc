@@ -28,6 +28,9 @@ for i in range(LEVELS):
 
     f = x[index]
     cond = (f < split)
-    w = array_index_secret_load_if(cond, tree, left_child, right_child)
+    w_res = array_index_secret_load_if(cond, tree, left_child, right_child)
+    
+    for j in range(4):
+        w[j] = w_res[j]
 
 w[0].reveal()

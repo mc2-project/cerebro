@@ -4,7 +4,6 @@ from Compiler.types import MemValue, read_mem_value, regint, Array
 from Compiler.program import Tape, Program
 from Compiler.instructions_gc import *
 import operator
-import mllib
 
 # Logic copied from AG-MPC
 # https://github.com/emp-toolkit/emp-tool/blob/stable/emp-tool/circuits/integer.hpp
@@ -849,6 +848,51 @@ class sfix_gc(object):
     def reveal(self):
         return self.v.reveal()
 
+def array_index_secret_load_gc(l, index):
+    if isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
+        res_list = sfixArrayGC(l.length)
+        for i in range(l.length):
+            if isinstance(index, sfix_gc):
+                v = cfix_gc(v=i)
+            else:
+                v = cint_gc(index.length, i)
+            test = v.__eq__(index)
+            res_list[i] = test & l[i]
+        res = res_list[0]
+        for i in range(1, l.length):
+            res = res + res_list[i]
+        return res
+    elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
+        res_mat = sfixMatrixGC(l.rows, l.columns)
+        for i in range(l.rows):
+            if isinstance(index, sfix_gc):
+                v = cfix_gc(v=i)
+            else:
+                v = cint_gc(index.length, i)
+            test = v.__eq__(index)
+            for j in range(l.columns):
+                res_mat[i][j] = test & l[i][j]
+
+        res = res_mat[0]
+        for j in range(l.columns):
+            for i in range(1, l.rows):
+                res[j] = res[j] + res_mat[i][j]
+        return res
+    else:
+        raise NotImplementedError
+
+def array_index_secret_store_gc(l, index, value):
+    if isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
+        for i in range(l.length):
+            if isinstance(index, sfix_gc):
+                v = cfix_gc()
+            else:
+                v = sint_gc(index.length, i)
+            test = v.__eq__(index)
+            l[i] = (test & value) + (~test & l[i])
+    else:
+        raise NotImplementedError
+
 class ArrayGC(object):
     def __init__(self, length):
         self.length = length
@@ -856,7 +900,7 @@ class ArrayGC(object):
 
     def __getitem__(self, index):
         if isinstance(index, (sint_gc, sfix_gc)):
-            return mllib.array_index_secret_load(self, index)
+            return array_index_secret_load_gc(self, index)
         elif isinstance(index, int):
             return self.data[index]
         else:
@@ -864,7 +908,7 @@ class ArrayGC(object):
 
     def __setitem__(self, index, value):
         if isinstance(index, (sint_gc, sfix_gc)):
-            mllib.array_index_secret_store(self, index, value)
+            array_index_secret_store_gc(self, index, value)
         elif isinstance(index, int):
             self.data[index] = value
         else:

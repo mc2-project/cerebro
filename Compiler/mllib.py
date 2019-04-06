@@ -1,5 +1,4 @@
-from Compiler.types import cint,sint,pint,cfix,sfix,sfloat,cfloat,MPCThread,Array,MemValue,_number,_mem,_register,regint,Matrix,_types
-from Compiler.types import sintArray, sintMatrix, cintArray, cintMatrix, MixMatrix, sfixMatrix, sfixArray
+from Compiler.types import *
 from Compiler.instructions import *
 from Compiler.util import tuplify,untuplify
 from Compiler import instructions,instructions_base,comparison,program
@@ -301,86 +300,14 @@ def mat_assign(o, i, nparallel=1):
         def g(v):
             o[u][v] = i[u][v]
 
-def array_index_secret_load(l, index, nparallel=1):
-    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
-        res_list = type(l).__init__(l.length)
-        @for_range_multithread(l.length, nparallel, nparallel)
-        def f(i):
-            v = None
-            if isinstance(index, sfix):
-                v = sfix().load_int(i).__eq__(index)
-            else:
-                v = sint(i).__eq__(index)
-            assert(v is not None)
-            res_list[i] = v * l[i]
-
-        res = l.value_type(0)
-        @for_range(l.length)
-        def f(i):
-            res += res_list[i]
-        return res
-    elif isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
-        res_list = sfixArrayGC(l.length)
-        for i in range(l.length):
-            if isinstance(index, sfix_gc):
-                v = cfix_gc(v=i)
-            else:
-                v = cint_gc(index.length, i)
-            test = v.__eq__(index)
-            res_list[i] = test & l[i]
-        res = res_list[0]
-        for i in range(1, l.length):
-            res = res + res_list[i]
-        return res
-    elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
-        res_mat = sfixMatrixGC(l.rows, l.columns)
-        for i in range(l.rows):
-            if isinstance(index, sfix_gc):
-                v = cfix_gc(v=i)
-            else:
-                v = cint_gc(index.length, i)
-            test = v.__eq__(index)
-            for j in range(l.columns):
-                res_mat[i][j] = test & l[i][j]
-
-        res = res_mat[0]
-        for j in range(l.columns):
-            for i in range(1, l.rows):
-                res[j] = res[j] + res_mat[i][j]
-        return res
-    else:
-        raise NotImplementedError
-
 def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
     supported_types_a = (sint, sfix)
     supported_types_b = (sint_gc, sfix_gc)
     if isinstance(index_1, supported_types_a) and isinstance(index_2, supported_types_a): 
         index = (condition * index_1) + ((1 - condition) * index_2)
-        return array_index_secret(l, index, nparallel=nparallel)
+        return array_index_secret_load_a(l, index, nparallel=nparallel)
     elif isinstance(index_1, supported_types_b) and isinstance(index_2, supported_types_b): 
         index = (condition & index_1) + ((~condition) & index_2)
-        return array_index_secret_load(l, index, nparallel=nparallel)
-    else:
-        raise NotImplementedError
-
-def array_index_secret_store(l, index, value, nparallel=1):
-    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
-        @for_range_multithread(l.length, nparallel, nparallel)
-        def f(i):
-            v = None
-            if isinstance(index, sfix):
-                test = sfix().load_int(i)
-            else:
-                test = sint(i)
-            test = v.__eq__(index)
-            l[i] = (test * value) + ((sint(1) - test) * l[i])
-    elif isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
-        for i in range(l.length):
-            if isinstance(index, sfix_gc):
-                v = cfix_gc()
-            else:
-                v = sint_gc(index.length, i)
-            test = v.__eq__(index)
-            l[i] = (test & value) + (~test & l[i])
+        return array_index_secret_load_gc(l, index)
     else:
         raise NotImplementedError

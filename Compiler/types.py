@@ -2,6 +2,7 @@ from Compiler.program import Tape
 from Compiler.exceptions import *
 from Compiler.instructions import *
 from Compiler.instructions_base import *
+#import Compiler.mllib
 from floatingpoint import two_power
 import comparison, floatingpoint
 import math
@@ -2223,6 +2224,64 @@ _types = {
     'pi': pint,
 }
 
+def array_index_secret_load_a(l, index, nparallel=1):
+    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
+        res_list = Array(l.length, l.value_type)
+        @library.for_range_multithread(l.length, nparallel, nparallel)
+        def f(i):
+            v = None
+            if isinstance(index, sfix):
+                v = cfix(i)
+            else:
+                v = sint(i)
+            assert(v is not None)
+            test = v.__eq__(index)
+            res_list[i] = test * l[i]
+
+        res = Array(1, l.value_type)
+        @library.for_range(l.length)
+        def f(i):
+            res[0] += res_list[i]
+        return res[0]
+
+    elif isinstance(l, Matrix) and isinstance(index, (sint, sfix)):
+        res_list = Matrix(l.rows, l.columns, l.value_type)
+        @library.for_range_multithread(l.rows, nparallel, nparallel)
+        def f(i):
+            v = None
+            if isinstance(index, sfix):
+                v = cfix(i)
+            else:
+                v = sint(i)
+            assert(v is not None)
+            test = v.__eq__(index)
+            @library.for_range_multithread(l.columns, nparallel, nparallel)
+            def g(j):
+                res_list[i][j] = test * l[i][j]
+
+        res = Array(l.columns, l.value_type)
+        @library.for_range(l.rows)
+        def f(i):
+            @library.for_range(l.columns)
+            def g(j):
+                res[j] += res_list[i][j]
+        return res        
+    else:
+        raise NotImplementedError
+
+def array_index_secret_store_a(l, index, value, nparallel=1):
+    if isinstance(l, Array) and isinstance(index, (sint, sfix)):
+        @library.for_range_multithread(l.length, nparallel, nparallel)
+        def f(i):
+            v = None
+            if isinstance(index, sfix):
+                v = cfix(i)
+            else:
+                v = sint(i)
+            test = v.__eq__(index)
+            l[i] = (test * value) + ((sint(1) - test) * l[i])
+    else:
+        raise NotImplementedError
 
 class Array(object):
     """ Array objects """
@@ -2257,7 +2316,9 @@ class Array(object):
         return index.start or 0, index.stop or self.length, index.step or 1
 
     def __getitem__(self, index):
-        if isinstance(index, slice):
+        if isinstance(index, (sint, sfix)):
+            return array_index_secret_load_a(self, index)
+        elif isinstance(index, slice):
             start, stop, step = self.get_slice(index)
             res_length = (stop - start - 1) / step + 1
             res = Array(res_length, self.value_type)
@@ -2270,7 +2331,9 @@ class Array(object):
         return self._load(self.get_address(index))
 
     def __setitem__(self, index, value):
-        if isinstance(index, slice):
+        if isinstance(index, (sint, sfix)):
+            return library.array_index_secret_store_a(self, index, value)
+        elif isinstance(index, slice):
             start, stop, step = self.get_slice(index)
             source_index = MemValue(0)
 
@@ -2424,36 +2487,36 @@ class sfloatMatrix(Matrix):
         return sfloatArray(self.columns, self.multi_array[index].address)
 
 
-class sfixArray(Array):
-    def __init__(self, length, address=None):
-        # self.address = address
-        self.array = Array(length, sint, address)
-        self.address = self.array.address
-        self.length = length
-        self.value_type = sfix
+# class sfixArray(Array):
+#     def __init__(self, length, address=None):
+#         # self.address = address
+#         self.array = Array(length, sfix, address)
+#         self.address = self.array.address
+#         self.length = length
+#         self.value_type = sfix
 
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            return Array.__getitem__(self, index)
-        return sfix(self.array[index])
+#     def __getitem__(self, index):
+#         if isinstance(index, slice):
+#             return Array.__getitem__(self, index)
+#         return sfix(self.array[index])
 
-    def __setitem__(self, index, value):
-        if isinstance(index, slice):
-            return Array.__setitem__(self, index, value)
-        self.array[index] = sfix(value).v
+#     def __setitem__(self, index, value):
+#         if isinstance(index, slice):
+#             return Array.__setitem__(self, index, value)
+#         self.array[index] = sfix(value).v
 
-    def get_address(self, index):
-        return self.array.get_address(index)
+#     def get_address(self, index):
+#         return self.array.get_address(index)
 
 
-class sfixMatrix(Matrix):
-    def __init__(self, rows, columns, address=None):
-        self.rows = rows
-        self.columns = columns
-        self.multi_array = Matrix(rows, columns, sint, address)
+# class sfixMatrix(Matrix):
+#     def __init__(self, rows, columns, address=None):
+#         self.rows = rows
+#         self.columns = columns
+#         self.multi_array = Matrix(rows, columns, sfix, address)
 
-    def __getitem__(self, index):
-        return sfixArray(self.columns, self.multi_array[index].address)
+#     def __getitem__(self, index):
+#         return sfixArray(self.columns, self.multi_array[index].address)
 
 
 class _mem(_number):
@@ -2699,6 +2762,14 @@ class sintArray(Array):
 class sintMatrix(Matrix):
     def __init__(self, n, m, address=None):
         Matrix.__init__(self, n, m, sint, address)
+
+class sfixArray(Array):
+    def __init__(self, n, address=None):
+        Array.__init__(self, n, sfix, address)
+
+class sfixMatrix(Matrix):
+    def __init__(self, n, m, address=None):
+        Matrix.__init__(self, n, m, sfix, address)
 
 class pintMatrix(Matrix):
     def __init__(self, pid, n, m, address=None):

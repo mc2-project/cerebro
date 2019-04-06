@@ -165,4 +165,5 @@ class ASTParser(object):
         source = astor.to_source(self.tree)
         if self.debug:
             print(source)
-        exec(compile(self.tree, filename="<ast>", mode="exec"), context)
+        exec(source, context)
+        #exec(compile(self.tree, filename="<ast>", mode="exec"), context)

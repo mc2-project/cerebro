@@ -1,5 +1,6 @@
 import config
 from Compiler.types import cint,sint,pint,cfix,sfix,sfloat,cfloat,MPCThread,Array,MemValue,_number,_mem,_register,regint,Matrix,_types
+from Compiler.types_gc import *
 from Compiler.instructions import *
 from Compiler.util import tuplify,untuplify
 from Compiler import instructions,instructions_base,comparison,program
@@ -1425,5 +1426,3 @@ def int2FL_plain(a, gamma, l, kappa):
 
 
     return v, p, z, s
-
-
