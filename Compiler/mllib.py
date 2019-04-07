@@ -87,14 +87,25 @@ def _transpose(A, B):
         def g(j):
             B[j][i] = A[i][j]
 
-def transpose(A):
-    if not isinstance(A, Matrix):
-        raise ValueError("Only matrix can be transposed")
-    
-    B = A.__class__(A.columns, A.rows)
-    _transpose(A, B)
-    return B
+def _transpose_gc(A, B):
+    for i in range(A.rows):
+        for j in range(A.columns):
+            B[j][i] = A[i][j]    
 
+def transpose(A):
+    if not isinstance(A, (Matrix, MatrixGC)):
+        raise ValueError("Only matrix can be transposed")
+
+    if isinstance(A, (sintMatrix, sfixMatrix)):
+        B = A.__class__(A.columns, A.rows)
+        _transpose(A, B)
+        return B
+    elif isinstance(A, (sintMatrixGC, sfixMatrixGC)):
+        B = A.__class__(A.columns, A.rows)
+        _transpose_gc(A, B)
+        return B
+    else:
+        raise NotImplementedError
 
 def _matmul(A, B, C, D, int_type, nparallel=1):
     @for_range_multithread(nparallel, nparallel, A.rows * B.columns * A.columns)
@@ -130,13 +141,16 @@ def _matmul_mix(A, B, nparallel=1):
 
     return C
 
-def matmul_gc(A, B, C):
+def _matmul_gc(A, B, C):
     for i in range(A.rows):
         for j in range(B.columns):
-            v = int_gc()
+            v = None
             for k in range(A.columns):
-                v = A.get(i, k) * B.get(k, j)
-            C.set(i, j, v)
+                if v is None:
+                    v = A[i][k] * B[k][j]
+                else:
+                    v += A[i][k] * B[k][j]
+            C[i][j] = v
 
 def matmul(A, B, nparallel=1):
     if isinstance(A, sintMatrix) and isinstance(B, sintMatrix):
@@ -155,8 +169,8 @@ def matmul(A, B, nparallel=1):
         C = sintMatrixGC(A.rows, B.columns)
         _matmul_gc(A, B, C)
         return C
-    elif isinstance(A, sintMatrixGC) and isinstance(B, sintMatrixGC):
-        C = sintMatrixGC(A.rows, B.columns)
+    elif isinstance(A, sfixMatrixGC) and isinstance(B, sfixMatrixGC):
+        C = sfixMatrixGC(A.rows, B.columns)
         _matmul_gc(A, B, C)
         return C
     elif isinstance(A, MixMatrix) and isinstance(B, MixMatrix):
@@ -189,7 +203,12 @@ def _matsub(A, B, C, int_type, nparallel=1):
         i_index = i / A.columns
         j_index = i % A.columns
         
-        C[i_index][j_index] = A[i_index][j_index] - B[i_index][j_index]        
+        C[i_index][j_index] = A[i_index][j_index] - B[i_index][j_index]
+
+def _matsub_gc(A, B, C):
+    for i in range(A.rows):
+        for j in range(A.columns):
+            C[i][j] = A[i][j] - B[i][j]
         
 def matsub(A, B, nparallel=1):
     if A.rows != B.rows or A.columns != B.columns:
@@ -207,12 +226,16 @@ def matsub(A, B, nparallel=1):
         C = sfixMatrix(A.rows, A.columns)
         _matsub(A, B, C, sfix, nparallel)
         return C
+    elif isinstance(A, sfixMatrixGC) and isinstance(B, sfixMatrixGC):
+        C = sfixMatrixGC(A.rows, A.columns)
+        _matsub_gc(A, B, C)
+        return C
     else:
         raise NotImplementedError
 
 
 # horizontally stack the input matrices
-def matstack(matrices):
+def matstack_int(matrices):
     pid = None
 
     s = set([m.columns for m in matrices])
@@ -257,18 +280,23 @@ def matstack(matrices):
 
     return M
 
+def matstack(matrices):
+    if isinstance(matrices[0], (cintMatrix, pintMatrix, sintMatrix)):
+        return matstack_int(matrices)
+    else:
+        raise NotImplementedError
+
 def _sigmoid_sfix(v):
-    res = sfix()
-    sign_v = sfix(v < 0)
-    denom = 1 + sign_v * v
+    sign_v = (v < 0)
+    denom = (v & sign_v) + 1
     res = v / denom
     return res
 
 def sigmoid(v, nparallel=1):
     if isinstance(v, sfix):
         return _sigmoid_sfix(v)
-    elif isinstance(v, sfixMatrix):
-        res = sfixMatrix(v.rows, v.columns)
+    elif isinstance(v, (sfixMatrix, sfixMatrixGC)):
+        res = v.__class__(v.rows, v.columns)
         @for_range_multithread(v.rows, nparallel, nparallel)
         def a(i):
             @for_range_multithread(v.columns, nparallel, nparallel)
@@ -287,18 +315,29 @@ def mat_const_mul(c, m, nparallel=1):
             def g(j):
                 res[i][j] = c * m[i][j]
         return res
+    elif isinstance(m, sfixMatrixGC):
+        res = sfixMatrixGC(m.rows, m.columns)
+        for i in range(m.rows):
+            for j in range(m.columns):
+                res[i][j] = c * m[i][j]
+        return res
     else:
         raise NotImplementedError
 
 def mat_assign(o, i, nparallel=1):
     if o.rows != i.rows or o.columns != i.columns:
         raise ValueError("Matrices must be of the same sizes")
-    
-    @for_range_multithread(i.rows, nparallel, nparallel)
-    def f(u):
-        @for_range_multithread(i.columns, nparallel, nparallel)
-        def g(v):
-            o[u][v] = i[u][v]
+
+    if isinstance(o, (sintMatrix, sfixMatrix)):
+        @for_range_multithread(i.rows, nparallel, nparallel)
+        def f(u):
+            @for_range_multithread(i.columns, nparallel, nparallel)
+            def g(v):
+                o[u][v] = i[u][v]
+    elif isinstance(o, (sintMatrixGC, sfixMatrixGC)):
+        for u in range(i.rows):
+            for v in range(i.columns):
+                o[u][v] = i[u][v]
 
 def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
     supported_types_a = (sint, sfix)

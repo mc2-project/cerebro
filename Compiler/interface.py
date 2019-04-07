@@ -75,6 +75,16 @@ class SecretFixedPointArrayFactory(object):
             return ret
 
 class SecretFixedPointMatrixFactory(object):
+    def __call__(self, rows, columns):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
+        if mpc_type == SPDZ:
+            ret = sfixMatrix(rows, columns)
+            return ret
+        else:
+            ret = sfixMatrixGC(rows, columns)
+            return ret
+        
     def read_input(self, rows, columns, party):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
@@ -93,6 +103,33 @@ class SecretFixedPointMatrixFactory(object):
                 for j in range(ret.columns):
                     v = sint_gc(Params.intp, party)
                     ret[i][j] = sfix_gc.load_sint(v)
+            return ret
+    
+    # Read horizontally partitioned data from multiple parties
+    # input config should be of the form: (party_id, rows, columns)
+    def read_input_variable_rows(self, columns, input_config):
+        rows = sum([ic[1] for ic in input_config])
+        if mpc_type == SPDZ:
+            ret = sfixMatrix(rows, columns)
+            party_config = cintMatrix(len(input_config), 2)
+            rows_offset = 0 
+            for (p, r) in input_config:
+                @library.for_range(r)
+                def a(i):
+                    @library.for_range(columns)
+                    def b(j):
+                        v = sint.get_private_input_from(p)
+                        ret[i + rows_offset][j] = sfix.load_sint(v)
+                rows_offset += r
+            return ret
+        else:
+            ret = sfixMatrixGC(rows, columns)
+            rows_offset = 0
+            for (p, r) in input_config:
+                for i in range(r):
+                    for j in range(columns):
+                        ret[i+rows_offset][j] = sfix_gc(v=None, input_party=p)
+                rows_offset += r
             return ret
 
 ClearInteger = ClearIntegerFactory()

@@ -178,7 +178,7 @@ def sub_full(dest, op1, op2, size, borrow_in=None, borrow_out=None):
     if borrow is None:
         borrow = cbits(0)
 
-    skip_last = int(borrow_out == None)
+    skip_last = int(borrow_out is None)
 
     i = 0
     while size > skip_last:
@@ -349,7 +349,7 @@ class int_gc(object):
         i2 = other.absolute()
         sign = self.bits[other.length - 1] ^ other.bits[other.length - 1]
         div_full(dest.bits, i1.bits, i2.bits, self.length)
-        dest_temp = [int_gc() for i in range(self.length)]
+        dest_temp = [None for i in range(self.length)]
 	cond_neg(sign, dest_temp, dest.bits, self.length)
         for i in range(len(dest_temp)):
             dest.bits[i] = dest_temp[i]
@@ -453,7 +453,8 @@ class cint_gc(int_gc):
         if value is None:
             self.bits = [cbits(0) for i in range(self.length)]
         else:
-            s = bin(value)[2:]
+            # TODO handle negative here
+            s = bin(abs(value))[2:]
             if len(s) > self.length:
                 s = s[len(s) - self.length:len(s)]
             if len(s) < self.length:
@@ -610,7 +611,7 @@ class cfix_gc(object):
         elif isinstance(other, sint_gc):
             return self + sfix_gc(v=other, scale=True)
         else:
-            return NotImplemented
+            return other.__add__(self)
     
     def __sub__(self, other):
         if isinstance(other, cfix_gc):
@@ -633,7 +634,7 @@ class cfix_gc(object):
         elif isinstance(other, sint_gc):
             return (self * sfix_gc(v=other, scale=True))
         else:
-            return NotImplemented
+            return other.__mul__(self)
 
     def __div__(self, other):
         if isinstance(other, cfix_gc):
@@ -741,7 +742,7 @@ class sfix_gc(object):
         if isinstance(other, (cfix_gc, sfix_gc)):
             intv = self.v + other.v
             return sfix_gc(v=intv)
-        elif isinstance(other, cint_gc):
+        elif isinstance(other, (int, cint_gc)):
             other_fix = cfix_gc(v=other, scale=True)
             return (self + other_fix)
         elif isinstance(other, sint_gc):
@@ -759,7 +760,7 @@ class sfix_gc(object):
         elif isinstance(other, sfix_gc):
             intv = self.v - other.v
             return sfix_gc(v=intv)
-        elif isinstance(other, cint_gc):
+        elif isinstance(other, (int, cint_gc)):
             v = cfix_gc(v=other.v, scale=True)
             return self.__sub__(v, reverse=reverse)
         elif isinstance(other, sint_gc):
@@ -775,10 +776,9 @@ class sfix_gc(object):
             ret_v = v_ex * ov_ex
             ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
-            ret = sfix_gc()
-            ret.load_sint(ret_v)
+            ret = sfix_gc(v=ret_v, scale=False)
             return ret
-        elif isinstance(other, cint_gc):
+        elif isinstance(other, (int, cint_gc)):
             other_cfix = cfix_gc(v=other, scale=True)
             return self * other_cfix
         elif isinstance(other, sint_gc):
@@ -799,10 +799,9 @@ class sfix_gc(object):
             ret_v = v_ex / ov_ex
             ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
-            ret = sfix_gc()
-            ret.load_int(ret_v)
+            ret = sfix_gc(v=ret_v, scale=False)
             return ret
-        elif isinstance(other, cint_gc):
+        elif isinstance(other, (int, cint_gc)):
             other_cfix = cfix_gc(v=other, scale=True)
             return self.__div__(other_cfix, reverse=reverse)
         elif isinstance(other, sint_gc):
@@ -830,6 +829,9 @@ class sfix_gc(object):
             return (self.v >= other.v)
         elif isinstance(other, sfix_gc):
             return (self.v >= other.v)
+        elif isinstance(other, (int, cint_gc)):
+            other_fix = cfix_gc(v=other, scale=True)
+            return self.v >= other_fix.v
         elif isinstance(other, sint_gc):
             other_fix = sfix_gc(other.length, other)
             return (self >= other_fix)
