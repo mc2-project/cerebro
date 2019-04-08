@@ -113,6 +113,7 @@ void Share::mul(const Share &S, const gfp &aa)
   check();
 }
 
+
 void Share::add(const Share &S, const gfp &aa, const vector<gfp> &alphai)
 {
 
@@ -153,6 +154,38 @@ void Share::add(const Share &S, const gfp &aa, const vector<gfp> &alphai)
     }
   check();
 }
+
+void Share::add_semihonest(const Share &S, const gfp &aa) {
+
+  if (p != S.p)
+    {
+      p= S.p;
+      a.resize(SD.M.shares_per_player(p));
+    }
+
+  gfp tmp;
+  if (SD.type == Other || SD.type == Replicated || SD.type == Q2MSP)
+    {
+      for (unsigned int i= 0; i < SD.M.shares_per_player(p); i++)
+        {
+          tmp.mul(aa, SD.share_of_one[p][i]);
+          a[i].add(S.a[i], tmp);
+        }
+    }
+  else
+    {
+      if (p == 0 || SD.type == Shamir)
+        {
+          a[0].add(S.a[0], aa);
+        }
+      else
+        {
+          a[0]= S.a[0];
+        }
+
+    }
+}
+
 
 void Share::sub(const Share &S, const gfp &aa, const vector<gfp> &alphai)
 {

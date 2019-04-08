@@ -147,6 +147,7 @@ public:
   /* Arithmetic Routines */
   void mul(const Share &S, const gfp &aa);
   void add(const Share &S, const gfp &aa, const vector<gfp> &alphai);
+  void add_semihonest(const Share &S, const gfp &aa);
   void sub(const Share &S, const gfp &aa, const vector<gfp> &alphai);
   void sub(const gfp &aa, const Share &S, const vector<gfp> &alphai);
   void add(const Share &S1, const Share &S2);
