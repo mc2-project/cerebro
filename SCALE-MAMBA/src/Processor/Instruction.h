@@ -164,7 +164,21 @@ enum {
   // Others
   RAND= 0xE0,
   START_TIMER= 0xE1,
-  STOP_TIMER= 0xE2
+  STOP_TIMER= 0xE2,
+
+  // Private integer operations
+  LDPINT = 0xF0,
+  LDMPINT = 0xF1,
+  LDMPINTI = 0xF2,
+  LDMPINTII = 0xF3,
+  STMPINT = 0xF4,
+  STMPINTI = 0xF5,
+  PRIVATE_INPUT_PINT= 0xF6,
+  PRIVATE_OUTPUT_PINT= 0xF7,
+  ADDP = 0xF8, 
+  MULP = 0xF9, 
+  ADDPS = 0xFA,
+  ADDPC = 0xFB,
 };
 
 // Register types

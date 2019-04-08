@@ -92,6 +92,7 @@ public:
   Memory<gfp> Mc;
   Memory<Share> Ms;
   Memory<Integer> Mr;
+  Memory<gfp> Mp;
 
   // The Schedule process we are running
   Schedule schedule;

@@ -17,6 +17,7 @@ void Machine::SetUp_Memory(unsigned int whoami, const string &memtype)
   Mc.set_default(gfp(0));
   Ms.set_default(Share(whoami));
   Mr.set_default(Integer(0));
+  Mp.set_default(gfp(0));
 
   // Initialize the global memory
   if (memtype.compare("old") == 0)
@@ -28,7 +29,7 @@ void Machine::SetUp_Memory(unsigned int whoami, const string &memtype)
           throw file_error(filename);
         }
       // See below for ordering here
-      inpf >> Mc >> Mr >> Ms;
+      inpf >> Mc >> Mr >> Ms >> Mp;
       inpf.close();
     }
   else if (!(memtype.compare("empty") == 0))
@@ -48,6 +49,8 @@ void Machine::Dump_Memory(unsigned int whoami)
     Ms.resize(max_size);
   if (Mr.size() > max_size)
     Mr.resize(max_size);
+  if (Mp.size() > max_size)
+    Mp.resize(max_size);
 
   // Write out the memory to use next time
   char filename[2048];
@@ -55,7 +58,7 @@ void Machine::Dump_Memory(unsigned int whoami)
   ofstream outf(filename, ios::out | ios::binary);
   // We do it in this order as this is needed by Script/test_result.py
   // and we do not want that Script to worry about sizes of Shares
-  outf << Mc << Mr << Ms;
+  outf << Mc << Mr << Ms << Mp;
   outf.close();
 }
 
@@ -71,6 +74,7 @@ void Machine::Load_Schedule_Into_Memory()
       Mc.minimum_size(progs[i].direct_mem(MODP)[CLEAR], schedule.tnames[i]);
       Ms.minimum_size(progs[i].direct_mem(MODP)[SECRET], schedule.tnames[i]);
       Mr.minimum_size(progs[i].direct_mem(INT)[CLEAR], schedule.tnames[i]);
+      Mp.minimum_size(progs[i].direct_mem(MODP)[SECRET], schedule.tnames[i]);
     }
 }
 

@@ -234,6 +234,42 @@ void BaseInstruction::parse_operands(istream &s, int pos)
             throw invalid_params();
           }
         break;
+
+       // 1 register, 1 int, 1 player
+      case LDPINT:
+      case LDMPINT:
+      case STMPINT:
+        r[0] = get_int(s);
+        n = get_int(s);
+        p = get_int(s);
+        break;
+      // 2 registers, 1 player
+      case PRIVATE_INPUT_PINT:
+      case PRIVATE_OUTPUT_PINT:
+        r[0] = get_int(s);
+        p = get_int(s);
+        n = get_int(s);
+        break;
+      case STMPINTI:
+        r[0] = get_int(s);
+        r[1] = get_int(s);
+        p = get_int(s);
+        break;
+      case LDMPINTII:
+        r[0] = get_int(s);
+        r[1] = get_int(s);
+        r[2] = get_int(s);
+        break;
+      // 3 registers and 1 player 
+      case ADDP:
+      case MULP:
+      case ADDPS:
+      case ADDPC:
+        r[0] = get_int(s);
+        r[1] = get_int(s);
+        r[2] = get_int(s);
+        p = get_int(s);
+        break;
       default:
         ostringstream os;
         os << "Invalid instruction " << hex << showbase << opcode << " at " << dec
@@ -315,6 +351,8 @@ bool BaseInstruction::is_direct_memory_access(SecrecyType sec_type) const
           case STMC:
           case LDMINT:
           case STMINT:
+          case LDMPINT:
+          case STMPINT:
             return true;
           default:
             return false;
@@ -648,6 +686,43 @@ ostream &operator<<(ostream &s, const Instruction &instr)
       case STOP_TIMER:
         s << "STOP_TIMER";
         break;
+      case LDPINT:
+        s << "LDPINT";
+        break;
+      case LDMPINT:
+        s << "LDMPINT";
+        break;
+      case LDMPINTI:
+        s << "LDMPINTI";
+        break;
+      case LDMPINTII:
+        s << "LDMPINTII";
+        break;
+      case STMPINT:
+        s << "STMPINT";
+        break;
+      case STMPINTI:
+        s << "STMPINTI";
+        break;
+      case PRIVATE_INPUT_PINT:
+        s << "PRIVATE_INPUT_PINT";
+        break;
+      case PRIVATE_OUTPUT_PINT:
+        s << "PRIVATE_OUTPUT_PINT";
+        break;
+      case ADDP:
+        s << "ADDP";
+        break;
+      case MULP:
+        s << "MULP";
+        break;
+      case ADDPS:
+        s << "ADDPS";
+        break;
+      case ADDPC:
+        s << "ADDPC";
+        break;
+      
       default:
         s << instr.opcode;
         throw Invalid_Instruction("Verbose Opcode Note Known");
@@ -883,6 +958,48 @@ ostream &operator<<(ostream &s, const Instruction &instr)
             s << "s_" << instr.start[i] << " ";
           }
         break;
+
+      // One pi register, one integer operand
+      case LDPINT:
+      case LDMPINT:
+      case STMPINT:
+        s << "pi_" << instr.r[0] << " ";
+        s << instr.n << " ";
+        break;
+      // One pi register, one regint register
+      case LDMPINTI:
+      case STMPINTI:
+        s << "pi_" << instr.r[0] << " ";
+        s << "r_" << instr.r[1] << " ";
+        break;
+      // Two pi registers, one integer operand
+      case PRIVATE_INPUT_PINT:
+        s << "pi_" << instr.r[0] << " ";
+        s << instr.p << " ";
+        s << instr.n << " ";
+        break;
+      case PRIVATE_OUTPUT_PINT:
+        s << "pi_" << instr.r[0] << " ";
+        s << instr.p << " ";
+        s << instr.n << " ";
+        break;
+      // Two pi registers, one integer, one party
+      case ADDP:
+      case MULP:
+      case ADDPS:
+      case ADDPC:
+        s << "pi_" << instr.r[0] << " ";
+        s << "pi_" << instr.r[1] << " ";
+        s << instr.n << " ";
+        s << instr.p << " ";
+        break;
+
+        // One pi register, two regint registers
+      case LDMPINTII:
+        s << "pi_" << instr.r[0] << " ";
+        s << "r_" << instr.r[1] << " ";
+        s << "r_" << instr.r[2] << " ";
+        break;
       default:
         throw Invalid_Instruction("Cannot parse operarands in verbose mode");
     }
@@ -941,21 +1058,21 @@ void Instruction::execute_using_sacrifice_data(
         {
           case TRIPLE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
-            //SacrificeD[thread].TD.ta.pop_front();
+            SacrificeD[thread].TD.ta.pop_front();
             Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
-            //SacrificeD[thread].TD.tb.pop_front();
+            SacrificeD[thread].TD.tb.pop_front();
             Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
-            //SacrificeD[thread].TD.tc.pop_front();
+            SacrificeD[thread].TD.tc.pop_front();
             break;
           case SQUARE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
-            //SacrificeD[thread].SD.sa.pop_front();
+            SacrificeD[thread].SD.sa.pop_front();
             Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].SD.sb.front());
-            //SacrificeD[thread].SD.sb.pop_front();
+            SacrificeD[thread].SD.sb.pop_front();
             break;
           case BIT:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            //SacrificeD[thread].BD.bb.pop_front();
+            SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();
@@ -1670,6 +1787,91 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
               }
             Proc.iop.private_input(p, r[0], m, Proc, P, machine, OCD);
             break;
+
+          // TODO: All private integer instructions
+          case LDPINT:
+            if (p == P.whoami()) {
+              Proc.write_Pp(r[0], n);
+            }
+            break;
+
+          case LDMPINT:
+            if (p == P.whoami()) {
+              Proc.write_Pp(r[0], machine.Mp.read(Proc.read_Ri(r[1])));
+            }
+            break;
+            
+          case LDMPINTI:
+            if (p == P.whoami()) {
+              Proc.write_Pp(r[0], machine.Mp.read(Proc.read_Ri(r[1])).get());
+            }
+            break;
+
+          case LDMPINTII:
+            if (Proc.read_Ri(r[2]) == P.whoami()) {
+              Proc.write_Pp(r[0], machine.Mp.read(Proc.read_Ri(r[1])).get());
+            }
+            break;
+            
+          case STMPINT:
+            if (p == P.whoami()) {
+              machine.Mp.write(n, Proc.read_Pp(r[0]), Proc.get_PC());
+              n++;
+            }
+            break;
+
+          case STMPINTI:
+            if (p == P.whoami()) {
+              machine.Mp.write(Proc.read_Ri(r[1]), Proc.read_Pp(r[0]), Proc.get_PC());
+            }
+            break;
+
+          case PRIVATE_INPUT_PINT:
+            if (p == P.whoami()) {
+              if (Proc.get_thread_num() != 0) {
+                throw IO_thread();
+              }
+              
+              Proc.get_Pp_ref(r[0]) = machine.get_IO().private_input_gfp(n);
+            }
+            break;
+
+          case PRIVATE_OUTPUT_PINT:
+            if (p == P.whoami()) {
+              if (Proc.get_thread_num() != 0) {
+                throw IO_thread();
+              }
+              
+              machine.get_IO().private_output_gfp(Proc.get_Pp_ref(r[0]), n);
+            }
+            break;
+
+          case ADDP:
+            if (p == P.whoami()) {
+              Proc.get_Pp_ref(r[0]).add(Proc.read_Pp(r[1]), Proc.read_Pp(r[2]));
+            }
+            break;
+
+          case MULP:
+            if (p == P.whoami()) {
+              Proc.get_Pp_ref(r[0]).mul(Proc.read_Pp(r[1]), Proc.read_Pp(r[2]));
+            }
+            break;
+
+          case ADDPS:
+            if (p == P.whoami()) {
+              Proc.get_Sp_ref(r[0]).add_semihonest(Proc.read_Sp(r[1]),
+                                                   Proc.read_Pp(r[2]));
+              
+            }
+            break;
+            
+          case ADDPC:
+            if (p == P.whoami()) {
+              Proc.get_Pp_ref(r[0]).add(Proc.read_Cp(r[1]), Proc.read_Pp(r[2]));
+            }
+            break;
+            
           default:
             printf("Case of opcode=%d not implemented yet\n", opcode);
             throw not_implemented();

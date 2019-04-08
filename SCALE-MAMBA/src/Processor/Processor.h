@@ -38,6 +38,7 @@ class Processor
   vector<gfp> Cp;
   vector<Share> Sp;
   vector<long> Ri;
+  vector<gfp> Pp;
 
 // In DEBUG mode we keep track of valid/invalid read/writes on the registers
 #ifdef DEBUG
@@ -215,6 +216,20 @@ public:
   {
     Ri[i]= x;
   }
+
+  // Private integer operations
+  const gfp &read_Pp(int i) const {
+    return Pp[i];
+  }
+
+  gfp &get_Pp_ref(int i) {
+    return Pp[i];
+  }
+
+  void write_Pp(int i, const gfp &x) {
+    Pp[i] = x;
+  }
+
 #endif
 
   /* Run interaction with other players */
