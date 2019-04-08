@@ -625,9 +625,9 @@ class Tape:
     def get_bytes(self):
         """ Get the byte encoding of the program as an actual string of bytes. """
         counter = 0
-        # for i in self._get_instructions():
-        #     print "instruction {} = {}".format(counter, i)
-        #     counter += 1
+        for i in self._get_instructions():
+            print "instruction {} = {}".format(counter, i)
+            counter += 1
         return "".join(str(i.get_bytes()) for i in self._get_instructions() if i is not None)
     
     @unpurged

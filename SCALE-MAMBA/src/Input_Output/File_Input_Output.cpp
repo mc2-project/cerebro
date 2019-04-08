@@ -11,7 +11,7 @@ All rights reserved
 long File_Input_Output::open_channel(unsigned int channel)
 {
   cout << "Opening file " << channel << endl;
-  fstream *myfile = new myfile();
+  fstream *myfile = new fstream();
   std::string file_name(file_dir);
   file_name.append("/f");
   file_name.append(std::to_string(channel));
@@ -33,7 +33,7 @@ gfp File_Input_Output::private_input_gfp(unsigned int channel)
 {
   fstream *myfile = open_channels[channel];
   word x;
-  myfile >> x;
+  myfile->read((char *) &x, sizeof(x));
   gfp y;
   y.assign(x);
   return y;
@@ -86,16 +86,16 @@ void File_Input_Output::public_output_int(const long output, unsigned int channe
 
 void File_Input_Output::output_share(const Share &S, unsigned int channel)
 {
-  (*outf) << "Output channel " << channel << " : ";
-  S.output(*outf, true);
+  // (*outf) << "Output channel " << channel << " : ";
+  // S.output(*outf, true);
 }
 
 Share File_Input_Output::input_share(unsigned int channel)
 {
-  cout << "Enter value on channel " << channel << " : ";
-  Share S;
-  S.input(*inpf, true);
-  return S;
+  // cout << "Enter value on channel " << channel << " : ";
+  // Share S;
+  // S.input(*inpf, true);
+  // return S;
 }
 
 void File_Input_Output::trigger(Schedule &schedule)

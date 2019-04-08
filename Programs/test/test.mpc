@@ -23,4 +23,9 @@ Params.set_params(int_precision=3, f=3,k=3)
 #b = s_fix_array.read_input(20, 1)
 #c = b[a[0]]
 
-open_channel()
+# open_channel(0)
+# a = sint.get_private_input_from(0)
+# print_ln("a = %s", a.reveal())
+# close_channel(0)
+
+a = sint(1)

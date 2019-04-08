@@ -97,9 +97,9 @@ def run_gc(args, options, param=-1, merge_opens=True, \
 def run(args, options, param=-1, merge_opens=True, \
         reallocate=True, debug=False):
 
-    if args[1] == 'a':
-        return run_arithmetic(args, options, param, merge_opens=merge_opens, debug=debug)
-    elif args[1] == 'b':
-        return run_gc(args, options, param, merge_opens=merge_opens, debug=debug)
+    if args[0] == 'a':
+        return run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    elif args[0] == 'b':
+        return run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
     else:
         raise ValueError("Must choose either arithmetic (a) or GC (b)")

@@ -8,6 +8,7 @@ All rights reserved
 #define _IO
 
 #include "Input_Output_Simple.h"
+#include "File_Input_Output.h"
 
 // #include "Input_Output_Galois.h"
 

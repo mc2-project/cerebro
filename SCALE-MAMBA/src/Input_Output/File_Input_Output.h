@@ -34,8 +34,9 @@ public:
     ;
   }
 
-  void init(std::string _file_dir) : file_dir(_file_dir)
+  void init(std::string _file_dir)
   {
+    this->file_dir = _file_dir ;
   }
 
   virtual long open_channel(unsigned int channel);

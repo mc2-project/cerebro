@@ -383,8 +383,8 @@ int main(int argc, const char *argv[])
   // Here you configure the IO in the machine
   //  - This depends on what IO machinary you are using
   //  - Here we are just using the simple IO class
-  unique_ptr<Input_Output_Simple> io(new Input_Output_Simple);
-  io->init(cin, cout, true);
+  unique_ptr<File_Input_Output> io(new File_Input_Output);
+  io->init(std::string("./Input_Data/"));
   machine.Setup_IO(std::move(io));
 
   // Load the initial tapes for the first program into the schedule

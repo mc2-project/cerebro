@@ -10,7 +10,7 @@ from optparse import OptionParser
 import Compiler
 
 def main():
-    usage = "usage: %prog %mpc_type [options] filename [args]"
+    usage = "usage: %mpc_type %prog [options] filename [args]"
     parser = OptionParser(usage=usage)
     parser.add_option("-n", "--nomerge",
                       action="store_false", dest="merge_opens", default=True,
