@@ -23,4 +23,4 @@ Params.set_params(int_precision=3, f=3,k=3)
 #b = s_fix_array.read_input(20, 1)
 #c = b[a[0]]
 
-array = s_fix_mat.read_input_variable_rows(1, [(12, 2), (13, 3)])
+open_channel()
