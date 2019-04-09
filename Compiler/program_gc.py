@@ -82,18 +82,27 @@ class ProgramGC(object):
         f.write("{} {} {}\n".format(self.total_inputs, 0, len(self.output_wires)))
         f.write("\n")
 
+        # Output all instructions
         for i in self.activeblock.instructions:
             f.write("{}\n".format(i))
 
+        # Output the output wires
         f.write("2 1 {} {} {} XOR\n".format(0, 0, self.total_wires))
         wire_count = self.total_wires
         for b in self.output_wires:
             wire_count += 1
             f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
-            
-        f.write("2 1 {} {} {} XOR\n".format(0, 0, self.total_wires))
+
+        f.close()
+
+        # Output input wire configuration for each party
+        # format = party, wire start, wire end
+        f = open(fname + ".input", 'w')
+        num_parties = len(set(input_wires.keys()))
+        # First output the total number of input wires
+        f.write("{} {}\n".format(self.total_inputs, len(self.output_wires)))
         for party, wires in self.input_wires.iteritems():
             for v in find_ranges(wires):
-                f.write("2 1 {} {} {} XOR\n".format(party, v[0], v[1]))
+                f.write("{} {} {}\n".format(party, v[0], v[1]))
             
         f.close()

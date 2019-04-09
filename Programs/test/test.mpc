@@ -29,3 +29,4 @@ Params.set_params(int_precision=3, f=3,k=3)
 # close_channel(0)
 
 a = sint(1)
+print_ln("a = %s", a.reveal())
