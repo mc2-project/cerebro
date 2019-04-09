@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -20,10 +22,10 @@ std::pair<uint64_t, uint64_t> parse_circuit_input(uint64_t party_id,
       continue;
     }
 
-    input_wires.push_back(std::make_pair<uint64_t, uin64_t>(begin, end));
+    input_wires.push_back(std::make_pair(begin, end));
   }
 
-  return std::make_pair<uint64_t, uint64_t>(num_inputs, num_outputs);
+  return std::make_pair(num_inputs, num_outputs);
 }
 
 // This function reads the input from "filename" and sets the data in "input"
@@ -34,37 +36,36 @@ void create_circuit_input(bool *input, std::vector<std::pair<uint64_t, uint64_t>
   for (size_t i = 0; i < input_wires.size(); i++) {
     uint64_t offset = input_wires.at(i).first;
     uint64_t length = input_wires.at(i).second - offset;
-    infile.read(input + offset, length);
+    infile.read(reinterpret_cast<char *>(input + offset), length / 8);
   }
 }
 
 int main(int argc, char **argv) {
-  if (argc != 7) {
-    printf("USAGE: %s <party_id> <num_parties> <port_base> <circuit_file> <input_format_file> <input_file>\n", argv[0]);
+  if (argc != 6) {
+    printf("USAGE: %s <party_id> <port_base> <circuit_file> <input_format_file> <input_file>\n", argv[0]);
     return 1;
   }
 
   // Define some constants for the circuit setup.
   const static int party_id = atoi(argv[1]);
-  const static int num_parties = atoi(argv[2]);
-  const static int port_base  = atoi(argv[3]);
-  std::string circuit_file(argv[4]);
-  std::string input_format_file(argv[5]);
-  std::string input_file(argv[6]);
-  const static int bit_length = 32;
+  const static int port_base  = atoi(argv[2]);
+  std::string circuit_file(argv[3]);
+  std::string input_format_file(argv[4]);
+  std::string input_file(argv[5]);
+  const static int num_parties = 3;
 
   // Input circuit file
   CircuitFile cf(circuit_file.c_str());
 
   // Parse input
   std::vector<std::pair<uint64_t, uint64_t> > input_wires;
-  std::pair<uint64_t, uint64_t> num_wires = parse_circuit_input(party_id, input_format_file, inputs);
-  bool *input = new bool[num_wires[0]];
-  memset(input, false, input_wires);
+  std::pair<uint64_t, uint64_t> num_wires = parse_circuit_input(party_id, input_format_file, input_wires);
+  bool *input = new bool[num_wires.first];
+  memset(input, false, num_wires.first);
   create_circuit_input(input, input_wires, input_file);
-  bool *output = new bool[num_wires[1]];
+  bool *output = new bool[num_wires.second];
 
-  NetIOMP<nP> *io_list[num_parties];
+  NetIOMP<num_parties> *io_list[num_parties];
   for (uint64_t i = 0; i < num_parties; i++) {
     io_list[i] = new NetIOMP<num_parties>(party_id, port_base + i);
   }
@@ -75,7 +76,10 @@ int main(int argc, char **argv) {
   // Run the secure computation
   mpc->function_independent();
   mpc->function_dependent();
-  mpc->online(input, output, {0}, {num_wires[0]});
+
+  int start[] = {0};
+  int end[] = {(int) num_wires.first};
+  mpc->online(input, output, start, end);
 
   // Clean up memory
   for (uint64_t i = 0; i < num_parties; i++) {
