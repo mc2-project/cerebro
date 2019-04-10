@@ -1,4 +1,4 @@
-Params.set_params(int_precision=3, f=3,k=3)
+Params.set_params(int_precision=3, f=3,k=6)
 
 # a = s_fix_mat(2, 2)
 # for i in range(a.rows):
@@ -28,5 +28,5 @@ Params.set_params(int_precision=3, f=3,k=3)
 # print_ln("a = %s", a.reveal())
 # close_channel(0)
 
-a = sint(1)
-print_ln("a = %s", a.reveal())
+A = s_fix_mat.read_input(2, 2, 0)
+A_inv = matinv(A)

@@ -350,3 +350,80 @@ def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
         return array_index_secret_load_gc(l, index)
     else:
         raise NotImplementedError
+
+def get_identity_matrix(value_type, n):
+    if isinstance(value_type, (sfix, sfixMatrix)):
+        ret = sintMatrix(n, n)
+        @for_range(n)
+        def f(i):
+            @for_range(n)
+            def g(j):
+                v = (i == j)
+                ret[i][j] = sint(v)
+        return ret
+    elif isinstance(value_type, (sfix, sfixMatrixGC)):
+        ret = sfixMatrixGC(n, n)
+        for i in range(n):
+            for j in range(n):
+                ret[i][j] = cfix(int(i == j))
+        return ret
+    else:
+        raise NotImplementedError
+
+def matinv(A):
+    if not isinstance(A, sfixMatrix):
+        raise NotImplementedError
+    
+    n = A.rows
+    X = A.__class__(A.rows, A.columns)
+    mat_assign(X, A)
+    
+    I = get_identity_matrix(A, A.rows)
+
+    @for_range(n)
+    def f0(j):
+        @for_range(j, n)
+        def f1(i):
+            b = X[i][j].__ne__(0)
+            @for_range(n)
+            def f2(k):
+                a1 = X[j][k]
+                a2 = X[i][k]
+                X[j][k] = cond_assign_a(b, a2, a1)
+                X[i][k] = cond_assign_a(b, a1, a2)
+
+                a1 = I[j][k]
+                a2 = I[i][k]
+                I[j][k] = cond_assign_a(b, a2, a1)
+                I[i][k] = cond_assign_a(b, a1, a2)
+
+            xjj_inv = sfix(1).__div__(X[j][j])
+            t = cond_assign_a(b, xjj_inv, sfix(1))
+            @for_range(n)
+            def f3(k):
+                v = X[j][k]
+                X[j][k] = t * v
+                v = I[j][k]
+                v2 = t * v
+                I[j][k] = v2
+
+            @for_range(j)
+            def f4(L):
+                t = -1 * X[L][j]
+                @for_range(n)
+                def g0(k):
+                    a1 = X[L][k] + t * X[j][k]
+                    a2 = I[L][k] + t * I[j][k]
+                    X[L][k] = cond_assign_a(b, a1, X[L][k])
+                    I[L][k] = cond_assign_a(b, a2, I[L][k])
+
+            @for_range(j+1, n)
+            def f5(L):
+                t = -1 * X[L][j]
+                @for_range(n)
+                def g0(k):
+                    a1 = X[L][k] + t * X[j][k]
+                    a2 = I[L][k] + t * I[j][k]
+                    X[L][k] = cond_assign_a(b, a1, X[L][k])
+                    I[L][k] = cond_assign_a(b, a2, I[L][k])
+    return I

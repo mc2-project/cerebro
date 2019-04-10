@@ -895,6 +895,10 @@ def array_index_secret_store_gc(l, index, value):
     else:
         raise NotImplementedError
 
+def cond_assign_gc(condition, v1, v2):
+    assert(isinstance(condition, sbits))
+    return (v1 & condition) + ((~condition) & v2)
+
 class ArrayGC(object):
     def __init__(self, length):
         self.length = length

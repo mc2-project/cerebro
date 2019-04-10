@@ -2283,6 +2283,9 @@ def array_index_secret_store_a(l, index, value, nparallel=1):
     else:
         raise NotImplementedError
 
+def cond_assign_a(condition, v1, v2):
+    return (v1 * condition) + ((sint(1) - condition) * v2)
+
 class Array(object):
     """ Array objects """
 
