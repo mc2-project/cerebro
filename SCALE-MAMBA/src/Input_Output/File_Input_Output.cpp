@@ -15,7 +15,7 @@ long File_Input_Output::open_channel(unsigned int channel)
   std::string file_name(file_dir);
   file_name.append("/f");
   file_name.append(std::to_string(channel));
-  myfile->open(file_name, ios::binary);
+  myfile->open(file_name);
   open_channels.insert(std::pair<unsigned int, fstream*>(channel, myfile));
   return 0;
 }
@@ -32,7 +32,7 @@ void File_Input_Output::close_channel(unsigned int channel)
 gfp File_Input_Output::private_input_gfp(unsigned int channel)
 {
   fstream *myfile = open_channels[channel];
-  word x;
+  word x = 0;
   myfile->read((char *) &x, sizeof(x));
   gfp y;
   y.assign(x);
