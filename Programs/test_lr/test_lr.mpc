@@ -37,5 +37,3 @@ for i in range(SGD_ITERS):
 
 for i in range(dim):
     w[i][0].reveal()
-    
-
