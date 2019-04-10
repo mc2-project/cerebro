@@ -353,19 +353,21 @@ def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
 
 def get_identity_matrix(value_type, n):
     if isinstance(value_type, (sfix, sfixMatrix)):
-        ret = sintMatrix(n, n)
+        ret = sfixMatrix(n, n)
         @for_range(n)
         def f(i):
             @for_range(n)
             def g(j):
                 v = (i == j)
-                ret[i][j] = sint(v)
+                v = sint(v)
+                v = v.__rshift__(sfix.f)
+                ret[i][j] = sfix.load_sint(v)
         return ret
-    elif isinstance(value_type, (sfix, sfixMatrixGC)):
+    elif isinstance(value_type, (sfix_gc, sfixMatrixGC)):
         ret = sfixMatrixGC(n, n)
         for i in range(n):
             for j in range(n):
-                ret[i][j] = cfix(int(i == j))
+                ret[i][j] = cfix_gc(int(i == j))
         return ret
     else:
         raise NotImplementedError
@@ -405,7 +407,7 @@ def matinv(A):
                 X[j][k] = t * v
                 v = I[j][k]
                 v2 = t * v
-                I[j][k] = v2
+                I[j][k] = v
 
             @for_range(j)
             def f4(L):
