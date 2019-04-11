@@ -132,6 +132,35 @@ class SecretFixedPointMatrixFactory(object):
                 rows_offset += r
             return ret
 
+def reveal_all(v):
+    if mpc_type == SPDZ:
+        if isinstance(v, (sint, sfix)):
+            library.print_ln("%s", v.reveal())
+        elif isinstance(v, Array):
+            @for_range(v.length)
+            def f(i):
+                library.print_ln("%s", v[i].reveal())
+        elif isinstance(v, Matrix):
+            @for_range(v.rows)
+            def f(i):
+                @for_range(v.columns)
+                def g(j):
+                    library.print_ln("%s", v[i][j].reveal())
+        else:
+            raise NotImplemented
+    else:
+        if isinstance(v, (sint_gc, sfix_gc)):
+            v.reveal()
+        elif isinstance(v, ArrayGC):
+            for i in range(v.length):
+                v[i].reveal()
+        elif isinstance(v, MatrixGC):
+            for i in range(v.rows):
+                for j in range(v.columns):
+                    v[i][j].reveal()
+        else:
+            raise NotImplemented
+
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()
 ClearFixedPoint = ClearFixedPointFactory()
@@ -145,6 +174,7 @@ compilerLib.VARS["c_fix"] = ClearFixedPoint
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
+compilerLib.VARS["reveal_all"] = reveal_all
 
 
 import ast

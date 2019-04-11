@@ -7,7 +7,7 @@ total_samples = sum(data_sizes)
 dim = 10
 BATCH_SIZE = 5
 
-LEVELS = 5
+LEVELS = 3
 TOTAL_NODES = (2 ** LEVELS) - 1
 
 # The columns are:
@@ -33,4 +33,4 @@ for i in range(LEVELS):
     for j in range(4):
         w[j] = w_res[j]
 
-w[0].reveal()
+reveal_all(w[0])
