@@ -189,8 +189,11 @@ class ASTParser(object):
     
     def __init__(self, fname, debug=False):
         f = open(fname, 'r')
-        self.tree = ast.parse(f.read())
+        s = f.read()
         f.close()
+        if mpc_type == SPDZ:
+            s = "open_channel(0)\n" + s + "\nclose_channel(0)\n"
+        self.tree = ast.parse(s)
 
         self.debug = debug
 

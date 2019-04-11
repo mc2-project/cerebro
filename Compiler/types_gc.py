@@ -93,6 +93,9 @@ class bits(object):
         res = ~res
         return res
 
+    def reveal(self):
+        program_gc.output_wires.append(self.gid)
+
 class cbits(bits):
     def __init__(self, value):
         super(cbits, self).__init__()
@@ -433,8 +436,7 @@ class int_gc(object):
         
     def reveal(self):
         for b in self.bits:
-            if isinstance(b, sbits):
-                b.reveal()
+            b.reveal()
             
     def __str__(self):
         s = ""

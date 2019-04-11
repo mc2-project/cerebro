@@ -15,8 +15,6 @@ from collections import defaultdict
 import itertools
 import math
 
-
-
 data_types = dict(
     triple = 0,
     square = 1,
@@ -287,7 +285,6 @@ class Program(object):
             tape.purge()
         if self.options.asmoutfile:
             tape.write_str(self.options.asmoutfile + '-' + tape.name)
-    
     
     def restart_main_thread(self):
         if self.main_thread_running:
