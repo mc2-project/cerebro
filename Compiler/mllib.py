@@ -326,20 +326,33 @@ def mat_const_mul(c, m, nparallel=1):
         raise NotImplementedError
 
 def mat_assign(o, i, nparallel=1):
-    if o.rows != i.rows or o.columns != i.columns:
-        raise ValueError("Matrices must be of the same sizes")
+    if isinstance(i, (Array, ArrayGC)):
+        if o.length != i.length:
+            raise ValueError("Arrays must be of the same sizes")
+        if isinstance(i, Array):
+            @for_range(i.length)
+            def f(u):
+                o[u] = i[u]
+        elif isinstance(i, ArrayGC):
+            for u in range(i.length):
+                o[u] = i[u]
+    elif isinstance(i, (Matrix, MatrixGC)):
+        if o.rows != i.rows or o.columns != i.columns:
+            raise ValueError("Matrices must be of the same sizes")
 
-    if isinstance(o, (sintMatrix, sfixMatrix)):
-        @for_range_multithread(nparallel, i.rows, i.rows)
-        def f(u):
-            @for_range_multithread(nparallel, i.columns, i.columns)
-            def g(v):
-                o[u][v] = i[u][v]
-    elif isinstance(o, (sintMatrixGC, sfixMatrixGC)):
-        for u in range(i.rows):
-            for v in range(i.columns):
-                o[u][v] = i[u][v]
-
+        if isinstance(i, Matrix):
+            @for_range_multithread(nparallel, i.rows, i.rows)
+            def f(u):
+                @for_range_multithread(nparallel, i.columns, i.columns)
+                def g(v):
+                    o[u][v] = i[u][v]
+        elif isinstance(i, MatrixGC):
+            for u in range(i.rows):
+                for v in range(i.columns):
+                    o[u][v] = i[u][v]
+    else:
+        raise NotImplementedError
+                    
 def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
     supported_types_a = (sint, sfix)
     supported_types_b = (sint_gc, sfix_gc)

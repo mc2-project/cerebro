@@ -2239,6 +2239,7 @@ def array_index_secret_load_a(l, index, nparallel=1):
             res_list[i] = test * l[i]
 
         res = Array(1, l.value_type)
+        res[0] = sfix(0)
         @library.for_range(l.length)
         def f(i):
             res[0] += res_list[i]
@@ -2250,16 +2251,19 @@ def array_index_secret_load_a(l, index, nparallel=1):
         def f(i):
             v = None
             if isinstance(index, sfix):
-                v = cfix(i)
+                v = sfix(i)
             else:
                 v = sint(i)
-            assert(v is not None)
             test = v.__eq__(index)
             @library.for_range_multithread(nparallel, l.columns, l.columns)
             def g(j):
                 res_list[i][j] = test * l[i][j]
 
         res = Array(l.columns, l.value_type)
+        @library.for_range(res.length)
+        def f(i):
+            res[i] = l.value_type(0)
+        
         @library.for_range(l.rows)
         def f(i):
             @library.for_range(l.columns)

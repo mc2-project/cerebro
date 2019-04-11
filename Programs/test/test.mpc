@@ -1,32 +1,16 @@
 Params.set_params(int_precision=3, f=3,k=6)
 
-# a = s_fix_mat(2, 2)
-# for i in range(a.rows):
-#     for j in range(a.columns):
-#         a[i][j] = s_fix.read_input(0)
+# Piecewise functionality
+# The function is:
+# [-inf, -1): f(x) = 0
+# [-1, 1): f(x) = x + 1
+# [1, -inf): f(x) = 1
 
-# a = sfixMatrix(2, 2)
-# @for_range(a.rows)
-# def f(i):
-#     @for_range(a.columns)
-#     def g(j):
-#         v = sint.get_private_input_from(0)
-#         a[i][j] = sfix.load_sint(v)
+# fn = Piecewise(3)
+# fn.add_boundary(None, sfix(-1), sfix(0), sfix(0))
+# fn.add_boundary(sfix(-1), sfix(1), sfix(1), sfix(1))
+# fn.add_boundary(sfix(1), None, sfix(0), sfix(1))
 
-# sfix_gc.set_precision(2, k=3)
-# a = sintMatrixGC(2, 2)
-# for i in range(2):
-#     for j in range(2):
-#         a[i][j] = sint_gc(3, input_party=0)
+# v = fn.evaluate(sfix(0.5))
+# reveal_all(v)
 
-#a = s_fix_array.read_input(20, 0)
-#b = s_fix_array.read_input(20, 1)
-#c = b[a[0]]
-
-# open_channel(0)
-# a = sint.get_private_input_from(0)
-# print_ln("a = %s", a.reveal())
-# close_channel(0)
-
-A = s_fix_mat.read_input(2, 2, 0)
-A_inv = matinv(A)

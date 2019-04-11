@@ -141,15 +141,15 @@ def reveal_all(v, text=""):
         elif isinstance(v, Array):
             if text == "":
                 text = "Array"
-            @for_range(v.length)
+            @library.for_range(v.length)
             def f(i):
                 library.print_ln("{}[%s] = %s".format(text), i, v[i].reveal())
         elif isinstance(v, Matrix):
             if text == "":
                 text = "Matrix"
-            @for_range(v.rows)
+            @library.for_range(v.rows)
             def f(i):
-                @for_range(v.columns)
+                @library.for_range(v.columns)
                 def g(j):
                     library.print_ln("{}[%s][%s] = %s".format(text), i, j, v[i][j].reveal())
         else:

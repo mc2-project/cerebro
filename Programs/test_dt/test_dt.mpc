@@ -20,7 +20,7 @@ tree = s_fix_mat.read_input(TOTAL_NODES, 4, 0)
 w = tree[0]
 x = s_fix_array.read_input(dim, 0)
 
-for i in range(LEVELS):
+for i in range(LEVELS-1):
     index = w[0]
     split = w[1]
     left_child = w[2]
@@ -29,8 +29,6 @@ for i in range(LEVELS):
     f = x[index]
     cond = (f < split)
     w_res = array_index_secret_load_if(cond, tree, left_child, right_child)
-    
-    for j in range(4):
-        w[j] = w_res[j]
+    mat_assign(w, w_res)
 
-reveal_all(w[0])
+reveal_all(w[1], "Final prediction class")
