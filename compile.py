@@ -6,53 +6,52 @@
 # See documentation for details on the Compiler package
 
 
-from optparse import OptionParser
+import argparse
 import Compiler
 
 def main():
-    usage = "usage: %mpc_type %prog [options] filename [args]"
-    parser = OptionParser(usage=usage)
-    parser.add_option("-n", "--nomerge",
+    parser = argparse.ArgumentParser(description="A compiler for generating arithmetic or GC circuits from .mpc files")
+    parser.add_argument('mpc_type', type=str, help="Use 'a' for arithmetic, and 'b' for garbled circuit")
+    parser.add_argument('filename', type=str, help="File name of the .mpc program")
+    parser.add_argument("-n", "--nomerge",
                       action="store_false", dest="merge_opens", default=True,
                       help="don't attempt to merge open instructions")
-    parser.add_option("-o", "--output", dest="outfile",
+    parser.add_argument("-o", "--output", dest="outfile",
                       help="specify output file")
-    parser.add_option("-a", "--asm-output", dest="asmoutfile",
+    parser.add_argument("-a", "--asm-output", dest="asmoutfile",
                       help="asm output file for debugging")
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
+    parser.add_argument("-d", "--debug", action="store_true", dest="debug",
                       help="keep track of trace for debugging")
-    parser.add_option("-c", "--comparison", dest="comparison", default="log",
+    parser.add_argument("-c", "--comparison", dest="comparison", default="log",
                       help="comparison variant: log|plain")
-    parser.add_option("-D", "--dead-code-elimination", action="store_true",
+    parser.add_argument("-D", "--dead-code-elimination", action="store_true",
                       dest="dead_code_elimination", default=False,
                       help="eliminate instructions with unused result")
-    parser.add_option("-r", "--noreorder", dest="reorder_between_opens",
+    parser.add_argument("-r", "--noreorder", dest="reorder_between_opens",
                       action="store_false", default=True,
                       help="don't attempt to place instructions between start/stop opens")
-    parser.add_option("-M", "--preserve-mem-order", action="store_true",
+    parser.add_argument("-M", "--preserve-mem-order", action="store_true",
                       dest="preserve_mem_order", default=False,
                       help="preserve order of memory instructions; possible efficiency loss")
-    parser.add_option("-u", "--noreallocate", action="store_true", dest="noreallocate",
+    parser.add_argument("-u", "--noreallocate", action="store_true", dest="noreallocate",
                       default=False, help="don't reallocate")
-    parser.add_option("-m", "--max-parallel-open", dest="max_parallel_open",
+    parser.add_argument("-m", "--max-parallel-open", dest="max_parallel_open",
                       default=False, help="restrict number of parallel opens")
-    parser.add_option("-P", "--profile", action="store_true", dest="profile",
+    parser.add_argument("-P", "--profile", action="store_true", dest="profile",
                       help="profile compilation")
-    parser.add_option("-C", "--continous", action="store_true", dest="continuous",
+    parser.add_argument("-C", "--continous", action="store_true", dest="continuous",
                       help="continuous computation")
-    parser.add_option("-s", "--stop", action="store_true", dest="stop",
+    parser.add_argument("-s", "--stop", action="store_true", dest="stop",
                       help="stop on register errors")
-    parser.add_option("-f", "--fdflag", action="store_false",
+    parser.add_argument("-f", "--fdflag", action="store_false",
                       dest="fdflag", default=True,
                       help="de-activates under-over flow check for sfloats")
-    options,args = parser.parse_args()
-
-    if len(args) < 2:
-        parser.print_help()
-        return
+    args = parser.parse_args()
+    options = args
+    args = [options.mpc_type, options.filename]
     
     def compilation():
-        prog = Compiler.run(args, options, 
+        prog = Compiler.run(args, options,
                             merge_opens=options.merge_opens, 
                             debug=options.debug)
         prog.write_bytes(options.outfile)
