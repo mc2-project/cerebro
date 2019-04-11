@@ -69,7 +69,7 @@ def int_multiply(data_list, nparallel=2):
         print("level = {}, length = {}".format(level+1, data[level+1].length))
         
         exec_len = data[level].length / 2
-        @for_range_multithread(nparallel, nparallel, exec_len)
+        @for_range_multithread(nparallel, exec_len, exec_len)
         def _multiply(i):
             data[level+1][i] = data[level][2 * i] * data[level][2 * i + 1]
 
@@ -108,7 +108,8 @@ def transpose(A):
         raise NotImplementedError
 
 def _matmul(A, B, C, D, int_type, nparallel=1):
-    @for_range_multithread(nparallel, nparallel, A.rows * B.columns * A.columns)
+    total = A.rows * B.columns * A.columns
+    @for_range_multithread(nparallel, total, total)
     def _multiply(i):
         i_index = i / (B.columns * A.columns)
         j_index = i % (B.columns * A.columns) / (A.columns)
@@ -116,7 +117,7 @@ def _matmul(A, B, C, D, int_type, nparallel=1):
 
         D[i] = A[i_index][k_index] * B[k_index][j_index]
 
-    @for_range_multithread(nparallel, nparallel, A.rows * B.columns)
+    @for_range_multithread(nparallel, A.rows * B.columns, A.rows * B.columns)
     def _add(i):
         i_index = i / B.columns
         j_index = i % B.columns
@@ -179,7 +180,7 @@ def matmul(A, B, nparallel=1):
         raise NotImplementedError
 
 def _matadd(A, B, C, int_type, nparallel=1):
-    @for_range_multithread(nparallel, nparallel, A.rows * A.columns)
+    @for_range_multithread(nparallel, A.rows * A.columns, A.rows * A.columns)
     def _add(i):
         i_index = i / A.columns
         j_index = i % A.columns
@@ -198,7 +199,7 @@ def matadd(A, B, nparallel=1):
         return _matadd(A, B, C, sint, nparallel)
 
 def _matsub(A, B, C, int_type, nparallel=1):
-    @for_range_multithread(nparallel, nparallel, A.rows * A.columns)
+    @for_range_multithread(nparallel, A.rows * A.columns, A.rows * A.columns)
     def _add(i):
         i_index = i / A.columns
         j_index = i % A.columns
@@ -297,9 +298,9 @@ def sigmoid(v, nparallel=1):
         return _sigmoid_sfix(v)
     elif isinstance(v, (sfixMatrix, sfixMatrixGC)):
         res = v.__class__(v.rows, v.columns)
-        @for_range_multithread(v.rows, nparallel, nparallel)
+        @for_range_multithread(nparallel, v.rows, v.rows)
         def a(i):
-            @for_range_multithread(v.columns, nparallel, nparallel)
+            @for_range_multithread(nparallel, v.columns, v.columns)
             def b(j):
                 res[i][j] = _sigmoid_sfix(v[i][j])
         return res
@@ -309,9 +310,9 @@ def sigmoid(v, nparallel=1):
 def mat_const_mul(c, m, nparallel=1):
     if isinstance(m, sfixMatrix):
         res = sfixMatrix(m.rows, m.columns)
-        @for_range_multithread(m.rows, nparallel, nparallel)
+        @for_range_multithread(nparallel, m.rows, m.rows)
         def f(i):
-            @for_range_multithread(m.columns, nparallel, nparallel)
+            @for_range_multithread(nparallel, m.columns, m.columns)
             def g(j):
                 res[i][j] = c * m[i][j]
         return res
@@ -329,9 +330,9 @@ def mat_assign(o, i, nparallel=1):
         raise ValueError("Matrices must be of the same sizes")
 
     if isinstance(o, (sintMatrix, sfixMatrix)):
-        @for_range_multithread(i.rows, nparallel, nparallel)
+        @for_range_multithread(nparallel, i.rows, i.rows)
         def f(u):
-            @for_range_multithread(i.columns, nparallel, nparallel)
+            @for_range_multithread(nparallel, i.columns, i.columns)
             def g(v):
                 o[u][v] = i[u][v]
     elif isinstance(o, (sintMatrixGC, sfixMatrixGC)):

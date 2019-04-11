@@ -2227,11 +2227,11 @@ _types = {
 def array_index_secret_load_a(l, index, nparallel=1):
     if isinstance(l, Array) and isinstance(index, (sint, sfix)):
         res_list = Array(l.length, l.value_type)
-        @library.for_range_multithread(l.length, nparallel, nparallel)
+        @library.for_range_multithread(nparallel, l.length, l.length)
         def f(i):
             v = None
             if isinstance(index, sfix):
-                v = cfix(i)
+                v = sfix(i)
             else:
                 v = sint(i)
             assert(v is not None)
@@ -2246,7 +2246,7 @@ def array_index_secret_load_a(l, index, nparallel=1):
 
     elif isinstance(l, Matrix) and isinstance(index, (sint, sfix)):
         res_list = Matrix(l.rows, l.columns, l.value_type)
-        @library.for_range_multithread(l.rows, nparallel, nparallel)
+        @library.for_range_multithread(nparallel, l.rows, l.rows)
         def f(i):
             v = None
             if isinstance(index, sfix):
@@ -2255,7 +2255,7 @@ def array_index_secret_load_a(l, index, nparallel=1):
                 v = sint(i)
             assert(v is not None)
             test = v.__eq__(index)
-            @library.for_range_multithread(l.columns, nparallel, nparallel)
+            @library.for_range_multithread(nparallel, l.columns, l.columns)
             def g(j):
                 res_list[i][j] = test * l[i][j]
 
@@ -2271,7 +2271,7 @@ def array_index_secret_load_a(l, index, nparallel=1):
 
 def array_index_secret_store_a(l, index, value, nparallel=1):
     if isinstance(l, Array) and isinstance(index, (sint, sfix)):
-        @library.for_range_multithread(l.length, nparallel, nparallel)
+        @library.for_range_multithread(nparallel, l.length, l.length)
         def f(i):
             v = None
             if isinstance(index, sfix):

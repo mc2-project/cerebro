@@ -132,20 +132,21 @@ class SecretFixedPointMatrixFactory(object):
                 rows_offset += r
             return ret
 
-def reveal_all(v):
+def reveal_all(v, text=""):
     if mpc_type == SPDZ:
+        print_text = "{}%s".format(text)
         if isinstance(v, (sint, sfix)):
-            library.print_ln("%s", v.reveal())
+            library.print_ln(print_text, v.reveal())
         elif isinstance(v, Array):
             @for_range(v.length)
             def f(i):
-                library.print_ln("%s", v[i].reveal())
+                library.print_ln(print_text, v[i].reveal())
         elif isinstance(v, Matrix):
             @for_range(v.rows)
             def f(i):
                 @for_range(v.columns)
                 def g(j):
-                    library.print_ln("%s", v[i][j].reveal())
+                    library.print_ln(print_text, v[i][j].reveal())
         else:
             raise NotImplemented
     else:
