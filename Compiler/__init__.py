@@ -27,6 +27,9 @@ instr_classes += [t[1] for t in inspect.getmembers(library, inspect.isfunction)\
 instr_classes += [t[1] for t in inspect.getmembers(mllib, inspect.isfunction)\
     if t[1].__module__ == mllib.__name__]
 
+instr_classes += [t[1] for t in inspect.getmembers(mllib, inspect.isclass)\
+    if t[1].__module__ == mllib.__name__]
+
 for op in instr_classes:
     compilerLib.VARS[op.__name__] = op
 

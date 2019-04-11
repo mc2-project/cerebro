@@ -134,19 +134,24 @@ class SecretFixedPointMatrixFactory(object):
 
 def reveal_all(v, text=""):
     if mpc_type == SPDZ:
-        print_text = "{}%s".format(text)
         if isinstance(v, (sint, sfix)):
-            library.print_ln(print_text, v.reveal())
+            if text == "":
+                text = "value"
+            library.print_ln("{} = %s".format(text), v.reveal())
         elif isinstance(v, Array):
+            if text == "":
+                text = "Array"
             @for_range(v.length)
             def f(i):
-                library.print_ln(print_text, v[i].reveal())
+                library.print_ln("{}[%s] = %s".format(text), i, v[i].reveal())
         elif isinstance(v, Matrix):
+            if text == "":
+                text = "Matrix"
             @for_range(v.rows)
             def f(i):
                 @for_range(v.columns)
                 def g(j):
-                    library.print_ln(print_text, v[i][j].reveal())
+                    library.print_ln("{}[%s][%s] = %s".format(text), i, j, v[i][j].reveal())
         else:
             raise NotImplemented
     else:

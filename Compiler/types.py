@@ -2756,11 +2756,17 @@ class cintMatrix(Matrix):
     def __init__(self, n, m, address=None):
         Matrix.__init__(self, n, m, cint, address)
 
+class cfixArray(Matrix):
+    def __init__(self, n, address=None):
+        Array.__init__(self, n, cfix, address)
+
+class cfixMatrix(Matrix):
+    def __init__(self, n, m, address=None):
+        Matrix.__init__(self, n, m, cfix, address)
 
 class sintArray(Array):
     def __init__(self, n, address=None):
         Array.__init__(self, n, sint, address)
-
 
 class sintMatrix(Matrix):
     def __init__(self, n, m, address=None):

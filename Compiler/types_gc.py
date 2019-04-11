@@ -941,6 +941,16 @@ class cintMatrixGC(MatrixGC):
         super(cintMatrixGC, self).__init__(rows, columns)
         self.data = [cintArrayGC(columns) for i in range(rows)]
 
+class cfixArrayGC(ArrayGC):
+    def __init__(self, length):
+        super(self, cfixArrayGC).__init__(length)
+        self.data = [cfix_gc(0) for i in range(length)]
+
+class cintMatrixGC(MatrixGC):
+    def __init__(self, rows, columns):
+        super(cfixMatrixGC, self).__init__(rows, columns)
+        self.data = [cfixArrayGC(columns) for i in range(rows)]
+
 class sintArrayGC(ArrayGC):
     def __init__(self, length):
         super(sintArrayGC, self).__init__(length)
