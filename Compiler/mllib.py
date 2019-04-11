@@ -429,3 +429,48 @@ def matinv(A):
                     X[L][k] = cond_assign_a(b, a1, X[L][k])
                     I[L][k] = cond_assign_a(b, a2, I[L][k])
     return I
+
+# Assumes that the piecewise function is public for now
+# Format: bounds in the form of [lower, upper]
+# Function in the form of a*x + b
+class Piecewise(object):
+    def __init__(self, boundaries):
+        self.boundary_points = sfixMatrix(len(boundaries), 4)
+        self.counter = regint(0)
+
+    def add_boundary(self, lower, upper, a, b):
+        self.boundary_points[self.counter][0] = lower
+        self.boundary_points[self.counter][1] = upper
+        self.boundary_points[self.counter][2] = a
+        self.boundary_points[self.counter][3] = b
+        self.counter += regint(1)
+
+    # For debugging purposes only
+    def iterate(self):
+        @for_range(self.boundary_points.rows)
+        def f(i):
+            print_ln("[%s, %s]: %s * x + %s", self.boundary_points[i][0].reveal(), self.boundary_points[i][1].reveal(), self.boundary_points[i][2].reveal(), self.boundary_points[i][3].reveal())
+
+    def evaluate(self, x):
+        coefs = sfixArray(2)
+        coefs[0] = sfix(0)
+        coefs[1] = sfix(0)
+        @for_range(self.boundary_points.rows)
+        def f(i):
+            lower = self.boundary_points[i][0]
+            upper = self.boundary_points[i][1]
+
+            b1 = x.__gt__(lower)
+            b2 = x.__le__(upper)
+            b = b1 * b2
+            coefs[0] += b * self.boundary_points[i][2]
+            coefs[1] += b * self.boundary_points[i][3]
+
+        res = coefs[0] * x + coefs[1]
+        return res
+
+def piecewise_approx_single(x, boundary_points, functions):
+    if isinstance(x, sfix):
+        pass
+    else:
+        raise NotImplementedError

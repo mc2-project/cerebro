@@ -98,7 +98,7 @@ class ProgramGC(object):
         # Output input wire configuration for each party
         # format = party, wire start, wire end
         f = open(fname + ".input", 'w')
-        num_parties = len(set(input_wires.keys()))
+        num_parties = len(set(self.input_wires.keys()))
         # First output the total number of input wires
         f.write("{} {}\n".format(self.total_inputs, len(self.output_wires)))
         for party, wires in self.input_wires.iteritems():

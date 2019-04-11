@@ -1,8 +1,9 @@
 *.pyc
 *.x
 *.o
-*.txt
+*.agmpc.txt
 *.bc
 *.sch
 .*.py
 *.a
+*~
