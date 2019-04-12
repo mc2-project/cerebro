@@ -1,4 +1,4 @@
-Params.set_params(int_precision=3, f=3,k=6)
+Params.set_params(int_precision=32,f=22,k=32)
 
 # Piecewise functionality
 # The function is:
@@ -14,3 +14,7 @@ Params.set_params(int_precision=3, f=3,k=6)
 # v = fn.evaluate(sfix(0.5))
 # reveal_all(v)
 
+A = s_fix_mat.read_input(3, 3, 0)
+reveal_all(A, "A")
+A_inv = matinv(A)
+reveal_all(A_inv, "A_inv")
