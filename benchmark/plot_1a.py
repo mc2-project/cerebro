@@ -54,7 +54,7 @@ def plot_dpi_ictf():
     # axes.set_xscale("log", basex=2)
     axes.set_ylim([0, 180000])
     # axes.set_xlim([0,700])
-	
+
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 

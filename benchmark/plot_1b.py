@@ -44,17 +44,15 @@ def plot_dpi_ictf():
     x = [2, 4, 6, 8, 10, 12]
     y1 = [26824, 22037.7, 20835.8, 20444.5, 19235.1, 19095.6]
     y2 = [34573.1, 15369.3, 9598.62, 7089, 5541.65, 4541.09]
-    # y3 = [4.44, 4.73, 5.20, 5.74, 6.12]
 
     plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="Many-to-all  ")
     plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color=blue, label="Pairwise")
-    # plt.plot(x, y3, linestyle='-.', marker='o', markersize=6, color=green, label="64KB")
 
     axes = plt.gca()
     # axes.set_xscale("log", basex=2)
     axes.set_ylim([0, 36000])
     # axes.set_xlim([0,700])
-	
+
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 
