@@ -8,10 +8,11 @@ def write_spdz(input_folder, data):
         f.write(output)
     f.close()
 
+# When writing out data for AG-MPC, we need to make sure that the format is [MSB ... LSB]
 def write_agmpc(input_folder, data):
     f = open(input_folder + "/agmpc.input", 'w')
     for d in data:
-        output = struct.pack("L", d)
+        output = struct.pack(">i", d)
         f.write(output)
     f.close()
 
@@ -24,8 +25,9 @@ def main():
     # data = [0, 0, 1, 2, 1, 1, 3, 4, 2, 2, 5, 6, leaf, 0, leaf, leaf, leaf, 1, leaf, leaf, leaf, 2, leaf, leaf, leaf, 3, leaf, leaf]
     # test_features = [5] * 10
     # data += test_features
+
+    data = [1234, 2345]
     
-    data = [1, 2, 3, 2, 6, 1, 4, 5, 6]
     write_spdz(args.input_folder, data)
     write_agmpc(args.input_folder, data)
 

@@ -20,7 +20,7 @@ std::pair<uint64_t, uint64_t> parse_circuit_input(uint64_t party_id,
   infile >> num_inputs >> num_outputs;
   uint64_t party = 0, begin = 0, end = 0;
   while (infile >> party >> begin >> end) {
-    if (party != party_id) {
+    if (party + 1 != party_id) {
       continue;
     }
 
@@ -34,12 +34,33 @@ std::pair<uint64_t, uint64_t> parse_circuit_input(uint64_t party_id,
 // Each party sets a value for every input wire
 // If a party does not provide real input for a wire, the value is set to be 0
 void create_circuit_input(bool *input, std::vector<std::pair<uint64_t, uint64_t> > &input_wires, std::string filename) {
-  std::ifstream infile(filename.c_str());
+  uint8_t buffer[1];
+  std::ifstream infile;
+  infile.open(filename.c_str());
   for (size_t i = 0; i < input_wires.size(); i++) {
     uint64_t offset = input_wires.at(i).first;
     uint64_t length = input_wires.at(i).second + 1 - offset;
-    infile.read(reinterpret_cast<char *>(input + offset), length / 8);
+
+    uint64_t counter = 0;
+    for (size_t j = 0; j < length / 8; j++) {
+      infile.read((char *) buffer, 1);
+      for (size_t k = 0; k < 8; k++) {
+        size_t shift = 7 - k;
+        input[counter] = ((buffer[0] & (1 << shift)) > 0);
+        counter += 1;
+      }
+    }
+
+    if (length % 8 > 0) {
+      infile.read((char *) buffer, 1);
+      for (size_t k = 0; k < length % 8; k++) {
+        size_t shift = 7 - k;
+        input[counter] = ((buffer[0] & (1 << shift)) > 0);
+        counter += 1;
+      }
+    }
   }
+  infile.close();
 }
 
 void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
@@ -57,8 +78,6 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   ios[0]->flush();
   ios[1]->flush();
   double t2 = time_from(start);
-  // ios[0]->sync();
-  // ios[1]->sync();
   cout <<"Setup:\t"<<party<<"\t"<< t2 <<"\n"<<flush;
 
   start = clock_start();
@@ -75,40 +94,31 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   t2 = time_from(start);
   if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2<<" \n"<<flush;
 
-  //bool *in = new bool[cf.n1+cf.n2]; bool *out = new bool[cf.n3];
-  memset(in, false, cf.n1+cf.n2);
   start = clock_start();
   mpc->online(in, out);
   ios[0]->flush();
   ios[1]->flush();
   t2 = time_from(start);
-  //uint64_t band2 = ios->count();
-  //if(party == 1)cout <<"bandwidth\t"<<party<<"\t"<<band2<<endl;
 
   if (party == 1) {
     // Write the out bits to a file
-    fstream out(output_file.c_str());
-    uint8_t v = 0;
+    // Note that we are writing bytes at a time
+    std::cout << "Writing to output file" << output_file << std::endl;
+    fstream outfile;
+    outfile.open(output_file.c_str(), std::ios::out);
+    uint8_t v;
     for (int i = 0; i < cf.n3; i += 8) {
       for (int j = 0; j < 8; j++) {
-        if (in[i + j]) {
+        if (out[i + j]) {
           v |= (1 << j);
         }
       }
-      out << v;
+      std::cout << "v = " << unsigned(v) << std::endl;
+      outfile.write((char *) &v, 1);
+      v = 0;
     }
+    outfile.close();
   }
-  
-  // if(party == 1)cout <<"ONLINE:\t"<<party<<"\t"<<t2<<" \n"<<flush;
-  // if(party == 1) {
-  //   string res = "";
-  //   for(int i = 0; i < cf.n3; ++i)
-  //     res += (out[i]?"1":"0");
-  //   cout << "Result: " << res << endl;
-  //   for (int i = 0; i < cf.n3; i += 64) {
-  //     cout << "Result individual: " << bool_to64(out + i * 64) << endl;
-  //   }
-  // }
   
   delete mpc;
 }
@@ -160,13 +170,21 @@ int main(int argc, char **argv) {
   std::pair<uint64_t, uint64_t> num_wires = parse_circuit_input(party, input_format_file, input_wires);
   std::cout << "Num inputs: " << num_wires.first << std::endl;
   std::cout << "Num output: " << num_wires.second << std::endl;
+
+  for (size_t i = 0; i < input_wires.size(); i++) {
+    std::cout << "Party "<< party << " has inputs " << input_wires[i].first << " - " << input_wires[i].second << std::endl;
+  }
+  
   bool *input = new bool[num_wires.first];
   bool *output = new bool[num_wires.second];
   memset(input, false, num_wires.first);
   
   // Parse input data
-  //create_circuit_input(input, input_wires, input_file);
+  create_circuit_input(input, input_wires, input_file);
 
+  for (size_t i = 0; i < num_wires.first; i++) {
+    cout << "input[" << i << "] = " << input[i] << std::endl;
+  }
 
   // Benchmark and write out the result to output_file
   bench_once(ios, &pool, circuit_file, output_file, party, input, output);

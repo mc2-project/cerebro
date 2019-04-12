@@ -14,7 +14,12 @@ Params.set_params(int_precision=32,f=22,k=32)
 # v = fn.evaluate(sfix(0.5))
 # reveal_all(v)
 
-A = s_fix_mat.read_input(3, 3, 0)
-reveal_all(A, "A")
-A_inv = matinv(A)
-reveal_all(A_inv, "A_inv")
+# A = s_fix_mat.read_input(3, 3, 0)
+# reveal_all(A, "A")
+# A_inv = matinv(A)
+# reveal_all(A_inv, "A_inv")
+
+a = s_int.read_input(0)
+b = s_int.read_input(0)
+c = a * b
+reveal_all(c, "c")

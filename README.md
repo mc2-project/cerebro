@@ -12,3 +12,19 @@ MC2: A Coopetitive Learning Platform
 ### Install SCALE-MAMBA (semi-honest version)
 
 1. Follow the instruction in this PDF file:  https://github.com/wzheng/mc2/blob/master/SCALE-MAMBA/Documentation/Documentation.pdf
+
+### Compilation
+
+1. In the root directory, run `python compile.py [a/b] Programs/app_directory/` to compile circuits. Option "a" means arithmetic, and option "b" is boolean/garbled circuits.
+
+2. The compilation step will generate the appropriate circuit files in `Programs/app_directory/`
+
+### Data I/O
+
+For now, MC2 supports file input and output for both SPDZ and AG-MPC.
+
+1. To generate input data, cd to Input_Data and run `gen_data.py`. You should put the appropriate input data into this script. This python script will generate input files for both SPDZ and AG-MPC.
+
+2. Currently, to get output from SPDZ/AG-MPC, you will need to call `reveal_all` inside the `.mpc` files.
+
+3. To parse the AG-MPC output, cd into the Output_Data directory and run `agmpc_output_parser.py`. This script will ask for the directory name of the circuit (e.g., `Programs/app_directory/`).

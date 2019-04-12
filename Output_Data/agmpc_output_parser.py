@@ -36,7 +36,8 @@ def parse(reader, obj, level=0):
         int_value = 0
         for i in range(num_wires):
             bit = parse(reader, obj["value"][i], level=level+1)
-            int_value += (bit << i)
+            #print bit
+            int_value += (bit << (num_wires - 1 - i))
 
         if level == 0:
             print "integer:{} = {}".format(obj["name"], int_value)
@@ -78,7 +79,7 @@ def parse(reader, obj, level=0):
 def main():
     parser = argparse.ArgumentParser(description="An AG-MPC output parser")
     parser.add_argument("output_data_file", type=str)
-    parser.add_argument("output_format_file", type=str)
+    parser.add_argument("circuit_directory", type=str)
 
     args = parser.parse_args()
 
@@ -86,11 +87,8 @@ def main():
     data = f.read()
     f.close()
 
-    pp = pprint.PrettyPrinter()
-
-    f = open(args.output_format_file, 'r')
+    f = open(args.circuit_directory+"/agmpc.txt.output", 'r')
     data_format = f.read()
-    pp.pprint(data_format)
     data_format = json.loads(data_format)
     f.close()
 
