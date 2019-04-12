@@ -25,7 +25,7 @@ def main():
     # test_features = [5] * 10
     # data += test_features
     
-    data = [123]
+    data = [1, 2, 3, 2, 6, 1, 4, 5, 6]
     write_spdz(args.input_folder, data)
     write_agmpc(args.input_folder, data)
 
