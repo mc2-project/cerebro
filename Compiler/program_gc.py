@@ -13,6 +13,7 @@ import itertools
 import math
 import Compiler.instructions_gc
 import types_gc
+import json
 
 def find_ranges(l):
     sorted_l = sorted(l)
@@ -42,6 +43,7 @@ class ProgramGC(object):
         self.total_inputs = 0
         self.input_wires = {}
         self.output_wires = []
+        self.output_objects = []
 
     def init_names(self, args):
         self.programs_dir=args[0];
@@ -63,7 +65,7 @@ class ProgramGC(object):
         if len(args) > 1:
             self.name += '-' + '-'.join(args[1:])
 
-        self.outfile = self.programs_dir + '/' + progname + '.agmpc.txt'
+        self.outfile = self.programs_dir + '/agmpc.txt'
 
     @property
     def curr_block(self):
@@ -95,7 +97,7 @@ class ProgramGC(object):
 
         f.close()
 
-        # Output input wire configuration for each party
+        # Write input wire configuration for each party
         # format = party, wire start, wire end
         f = open(fname + ".input", 'w')
         num_parties = len(set(self.input_wires.keys()))
@@ -105,4 +107,9 @@ class ProgramGC(object):
             for v in find_ranges(wires):
                 f.write("{} {} {}\n".format(party, v[0], v[1]))
             
+        f.close()
+
+        # Write output parsing
+        f = open(fname + ".output", 'w')
+        f.write(json.dumps(self.output_objects))
         f.close()

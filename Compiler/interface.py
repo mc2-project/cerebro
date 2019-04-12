@@ -155,17 +155,8 @@ def reveal_all(v, text=""):
         else:
             raise NotImplemented
     else:
-        if isinstance(v, (sint_gc, sfix_gc)):
-            v.reveal()
-        elif isinstance(v, ArrayGC):
-            for i in range(v.length):
-                v[i].reveal()
-        elif isinstance(v, MatrixGC):
-            for i in range(v.rows):
-                for j in range(v.columns):
-                    v[i][j].reveal()
-        else:
-            raise NotImplemented
+        info = v.reveal(name=text)
+        program_gc.output_objects.append(info)
 
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()

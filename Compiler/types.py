@@ -2215,8 +2215,6 @@ class cfloat(object):
             return other <= self
         raise  NotImplemented
 
-
-
 _types = {
     'c': cint,
     's': sint,

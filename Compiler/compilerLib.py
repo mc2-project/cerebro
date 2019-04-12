@@ -84,6 +84,7 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     prog = ProgramGC(args, options, param)
     instructions_gc.program_gc = prog
     types_gc.program_gc = prog
+    interface.program_gc = prog
     VARS['program_gc'] = prog
 
     print 'Compiling file', prog.infile

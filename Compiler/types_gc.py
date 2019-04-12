@@ -93,8 +93,14 @@ class bits(object):
         res = ~res
         return res
 
-    def reveal(self):
+    def reveal(self, name=""):
         program_gc.output_wires.append(self.gid)
+        
+        v = {}
+        v["type"] = "bits"
+        v["name"] = name
+        v["value"] = self.gid
+        return v
 
 class cbits(bits):
     def __init__(self, value):
@@ -136,9 +142,6 @@ class sbits(bits):
     def test_instance(self, other):
         if not isinstance(other, sbits):
             raise ValueError("requires type sbits")
-    
-    def reveal(self):
-        program_gc.output_wires.append(self.gid)
 
 def add_full(dest, op1, op2, size, carry_in=None, carry_out=None):
     if size == 0:
@@ -434,16 +437,18 @@ class int_gc(object):
             dest.bits = [self.bits[i] for i in range(new_length, self.length)]
         return dest
         
-    def reveal(self):
-        for b in self.bits:
-            b.reveal()
-            
     def __str__(self):
         s = ""
         for i in range(len(self.bits)):
             s += "{}: {}\n".format(i, self.bits[i])
         return s
 
+    def reveal(self, name=""):
+        v = {}
+        v["type"] = "int_gc"
+        v["name"] = name
+        v["value"] = [b.reveal() for b in self.bits]
+        return v
 
 class cint_gc(int_gc):
     value_type = cbits
@@ -849,8 +854,13 @@ class sfix_gc(object):
     def __gt__(self, other):
         return ~(self <= other)
 
-    def reveal(self):
-        return self.v.reveal()
+    def reveal(self, name=""):
+        v = {}
+        v["type"] = "sfix_gc"
+        v["name"] = name
+        v["value"] = [self.v.reveal()]
+        v["f"] = sfix_gc.f
+        return v
 
 def array_index_secret_load_gc(l, index):
     if isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
@@ -922,6 +932,13 @@ class ArrayGC(object):
         else:
             raise NotImplementedError
 
+    def reveal(self, name=""):
+        v = {}
+        v["type"] = "ArrayGC"
+        v["name"] = name
+        v["value"] = [d.reveal() for d in self.data]
+        return v
+
 class MatrixGC(object):
     def __init__(self, rows, columns):
         self.rows = rows
@@ -930,6 +947,15 @@ class MatrixGC(object):
 
     def __getitem__(self, index):
         return self.data[index]
+
+    def reveal(self, name=""):
+        v = {}
+        v["type"] = "MatrixGC"
+        v["name"] = name
+        v["rows"] = self.rows
+        v["columns"] = self.columns
+        v["value"] = [d.reveal() for d in self.data]
+        return v
 
 class cintArrayGC(ArrayGC):
     def __init__(self, length):
