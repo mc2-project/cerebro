@@ -101,6 +101,12 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   t2 = time_from(start);
 
   if (party == 1) {
+    for (int i = 0; i < cf.n3; i++) {
+      cout << "output[" << i << "] = " << out[i] << std::endl;
+    }
+  }
+
+  if (party == 1) {
     // Write the out bits to a file
     // Note that we are writing bytes at a time
     std::cout << "Writing to output file" << output_file << std::endl;
@@ -178,6 +184,7 @@ int main(int argc, char **argv) {
   bool *input = new bool[num_wires.first];
   bool *output = new bool[num_wires.second];
   memset(input, false, num_wires.first);
+  memset(output, false, num_wires.second);
   
   // Parse input data
   create_circuit_input(input, input_wires, input_file);
