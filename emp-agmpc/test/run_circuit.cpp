@@ -41,15 +41,13 @@ void create_circuit_input(bool *input, std::vector<std::pair<uint64_t, uint64_t>
     uint64_t offset = input_wires.at(i).first;
     uint64_t length = input_wires.at(i).second + 1 - offset;
 
-    uint64_t counter = 0;
-    // uint64_t counter = length - 1;
+    uint64_t counter = length - 1;
     for (size_t j = 0; j < length / 8; j++) {
       infile.read((char *) buffer, 1);
       for (size_t k = 0; k < 8; k++) {
         size_t shift = 7 - k;
         input[counter] = ((buffer[0] & (1 << shift)) > 0);
-        // counter -= 1;
-        counter++;
+        counter -= 1;
       }
     }
 
@@ -58,8 +56,7 @@ void create_circuit_input(bool *input, std::vector<std::pair<uint64_t, uint64_t>
       for (size_t k = 0; k < length % 8; k++) {
         size_t shift = 7 - k;
         input[counter] = ((buffer[0] & (1 << shift)) > 0);
-        // counter -= 1;
-        counter++;
+        counter -= 1;
       }
     }
   }
