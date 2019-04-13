@@ -7,7 +7,6 @@ OSSL = /users/cosic/nsmart/local/openssl/
 #   DETERMINISTIC = Removes all randomness, gain for debugging
 
 # MAX_MOD = 7 should be OK for 128 bit based FHE operations
-DETERMINISTIC = true
 MAX_MOD = 7
 
 #FLAGS = -DSH_DEBUG -DDEBUG -DMAX_MOD_SZ=$(MAX_MOD) -DDETERMINISTIC
