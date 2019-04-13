@@ -37,7 +37,7 @@ def parse(reader, obj, level=0):
         for i in range(num_wires):
             bit = parse(reader, obj["value"][i], level=level+1)
             #print bit
-            int_value += (bit << (num_wires - 1 - i))
+            int_value += (bit << (i))
 
         if level == 0:
             print "integer:{} = {}".format(obj["name"], int_value)
