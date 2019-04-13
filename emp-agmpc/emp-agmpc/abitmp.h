@@ -75,6 +75,7 @@ class ABitMP { public:
 			res.push_back(pool->enqueue([this, KEY, length, delta, party2]() {
 				abit1[party2]->send_cot(KEY[party2], delta, length);
 				io->get(party2, false)->flush();
+				io->get(party2, true)->flush();
 			}));
 			res.push_back(pool->enqueue([this, MAC, data, length, party2]() {
 				abit2[party2]->recv_cot(MAC[party2], data, length);
