@@ -15,7 +15,8 @@ MC2: A Coopetitive Learning Platform
 
 ### Compilation
 
-1. In the root directory, run `python compile.py [a/b] Programs/app_directory/` to compile circuits. Option "a" means arithmetic, and option "b" is boolean/garbled circuits.
+1. If you wish to compile arithmetic circuit, execute  `cd SCALE-MAMBA; python compile.py a Programs/app_directory/` to compile.
+If you wish to compile a boolean circuit, execute `cd emp-agmpc; python compile.py b Programs/app_directory`. 
 
 2. The compilation step will generate the appropriate circuit files in `Programs/app_directory/`
 

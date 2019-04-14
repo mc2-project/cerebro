@@ -275,7 +275,7 @@ def div_full(vquot, op1, op2, size, vrem=None):
             vrem[i] = rem[i]
         vquot[i] = quot[i]
 
-# index 0 is the MOST significant bit
+# index 0 is the LEAST significant bit
 class int_gc(object):
     value_type = sbits
     def __init__(self, length):
@@ -460,14 +460,15 @@ class cint_gc(int_gc):
         if value is None:
             self.bits = [cbits(0) for i in range(self.length)]
         else:
-            # TODO handle negative here
-            s = bin(abs(value))[2:]
+            # handle negative here
+            s = bin(((1L << self.length) + value) & value)[2:]
             if len(s) > self.length:
                 s = s[len(s) - self.length:len(s)]
             if len(s) < self.length:
                 for i in range(self.length - len(s)):
                     s = "0" + s
             self.bits = [cbits(int(x)) for x in s]
+            self.bits.reverse()
 
     def get_decimal(self):
         value = 0
