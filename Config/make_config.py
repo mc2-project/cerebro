@@ -23,7 +23,7 @@ def main():
     f.write("#define __CMPC_CONFIG\n")
     f.write("const static int abit_block_size = 1024;\n")
     f.write("const static int fpre_threads = 1;\n")
-    f.write("#define NUM_PARTY_FOR_RUNNING 3\n")
+    f.write("#define NUM_PARTY_FOR_RUNNING " + str(args.num_party) + "\n")
     f.write("const static char *IP[] = { \"\",\n")
 
     for server_ip in server_list:
