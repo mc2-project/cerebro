@@ -28,6 +28,7 @@ y_ = scaler_y.fit_transform(y)
 # Plaintext version of the secure training algorithm using SGD
 BATCH_SIZE = 5
 SGD_ITERS = n / BATCH_SIZE
+SGD_ITERS = 1
 
 def sigmoid(x):
     ret = []
@@ -35,18 +36,18 @@ def sigmoid(x):
         #v = 1.0 / (1.0 + math.exp(-1 * xi[0]))
         #ret.append(v)
         ret.append(xi[0] * 1.0 / (1 + abs(xi[0])))
-    ret = np.array(ret)
+    ret = np.array(ret).reshape(len(ret), 1)
     return ret
 
 w = np.zeros((dim, 1))
 alpha_B = (0.01 / BATCH_SIZE)
 
+XB = np.zeros((BATCH_SIZE, dim))
+yB = np.zeros((BATCH_SIZE, 1))
+
 for i in range(SGD_ITERS):
     batch_low = i * BATCH_SIZE
     batch_high = (i + 1) * BATCH_SIZE
-    
-    XB = np.zeros((BATCH_SIZE, dim))
-    yB = np.zeros((BATCH_SIZE, 1))
 
     for j in range(BATCH_SIZE):
         for d in range(dim):
@@ -54,10 +55,14 @@ for i in range(SGD_ITERS):
         yB[j][0] = y_[batch_low + j][0]
 
     w_ret = np.matmul(XB, w)
+    print "w_ret = {}".format(w_ret)
     w_sigmoid = sigmoid(w_ret)
-    w_sub = (w_sigmoid - yB) 
+    print "w_sigmoid = {}".format(w_sigmoid)
+    w_sub = (w_sigmoid - yB)
+    print "w_sub = {}".format(w_sub)
     XB_T = XB.T
     w_1 = np.matmul(XB_T, w_sub)
+    print "w_1 = {}".format(w_1)
     w_2 = alpha_B * w_1
     w = w - w_2
 
@@ -73,12 +78,11 @@ for xi, yi in zip(X_, y):
     score += int(pred == yi)
 
 print "Score = {}".format(score * 1.0 / total)
-print "Weights: {}".format(w)
+#print "Weights: {}".format(w)
 
 # Write out the training data
-print X_[0]
 data_x = [v for v in X_.flatten()]
 data_y = [v for v in y_.flatten()]
 
 data = data_x + data_y
-
+data = [d * (2 ** 32) for d in data]

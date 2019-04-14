@@ -289,6 +289,12 @@ def matstack(matrices):
 
 def _sigmoid_sfix(v):
     sign_v = (v < 0)
+    denom = (v * sign_v) + 1
+    res = v / denom
+    return res
+
+def _sigmoid_sfix_gc(v):
+    sign_v = (v < 0)
     denom = (v & sign_v) + 1
     res = v / denom
     return res
@@ -296,7 +302,7 @@ def _sigmoid_sfix(v):
 def sigmoid(v, nparallel=1):
     if isinstance(v, sfix):
         return _sigmoid_sfix(v)
-    elif isinstance(v, (sfixMatrix, sfixMatrixGC)):
+    elif isinstance(v, (sfixMatrix)):
         res = v.__class__(v.rows, v.columns)
         @for_range_multithread(nparallel, v.rows, v.rows)
         def a(i):
@@ -304,6 +310,12 @@ def sigmoid(v, nparallel=1):
             def b(j):
                 res[i][j] = _sigmoid_sfix(v[i][j])
         return res
+    elif isinstance(v, sfixMatrixGC):
+        res = v.__class__(v.rows, v.columns)
+        for i in range(v.rows):
+            for j in range(v.columns):
+                res[i][j] = _sigmoid_sfix_gc(v[i][j])
+        return res        
     else:
         raise NotImplementedError
 
