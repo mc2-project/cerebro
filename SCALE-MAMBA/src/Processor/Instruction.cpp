@@ -1885,7 +1885,5 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
         }
     }
 
-  printf("Finishing the instruction execution.\n");
-
   return restart;
 }
