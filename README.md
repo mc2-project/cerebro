@@ -24,11 +24,14 @@ If you wish to compile a boolean circuit, execute `cd emp-agmpc; python compile.
 
 For now, MC2 supports file input and output for both SPDZ and AG-MPC.
 
-1. To generate input data, cd to Input_Data and run `gen_data.py`. You should put the appropriate input data into this script. This python script will generate input files for both SPDZ and AG-MPC.
+1. To generate input data, cd to Input_Data and create your own dataset in a separate python file, e.g., `test_data.py`. Make sure to serialize all of your data into the variable `data`. Note that if you are inputting fixed point values, you must first scale these values to integers.
 
-2. Currently, to get output from SPDZ/AG-MPC, you will need to call `reveal_all` inside the `.mpc` files.
+2. Next run `python gen_data.py input_folder data_source`. This python script will generate input files for both SPDZ and AG-MPC. For example, you can run `python gen_data.py ./ test_data` if you named your file `test_data.py`.
 
-3. To parse the AG-MPC output, cd into the Output_Data directory and run `agmpc_output_parser.py`. This script will ask for the directory name of the circuit (e.g., `Programs/app_directory/`).
+3. Currently, to get output from SPDZ/AG-MPC, you will need to call `reveal_all` inside the `.mpc` files.
+
+4. To parse the AG-MPC output, cd into the Output_Data directory and run `agmpc_output_parser.py`. This script will ask for the directory name of the circuit (e.g., `Programs/app_directory/`).
+
 
 ## Machine Configuration
 
@@ -93,3 +96,4 @@ cd emp-agmpc/
 ./bin/run_circuit $MY_PARTY_ID_GC 5000 Programs/test_dt/ Input_Data/ Output_Data/ s
 echo "ok!"
 ```
+

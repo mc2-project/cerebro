@@ -1418,7 +1418,7 @@ class sfix(_number):
     @classmethod
     def load_sint(cls, v, scale=True):
         res = cls()
-        res.load_int(v)
+        res.load_int(v, scale=scale)
         return res
 
     @vectorize_init
