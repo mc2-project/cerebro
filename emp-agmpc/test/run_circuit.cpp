@@ -79,21 +79,21 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   ios[0]->flush();
   ios[1]->flush();
   double t2 = time_from(start);
-  cout <<"Setup:\t"<<party<<"\t"<< t2 <<"\n"<<flush;
+  cout <<"Setup:\t"<<party<<"\t"<< t2 << " => " << t2 / 1000.00 << "ms" << "\n"<<flush;
 
   start = clock_start();
   mpc->function_independent();
   ios[0]->flush();
   ios[1]->flush();
   t2 = time_from(start);
-  cout <<"FUNC_IND:\t"<<party<<"\t"<<t2<<" \n"<<flush;
+  cout <<"FUNC_IND:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
 
   start = clock_start();
   mpc->function_dependent();
   ios[0]->flush();
   ios[1]->flush();
   t2 = time_from(start);
-  if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2<<" \n"<<flush;
+  if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
 
   start = clock_start();
   mpc->online(in, out);
