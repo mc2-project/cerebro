@@ -88,6 +88,8 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   t2 = time_from(start);
   cout <<"FUNC_IND:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
 
+  auto ttmp = t2;
+
   start = clock_start();
   mpc->function_dependent();
   ios[0]->flush();
@@ -95,11 +97,17 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   t2 = time_from(start);
   if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
 
+  ttmp += t2;
+
   start = clock_start();
   mpc->online(in, out);
   ios[0]->flush();
   ios[1]->flush();
   t2 = time_from(start);
+
+  ttmp += t2;
+
+  cout << "total non-setup time:\t"<<party<<"\t"<<ttmp << " => " << ttmp / 1000.00 << "ms" << " \n"<<flush; 
 
   if (party == 1 && silence_for_benchmark == 0) {
     for (int i = 0; i < cf.n3; i++) {
