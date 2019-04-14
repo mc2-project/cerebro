@@ -288,14 +288,14 @@ def matstack(matrices):
         raise NotImplementedError
 
 def _sigmoid_sfix(v):
-    sign_v = (v < 0)
-    denom = (v * sign_v) + 1
+    sign_v = cfix(1) - cfix(2) * (v < 0)
+    denom = (v * sign_v) + sfix(1)
     res = v / denom
     return res
 
 def _sigmoid_sfix_gc(v):
-    sign_v = (v < 0)
-    denom = (v & sign_v) + 1
+    abs_v = v.absolute()
+    denom = abs_v + 1
     res = v / denom
     return res
 
