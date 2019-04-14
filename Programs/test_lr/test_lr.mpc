@@ -1,18 +1,18 @@
-Params.set_params(int_precision=32, f=16, k=32)
+Params.set_params(int_precision=64, f=32, k=64)
 NUM_PARTIES = 3
 
-SGD_ITERS = 5
-data_sizes = [(i, 10) for i in range(NUM_PARTIES)]
-dim = 10
+SGD_ITERS = 113
+data_size = 569
+dim = 30
 BATCH_SIZE = 5
 
 sfix.set_precision(32)
 
-X = s_fix_mat.read_input_variable_rows(dim, data_sizes)
-y = s_fix_mat.read_input_variable_rows(1, data_sizes)
+X = s_fix_mat.read_input(dim, 1, 0)
+y = s_fix_mat.read_input(1, data_size, 0)
 
 w = s_fix_mat(dim, 1)
-alpha_B = c_fix(100)
+alpha_B = c_fix(0.002)
 
 for i in range(SGD_ITERS):
     batch_low = i * BATCH_SIZE
@@ -35,5 +35,4 @@ for i in range(SGD_ITERS):
     w_res = matsub(w, w_2)
     mat_assign(w, w_res)
 
-for i in range(dim):
-    w[i][0].reveal()
+reveal_all(w)

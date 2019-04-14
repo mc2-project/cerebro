@@ -32,10 +32,15 @@ void File_Input_Output::close_channel(unsigned int channel)
 gfp File_Input_Output::private_input_gfp(unsigned int channel)
 {
   fstream *myfile = open_channels[channel];
-  word x = 0;
+  bool sign = false;
+  uint64_t x = 0;
+  myfile->read((char *) &sign, 1);
   myfile->read((char *) &x, sizeof(x));
   gfp y;
   y.assign(x);
+  if (sign) {
+    y.negate();
+  }
   return y;
 }
 
