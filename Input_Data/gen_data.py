@@ -24,8 +24,9 @@ def main():
     parser.add_argument("input_folder", type=str)
     parser.add_argument("data_source", type=str)
     args = parser.parse_args()
-
-    import args.data_source.data as data
+    
+    import importlib
+    data = importlib.import_module(args.data_source).data
     write_spdz(args.input_folder, data)
     write_agmpc(args.input_folder, data)
 
