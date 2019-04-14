@@ -2,6 +2,7 @@
 #define __CMPC_CONFIG
 const static int abit_block_size = 1024;
 const static int fpre_threads = 1;
+#define NUM_PARTY_FOR_RUNNING 3
 #define LOCALHOST
 //#define __MORE_FLUSH
 //#define __debug
