@@ -721,9 +721,12 @@ class sfix_gc(object):
             self.v = sint_gc(sfix_gc.k, input_party)
 
     @classmethod
-    def load_sint(cls, v):
+    def load_sint(cls, v, scale=True):
         ret = cls()
-        ret.v = v
+        if scale:
+            ret.v = v << sfix_gc.f
+        else:
+            ret.v = v
         return ret
 
     def __and__(self, other):

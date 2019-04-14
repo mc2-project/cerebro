@@ -65,13 +65,12 @@ class SecretFixedPointArrayFactory(object):
             @library.for_range(ret.length)
             def f(i):
                 v = sint.get_private_input_from(party)
-                ret[i] = sfix.load_sint(v)
+                ret[i] = sfix.load_sint(v, scale=False)
             return ret
         else:
             ret = sfixArrayGC(length)
             for i in range(ret.length):
-                v = sint_gc(Params.intp, party)
-                ret[i] = sfix_gc.load_sint(v)
+                ret[i] = sfix_gc(v=None, input_party=party)
             return ret
 
 class SecretFixedPointMatrixFactory(object):
@@ -95,14 +94,14 @@ class SecretFixedPointMatrixFactory(object):
                 @library.for_range(ret.columns)
                 def g(j):
                     v = sint.get_private_input_from(party)
-                    ret[i][j] = sfix.load_sint(v)
+                    ret[i][j] = sfix.load_sint(v, scale=False)
             return ret
         else:
             ret = sfixMatrixGC(rows, columns)
             for i in range(ret.rows):
                 for j in range(ret.columns):
                     v = sint_gc(Params.intp, party)
-                    ret[i][j] = sfix_gc.load_sint(v)
+                    ret[i][j] = sfix_gc(v=None, input_party=party)
             return ret
     
     # Read horizontally partitioned data from multiple parties
@@ -119,7 +118,7 @@ class SecretFixedPointMatrixFactory(object):
                     @library.for_range(columns)
                     def b(j):
                         v = sint.get_private_input_from(p)
-                        ret[i + rows_offset][j] = sfix.load_sint(v)
+                        ret[i + rows_offset][j] = sfix.load_sint(v, scale=False)
                 rows_offset += r
             return ret
         else:
