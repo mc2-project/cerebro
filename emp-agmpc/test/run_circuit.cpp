@@ -7,6 +7,7 @@
 #include <emp-tool/emp-tool.h>
 #include "emp-agmpc/emp-agmpc.h"
 
+int silence_for_benchmark = 0;
 
 const static int num_parties = NUM_PARTY_FOR_RUNNING;
 // This function parses the circuit input file to determine
@@ -100,7 +101,7 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   ios[1]->flush();
   t2 = time_from(start);
 
-  if (party == 1) {
+  if (party == 1 && silence_for_benchmark == 0) {
     for (int i = 0; i < cf.n3; i++) {
       cout << "output[" << i << "] = " << out[i] << std::endl;
     }
@@ -131,9 +132,15 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
 
 
 int main(int argc, char **argv) {
-  if (argc != 6) {
+  if (argc < 6) {
     printf("USAGE: %s <party_id> <port_base> <circuit_file_folder> <input_folder> <output_folder>\n", argv[0]);
     return 1;
+  }
+
+  if(argc >= 7){
+    if(argv[6][0] == 's'){
+	silence_for_benchmark = 1;
+    }
   }
 
   // Define some constants for the circuit setup.
@@ -189,8 +196,10 @@ int main(int argc, char **argv) {
   // Parse input data
   create_circuit_input(input, input_wires, input_file);
 
-  for (size_t i = 0; i < num_wires.first; i++) {
-    cout << "input[" << i << "] = " << input[i] << std::endl;
+  if(silence_for_benchmark == 0){
+    for (size_t i = 0; i < num_wires.first; i++) {
+      cout << "input[" << i << "] = " << input[i] << std::endl;
+    }
   }
 
   // Benchmark and write out the result to output_file
