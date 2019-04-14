@@ -6,9 +6,11 @@ All rights reserved
 */
 
 #include <unistd.h>
+#include <chrono>
 
 #include "Online.h"
 #include "Processor/Processor.h"
+
 
 void online_phase(int online_num, Player &P, offline_control_data &OCD,
                   Machine &machine)
@@ -33,6 +35,9 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
           sleep(1);
         }
     }
+ 
+  auto online_start_time = std::chrono::high_resolution_clock::now();
+
   printf("Starting online phase\n");
 
   // Initialise the program
@@ -89,4 +94,9 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
   OCD.finish_offline[online_num]= 1;
   OCD.sacrifice_mutex[online_num].unlock();
   printf("Exiting online phase : %d\n", online_num);
+
+  auto online_end_time = std::chrono::high_resolution_clock::now();
+  double online_total_time = std::chrono::duration_cast<std::chrono::microseconds>(online_end_time - online_start_time).count();
+  printf("Total online time = %lf microseconds => %lf ms\n", online_total_time, online_total_time / 1000.00);
 }
+
