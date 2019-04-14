@@ -8,7 +8,7 @@
 #include "emp-agmpc/emp-agmpc.h"
 
 
-const static int num_parties = 3;
+const static int num_parties = NUM_PARTY_FOR_RUNNING;
 // This function parses the circuit input file to determine
 // which input wires belong to which party
 std::pair<uint64_t, uint64_t> parse_circuit_input(uint64_t party_id,
