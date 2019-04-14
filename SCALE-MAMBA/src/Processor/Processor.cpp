@@ -114,6 +114,7 @@ void Processor::execute(const Program &prog, int argument, Player &P,
   Cp.resize(reg_maxp);
   Sp.resize(reg_maxp);
   Ri.resize(reg_maxi);
+  Pp.resize(reg_maxi);
 
   for (int i= 0; i < reg_maxp; i++)
     {
