@@ -63,6 +63,18 @@ class NetIOMP { public:
 				delete ios2[i];
 			}
 	}
+
+	void set_window_size(NetIO *io){
+		int fl;
+		int winsize = 32 * 1024 * 1024;
+		
+		fl = setsockopt(io->consocket, SOL_SOCKET, SO_RCVBUF, (char*)&winsize, sizeof(int));
+		if (fl<0) { error("set_up_socket:setsockopt");  }
+		
+		fl = setsockopt(io->consocket, SOL_SOCKET, SO_SNDBUF, (char*)&winsize, sizeof(int));
+		if (fl<0) { error("set_up_socket:setsockopt");  }
+	}
+
 	void send_data(int dst, const void * data, size_t len) {
 		if(dst != 0 and dst!= party) {
 			if(party < dst)
