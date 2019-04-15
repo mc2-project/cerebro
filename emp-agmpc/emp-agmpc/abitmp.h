@@ -70,15 +70,21 @@ class ABitMP { public:
 		vector<future<void>> res;
 		
 		block delta = Delta;
+		printf("abit->compute in the loop.\n");
 		for(int i = 1; i <= nP; ++i) for(int j = 1; j<= nP; ++j) if( (i < j) and (i == party or j == party) ) {
 			int party2 = i + j - party;
 			res.push_back(pool->enqueue([this, KEY, length, delta, party2]() {
+				printf("send data to %d\n", party2);
 				abit1[party2]->send_cot(KEY[party2], delta, length);
+				printf("finish data sending to %d\n", party2);
 				io->get(party2, false)->flush();
 				io->get(party2, true)->flush();
+				printf("done flusing to %d\n", party2);
 			}));
 			res.push_back(pool->enqueue([this, MAC, data, length, party2]() {
+				printf("wait for party %d to send data to me\n", party2);
 				abit2[party2]->recv_cot(MAC[party2], data, length);
+				printf("done receiving data from %d\n", party2);
 				io->flush(party2);
 			}));
 		}
