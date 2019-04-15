@@ -7,7 +7,7 @@ total_samples = sum(data_sizes)
 dim = 10
 BATCH_SIZE = 5
 
-LEVELS = 3
+LEVELS = 10
 TOTAL_NODES = (2 ** LEVELS) - 1
 
 # The columns are:

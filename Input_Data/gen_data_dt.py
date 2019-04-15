@@ -1,35 +1,14 @@
-import struct
-import argparse
+leaf = 1000
 
-def write_spdz(input_folder, data):
-    f = open(input_folder + "/f0", 'w')
-    for d in data:
-        output = struct.pack("L", d)
-        f.write(output)
-    f.close()
+data = []
 
-# When writing out data for AG-MPC, we need to make sure that the format is [MSB ... LSB]
-def write_agmpc(input_folder, data):
-    data_rev = data[::-1]
-    f = open(input_folder + "/agmpc.input", 'w')
-    for d in data_rev:
-        output = struct.pack(">i", d)
-        f.write(output)
-    f.close()
+for i in range(10):
+    v = 2 ** i
+    for j in range(v):
+        if i == 9:
+            data += [leaf, j - v + 1, leaf, leaf]
+        else:
+            data += [i, 2, (v + j + 1) * 2 + 1, (v + j + 1) * 2 + 2]
 
-def main():
-    parser = argparse.ArgumentParser(description="An MC2 input parser")
-    parser.add_argument("input_folder", type=str)
-    args = parser.parse_args()
-    
-    leaf = 1000
-    data = [0, 0, 1, 2, 1, 1, 3, 4, 2, 2, 5, 6, leaf, 0, leaf, leaf, leaf, 1, leaf, leaf, leaf, 2, leaf, leaf, leaf, 3, leaf, leaf]
-    test_features = [5] * 10
-    data += test_features
-
-    # data = [1234, 2345]
-    
-    write_spdz(args.input_folder, data)
-    write_agmpc(args.input_folder, data)
-
-main()
+test_features = [5] * 10
+data += test_features
