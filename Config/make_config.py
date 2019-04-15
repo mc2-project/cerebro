@@ -49,6 +49,7 @@ def main():
     f.close()
 
     os.system("cd ./emp-agmpc && cmake . && make")
+    os.system("cd ./SCALE-MAMBA/Data && rm -rf Memory-P0 && rm -rf *.key")
     os.system("cd ./SCALE-MAMBA && cp Auto-Test-Data/Cert-Store/* Cert-Store/")
     os.system("cd ./SCALE-MAMBA && cp Auto-Test-Data/" + str(args.num_party) +"/* Data/")
 
