@@ -31,13 +31,19 @@ def parse(reader, obj, level=0):
             print "bit:{} = {}".format(obj["name"], bit)
         else:
             return bit
+    elif obj["type"] == "cbits":
+        return int(obj["value"])
     elif obj["type"] == "int_gc":
         num_wires = len(obj["value"])
         int_value = 0
         for i in range(num_wires):
             bit = parse(reader, obj["value"][i], level=level+1)
-            #print bit
             int_value += (bit << (i))
+            
+        k = int(obj["k"])
+        if int_value > (1L << (k-1)):
+            int_value = (1L << k) - int_value
+            int_value = -1 * int_value
 
         if level == 0:
             print "integer:{} = {}".format(obj["name"], int_value)
@@ -52,7 +58,7 @@ def parse(reader, obj, level=0):
             return value
     elif obj["type"] == "ArrayGC":
         values = []
-        for o in obj["values"]:
+        for o in obj["value"]:
             values.append(parse(reader, o, level=level+1))
         if level == 0:
             print "Array {}".format(obj["name"])
@@ -62,10 +68,11 @@ def parse(reader, obj, level=0):
             return values
     elif obj["type"] == "MatrixGC":
         values = []
-        for o in obj["values"]:
+        for o in obj["value"]:
             row = parse(reader, o, level=level+1)
             values.append(row)
         if level == 0:
+            print "Matrix {} ".format(obj["name"])
             for row in values:
                 for v in row:
                     print v ,

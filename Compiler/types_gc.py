@@ -12,6 +12,7 @@ import operator
 
 class bits(object):
     global_gid = 0
+    __slots__ = ["gid", "input_party"]
     
     def __init__(self, input_party=-1):
         self.gid = None
@@ -94,15 +95,18 @@ class bits(object):
         return res
 
     def reveal(self, name=""):
+        self.set_gid()
         program_gc.output_wires.append(self.gid)
         
         v = {}
         v["type"] = "bits"
         v["name"] = name
         v["value"] = self.gid
+        assert(self.gid is not None)
         return v
 
 class cbits(bits):
+    __slots__ = ["value"]
     def __init__(self, value):
         super(cbits, self).__init__()
         if (value != 0) and (value != 1):
@@ -130,12 +134,20 @@ class cbits(bits):
     __rxor__ = __xor__
     __rand__ = __and__
 
-    def reveal(self):
+    def reveal(self, name=""):
         # cbits does not need to be revealed
+        v = {}
+        v["type"] = "cbits"
+        v["name"] = name
+        v["value"] = self.value
+        return v
+
+    def set_gid(self):
+        # cbits does not need a gid
         pass
-    
             
 class sbits(bits):
+    __slots__ = []
     def __init__(self, input_party=-1):
         super(sbits, self).__init__(input_party)
     
@@ -324,23 +336,34 @@ class int_gc(object):
         add_full(dest.bits, self.bits, other.bits, self.length)
         return dest
 
-    def __sub__(self, other):
-        self.test_instance(other)
+    def __sub__(self, other, reverse=False):
         dest = int_gc(self.length)
-        sub_full(dest.bits, self.bits, other.bits, self.length)
+        if reverse:
+            self.test_instance(other)
+            sub_full(dest.bits, other.bits, self.bits, self.length)
+        else:
+            self.test_instance(other)
+            sub_full(dest.bits, self.bits, other.bits, self.length)
         return dest
 
     def __neg__(self):
         dest = int_gc(self.length)
         dest.bits = [b for b in self.bits]
         b[0] = ~b[0]
+        for b in dest.bits:
+            if not isinstance(b, cbits):
+                b.set_gid()
         return dest
 
     def absolute(self):
         dest = int_gc(self.length)
         for i in range(0, self.length):
             dest.bits[i] = self.bits[self.length-1]
-        return (self + dest) ^ dest
+        ret = (self + dest) ^ dest
+        for b in ret.bits:
+            if isinstance(b, sbits):
+                b.set_gid()
+        return ret
 
     def __mul__(self, other):
         self.test_instance(other)
@@ -348,11 +371,15 @@ class int_gc(object):
         mul_full(dest.bits, self.bits, other.bits, self.length)
         return dest
 
-    def __div__(self, other):
+    def __div__(self, other, reverse=False):
         self.test_instance(other)
         dest = int_gc(self.length)
-        i1 = self.absolute()
-        i2 = other.absolute()
+        if reverse:
+            i1 = other.absolute()
+            i2 = self.absolute()
+        else:
+            i1 = self.absolute()
+            i2 = other.absolute()
         sign = self.bits[other.length - 1] ^ other.bits[other.length - 1]
         div_full(dest.bits, i1.bits, i2.bits, self.length)
         dest_temp = [None for i in range(self.length)]
@@ -386,28 +413,38 @@ class int_gc(object):
     def __ne__(self, other):
         return ~(self == other)
 
-    def __lshift__(self, other):
-        if not isinstance(other, int):
-            raise ValueError("Shift amount must be an integer!")
-
-        if other == 0:
-            return self
-
-        dest = int_gc(self.length)
-        if other > self.length:
-            dest.bits = [cbits(0) for i in range(self.length)]
-        else:
-            for i in range(self.length - 1, other-1, -1):
-                dest.bits[i] = self.bits[i-other]
-            for i in range(other - 1, -1, -1):
-                dest.bits[i] = cbits(0)
-        return dest
-                
+    # Sign extended shift
     def __rshift__(self, other):
         if not isinstance(other, int):
             raise ValueError("Shift amount must be an integer!")
 
         if other == 0:
+            for b in self.bits:
+                b.set_gid()
+            return self
+
+        msb = self.bits[self.length-1]
+        dest = int_gc(self.length)
+        if other > self.length:
+            dest.bits = [msb for i in range(self.length)]
+        else:
+            for i in range(self.length - 1, other-1, -1):
+                dest.bits[i] = self.bits[i-other]
+            for i in range(other - 1, -1, -1):
+                dest.bits[i] = msb
+
+        for b in dest.bits:
+            if not isinstance(bits, cbits):
+                b.set_gid()
+        return dest
+                
+    def __lshift__(self, other):
+        if not isinstance(other, int):
+            raise ValueError("Shift amount must be an integer!")
+
+        if other == 0:
+            for b in self.bits:
+                b.set_gid()
             return self
 
         dest = int_gc(self.length)
@@ -415,26 +452,29 @@ class int_gc(object):
             dest.bits = [cbits(0) for i in range(self.length)]
         else:
             for i in range(other, self.length):
-                dest.bits[i-other] = self.bits[i]
-            for i in range(0, self.length-other):
+                dest.bits[i] = self.bits[i-other]
+            for i in range(0, other):
                 dest.bits[i] = cbits(0)
 
+        for b in dest.bits:
+            if not isinstance(bits, cbits):
+                b.set_gid()
         return dest
 
-    # If new_length > current length, convert appends 0s in the more significant positions
+    # If new_length > current length, convert appends in the more significant positions using the MSB
     # Otherwise, it will truncate the most significant bits
     def convert(self, new_length):
         if new_length == self.length:
             return self
         elif new_length > self.length:
             dest = int_gc(new_length)
-            for i in range(0, new_length - self.length):
-                dest.bits[i] = cbits(0)
-            for i in range(new_length - self.length, self.length):
+            for i in range(0, self.length):
                 dest.bits[i] = self.bits[i]
+            for i in range(self.length, new_length):
+                dest.bits[i] = dest.bits[self.length-1]
         else:
             dest = int_gc(new_length)
-            dest.bits = [self.bits[i] for i in range(new_length, self.length)]
+            dest.bits = [self.bits[i] for i in range(0, new_length)]
         return dest
         
     def __str__(self):
@@ -448,6 +488,7 @@ class int_gc(object):
         v["type"] = "int_gc"
         v["name"] = name
         v["value"] = [b.reveal() for b in self.bits]
+        v["k"] = self.length
         return v
 
 class cint_gc(int_gc):
@@ -584,15 +625,11 @@ class cfix_gc(object):
 
     def __init__(self, v=None, scale=False):
         if isinstance(v, int):
-            if scale: 
-                self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
-            else:
-                self.v = cint_gc(cfix_gc.k, value=v)
+            # always scale if it's an integer
+            self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
         elif isinstance(v, float):
-            if scale:
-                self.__init__(int(v * (2 ** cfix_gc.f)))
-            else:
-                self.__init__(int(v))
+            # always scale if it's a float
+            self.__init__(int(v * (2 ** cfix_gc.f)))
         elif isinstance(v, cint_gc):
             if scale:
                 self.v = v << cfix_gc.f
@@ -684,7 +721,7 @@ class cfix_gc(object):
             other_sfix = sfix_gc(v=other, scale=True)
             return (other_sfix >= self)
         else:
-            return NotImplemented
+            raise NotImplementedError
 
     def __lt__(self, other):
         return ~(self >= other)
@@ -721,9 +758,12 @@ class sfix_gc(object):
             self.v = sint_gc(sfix_gc.k, input_party)
 
     @classmethod
-    def load_sint(cls, v):
+    def load_sint(cls, v, scale=True):
         ret = cls()
-        ret.v = v
+        if scale:
+            ret.v = v << sfix_gc.f
+        else:
+            ret.v = v
         return ret
 
     def __and__(self, other):
@@ -746,6 +786,10 @@ class sfix_gc(object):
         else:
             raise NotImplementedError
 
+    def absolute(self):
+        res = sfix_gc(v=self.v.absolute(), scale=False)
+        return res
+
     def __add__(self, other):
         if isinstance(other, (cfix_gc, sfix_gc)):
             intv = self.v + other.v
@@ -757,7 +801,7 @@ class sfix_gc(object):
             other_fix = sfix_gc(v=other, scale=True)
             return (self + other_fix)
         else:
-            return NotImplemented
+            raise NotImplementedError
     
     def __sub__(self, other, reverse=False):
         if isinstance(other, cfix_gc):
@@ -775,7 +819,7 @@ class sfix_gc(object):
             v = sfix_gc(v=other.v, scale=True)
             return self.__sub__(v, reverse=reverse)
         else:
-            return NotImplemented
+            raise NotImplementedError
 
     def __mul__(self, other):
         if isinstance(other, (cfix_gc, sfix_gc)):
@@ -793,7 +837,7 @@ class sfix_gc(object):
             other_sfix = sfix_gc(other, scale=True)
             return (ret * other_sfix)
         else:
-            return NotImplemented
+            raise NotImplementedError
 
     def __div__(self, other, reverse=False):
         if isinstance(other, (cfix_gc, sfix_gc)):
@@ -804,8 +848,9 @@ class sfix_gc(object):
                 denominator = self
             v_ex = numerator.v.convert(sfix_gc.k * 2)
             ov_ex = denominator.v.convert(sfix_gc.k * 2)
+            v_ex = v_ex << sfix_gc.f
             ret_v = v_ex / ov_ex
-            ret_v = ret_v >> sfix_gc.f
+            #ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
             ret = sfix_gc(v=ret_v, scale=False)
             return ret
@@ -816,7 +861,7 @@ class sfix_gc(object):
             other_sfix = sfix_gc(v=other, scale=True)
             return self.__div__(other_sfix, reverse=reverse)
         else:
-            return NotImplemented
+            raise NotImplementedError
 
     def __eq__(self, other):
         if isinstance(other, cfix_gc):
@@ -827,7 +872,7 @@ class sfix_gc(object):
             other_fix = sfix_gc(other.length, other)
             return (self == other_fix)
         else:
-            return NotImplemented
+            raise NotImplementedError
 
     def __ne__(self, other):
         return ~(self == other)
@@ -844,7 +889,7 @@ class sfix_gc(object):
             other_fix = sfix_gc(other.length, other)
             return (self >= other_fix)
         else:
-            return NotImplemented
+            raise NotImplementedError
         
     def __lt__(self, other):
         return ~(self >= other)
@@ -861,6 +906,7 @@ class sfix_gc(object):
         v["name"] = name
         v["value"] = [self.v.reveal()]
         v["f"] = sfix_gc.f
+        v["k"] = sfix_gc.k
         return v
 
 def array_index_secret_load_gc(l, index):
@@ -960,7 +1006,7 @@ class MatrixGC(object):
 
 class cintArrayGC(ArrayGC):
     def __init__(self, length):
-        super(self, cintArrayGC).__init__(length)
+        super(cintArrayGC, self).__init__(length)
         self.data = [cint_gc(0) for i in range(length)]
 
 class cintMatrixGC(MatrixGC):
@@ -970,10 +1016,10 @@ class cintMatrixGC(MatrixGC):
 
 class cfixArrayGC(ArrayGC):
     def __init__(self, length):
-        super(self, cfixArrayGC).__init__(length)
+        super(cfixArrayGC, self).__init__(length)
         self.data = [cfix_gc(0) for i in range(length)]
 
-class cintMatrixGC(MatrixGC):
+class cfixMatrixGC(MatrixGC):
     def __init__(self, rows, columns):
         super(cfixMatrixGC, self).__init__(rows, columns)
         self.data = [cfixArrayGC(columns) for i in range(rows)]

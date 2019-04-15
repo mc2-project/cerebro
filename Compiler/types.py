@@ -1416,9 +1416,9 @@ class sfix(_number):
         return sfix(*res)
 
     @classmethod
-    def load_sint(cls, v):
+    def load_sint(cls, v, scale=True):
         res = cls()
-        res.load_int(v)
+        res.load_int(v, scale=scale)
         return res
 
     @vectorize_init
@@ -1451,8 +1451,11 @@ class sfix(_number):
         self.kappa = sfix.kappa
 
     @vectorize
-    def load_int(self, v):
-        self.v = sint(v) * (2 ** self.f)
+    def load_int(self, v, scale=True):
+        if scale:
+            self.v = sint(v) * (2 ** self.f)
+        else:
+            self.v = sint(v)
 
 
     def store_in_mem(self, address):

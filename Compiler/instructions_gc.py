@@ -1,20 +1,21 @@
 # (C) 2017 University of Bristol. See License.txt
 
-import Compiler.instructions_base as base
-import Compiler.instructions as spdz
-import Compiler.tools as tools
+# import Compiler.instructions_base as base
+# import Compiler.instructions as spdz
+# import Compiler.tools as tools
 import collections
 import itertools
+import types_gc
 
-class SecretBitsAF(base.RegisterArgFormat):
-    reg_type = 'sb'
-class ClearBitsAF(base.RegisterArgFormat):
-    reg_type = 'cb'
+# class SecretBitsAF(base.RegisterArgFormat):
+#     reg_type = 'sb'
+# class ClearBitsAF(base.RegisterArgFormat):
+#     reg_type = 'cb'
 
-base.ArgFormats['sb'] = SecretBitsAF
-base.ArgFormats['sbw'] = SecretBitsAF
-base.ArgFormats['cb'] = ClearBitsAF
-base.ArgFormats['cbw'] = ClearBitsAF
+# base.ArgFormats['sb'] = SecretBitsAF
+# base.ArgFormats['sbw'] = SecretBitsAF
+# base.ArgFormats['cb'] = ClearBitsAF
+# base.ArgFormats['cbw'] = ClearBitsAF
 
 opcodes_gc = dict(
     INV = 0x1,
@@ -29,8 +30,8 @@ class InstructionGC(object):
         
     def check_args(self):
         for arg in self.args:
-            #assert(arg.gid is not None)
-            pass
+            if arg.gid is None and isinstance(arg, types_gc.sbits):
+                arg.set_gid()
 
 class invert_gc(InstructionGC):
     __slots__ = []

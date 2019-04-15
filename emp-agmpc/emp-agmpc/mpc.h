@@ -3,6 +3,7 @@
 #include "fpremp.h"
 #include "abitmp.h"
 #include "netmp.h"
+#include <assert.h>
 #include <emp-tool/emp-tool.h>
 using namespace emp;
 
@@ -379,6 +380,7 @@ class CMPC { public:
 						else if(block_cmp(&H[1], &t0, 1))
 							mask_input[cf->gates[4*i+2]] = mask_input[cf->gates[4*i+2]] != true;
 						else 	{cout <<ands <<"no match GT!"<<endl<<flush;
+                          exit(EXIT_FAILURE);
 						}
 					}
 					ands++;
@@ -545,6 +547,7 @@ class CMPC { public:
 						else if(block_cmp(&H[1], &t0, 1))
 							mask_input[cf->gates[4*i+2]] = mask_input[cf->gates[4*i+2]] != true;
 						else 	{cout <<ands <<"no match GT!"<<endl<<flush;
+                          exit(EXIT_FAILURE);
 						}
 					}
 					ands++;

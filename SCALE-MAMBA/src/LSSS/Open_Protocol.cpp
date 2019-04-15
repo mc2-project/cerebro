@@ -199,6 +199,8 @@ void Open_Protocol::Open_To_All_End(vector<gfp> &values, const vector<Share> &S,
  */
 void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, bool verbose)
 {
+  open_cnt= 0;
+  return;
   if (Share::SD.type == Full)
     {
       uint8_t seed[SEED_SIZE];
