@@ -64,7 +64,9 @@ class FpreMP { public:
 		}
 		prg.random_bool(tr, length*bucket_size*3);
 		memset(tr, false, length*bucket_size*3);
+		printf("before abit->compute %d\n", length);
 		abit->compute(tMAC, tKEY, tr, length*bucket_size*3);
+		printf("after abit->compute %d\n", length);
 		vector<future<void>>	 res;
 
 		for(int i = 1; i <= nP; ++i) for(int j = 1; j <= nP; ++j) if (i < j ) {

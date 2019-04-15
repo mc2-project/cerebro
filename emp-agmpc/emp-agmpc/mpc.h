@@ -114,10 +114,14 @@ class CMPC { public:
 		if(party != 1)
 			prg.random_block(labels, total_pre);
 
+		printf("before fpre->compute.\n");
 		fpre->compute(ANDS_mac, ANDS_key, ANDS_value, num_ands);
+		printf("after fpre->compute.\n");
 
 		prg.random_bool(preprocess_value, total_pre);
+		printf("before abit->compute.\n");
 		fpre->abit->compute(preprocess_mac, preprocess_key, preprocess_value, total_pre);
+		printf("after abit->compute.\n");
 		for(int i = 1; i <= nP; ++i) {
 			memcpy(key[i], preprocess_key[i], num_in * sizeof(block));
 			memcpy(mac[i], preprocess_mac[i], num_in * sizeof(block));
