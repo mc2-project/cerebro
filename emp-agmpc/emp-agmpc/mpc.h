@@ -133,11 +133,15 @@ class CMPC { public:
 		int ands = num_in;
 		bool * x[nP+1];
 		bool * y[nP+1];
+
+		printf("creating x, y\n");
 		for(int i = 1; i <= nP; ++i) {
 			x[i] = new bool[num_ands];
 			y[i] = new bool[num_ands];
 		}
 
+
+		printf("assigning key and mac.\n");
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
 				for(int j = 1; j <= nP; ++j) {
@@ -149,6 +153,7 @@ class CMPC { public:
 			}
 		}
 
+		printf("computing gates.\n");
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == XOR_GATE) {
 				for(int j = 1; j <= nP; ++j) {
@@ -169,6 +174,7 @@ class CMPC { public:
 			}
 		}
 
+		printf("using ANDS_value.\n");
 		ands = 0;
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
@@ -178,16 +184,22 @@ class CMPC { public:
 			}
 		}
 
+		printf("sending out the ANDS masks.\n");
 		vector<future<void>>	 res;
 		for(int i = 1; i <= nP; ++i) for(int j = 1; j <= nP; ++j) if( (i < j) and (i == party or j == party) ) {
 			int party2 = i + j - party;
 			res.push_back(pool->enqueue([this, x, y, party2]() {
+				printf("prepare to send x to %d.\n", party2);
 				io->send_data(party2, x[party], num_ands);
+				printf("prepare to send y to %d.\n", party2);
 				io->send_data(party2, y[party], num_ands);
+				printf("flushing the connection to %d\n", party2);
 				io->flush(party2);
 			}));
 			res.push_back(pool->enqueue([this, x, y, party2]() {
+				printf("waiting to receive x from %d\n", party2);
 				io->recv_data(party2, x[party2], num_ands);
+				printf("waiting to receive y from %d\n", party2); 
 				io->recv_data(party2, y[party2], num_ands);
 			}));
 		}
@@ -197,6 +209,7 @@ class CMPC { public:
 			y[1][j] = y[1][j] != y[i][j];
 		}
 
+		printf("compute sigma\n");
 		ands = 0;
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
@@ -230,6 +243,8 @@ class CMPC { public:
 			}
 		}//sigma_[] stores the and of input wires to each AND gates
 		
+
+		printf("building the circuit\n");
 		ands = 0;
 		block H[4][nP+1];
 		block K[4][nP+1], M[4][nP+1];
@@ -267,15 +282,24 @@ class CMPC { public:
 				for(int j = 0; j < 4; ++j)
 					io->send_data(1, H[j]+1, sizeof(block)*(nP));
 				++ands;
+				if(ands % 10000 == 0){
+					printf("done transmission of ands %d\n", ands);
+				}
 			}
+			printf("finishing sending my circuit to party 1\n");
 			io->flush(1);
 		} else {
 			for(int i = 2; i <= nP; ++i) {
 				int party2 = i;
 				res.push_back(pool->enqueue([this, party2]() {
-					for(int i = 0; i < num_ands; ++i)
+					printf("prepare to receive circuit from %d\n", party2);
+					for(int i = 0; i < num_ands; ++i){
 						for(int j = 0; j < 4; ++j)
 							io->recv_data(party2, GT[i][party2][j]+1, sizeof(block)*(nP));
+						if(i % 10000 == 0){
+							printf("done receiving ands %d from party %d\n", i, party2);
+						}
+					}
 				}));
 			}
 			for(int i = 0; i < cf->num_gate; ++i) if(cf->gates[4*i+3] == AND_GATE) {
@@ -301,6 +325,7 @@ class CMPC { public:
 				memcpy(GTv[ands], r, sizeof(bool)*4);
 				++ands;
 			}
+			printf("done receiving all the circuits\n");
 			joinNclean(res);
 		}
 		for(int i = 1; i <= nP; ++i) {
