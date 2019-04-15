@@ -1,7 +1,7 @@
-Params.set_params(int_precision=49, f=25, k=49)
+Params.set_params(int_precision=64, f=32, k=64)
 NUM_PARTIES = 3
 
-SGD_ITERS = 113
+SGD_ITERS = 2
 data_size = 569
 dim = 30
 BATCH_SIZE = 5
@@ -12,14 +12,8 @@ y = s_fix_mat.read_input(data_size, 1, 0)
 w = s_fix_mat(dim, 1)
 alpha_B = c_fix(0.002)
 
-print_ln("alpha_B = %s", alpha_B)
-
-# @for_range(dim)
-# def f(i):
-#     w[i][0] = sfix(0)
-
-XB = sfixMatrix(BATCH_SIZE, dim)
-yB = sfixMatrix(BATCH_SIZE, 1)
+XB = s_fix_mat(BATCH_SIZE, dim)
+yB = s_fix_mat(BATCH_SIZE, 1)
 
 for i in range(SGD_ITERS):
     batch_low = i * BATCH_SIZE
@@ -35,12 +29,12 @@ for i in range(SGD_ITERS):
     w_sigmoid = sigmoid(w_ret)
     #reveal_all(w_sigmoid, "w_sigmoid")
     w_sub = matsub(w_sigmoid, yB)
-    #reveal_all(w_sub, "w_sub")
-    XB_T = transpose(XB)
-    w_1 = matmul(XB_T, w_sub)
-    #reveal_all(w_1, "w_1")
-    w_2 = mat_const_mul(alpha_B, w_1)
-    w_res = matsub(w, w_2)
-    mat_assign(w, w_res)
+    reveal_all(w_sub, "w_sub")
+#     XB_T = transpose(XB)
+#     w_1 = matmul(XB_T, w_sub)
+#     reveal_all(w_1, "w_1")
+#     w_2 = mat_const_mul(alpha_B, w_1)
+#     w_res = matsub(w, w_2)
+#     mat_assign(w, w_res)
 
-reveal_all(w, "w")
+# reveal_all(w, "w")

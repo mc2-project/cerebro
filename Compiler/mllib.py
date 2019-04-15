@@ -145,12 +145,9 @@ def _matmul_mix(A, B, nparallel=1):
 def _matmul_gc(A, B, C):
     for i in range(A.rows):
         for j in range(B.columns):
-            v = None
-            for k in range(A.columns):
-                if v is None:
-                    v = A[i][k] * B[k][j]
-                else:
-                    v += A[i][k] * B[k][j]
+            v = A[i][0] * B[0][j]
+            for k in range(1, A.columns):
+                v += A[i][k] * B[k][j]
             C[i][j] = v
 
 def matmul(A, B, nparallel=1):
@@ -166,11 +163,11 @@ def matmul(A, B, nparallel=1):
         C = sfixMatrix(A.rows, B.columns)
         D = sfixArray(A.rows * B.columns * A.columns)
         return _matmul(A, B, C, D, sfix, nparallel)
-    elif isinstance(A, sintMatrixGC) and isinstance(B, sintMatrixGC):
-        C = sintMatrixGC(A.rows, B.columns)
+    elif isinstance(A, cfixMatrixGC) or isinstance(B, cfixMatrixGC):
+        C = cfixMatrixGC(A.rows, B.columns)
         _matmul_gc(A, B, C)
         return C
-    elif isinstance(A, sfixMatrixGC) and isinstance(B, sfixMatrixGC):
+    elif isinstance(A, sfixMatrixGC) or isinstance(B, sfixMatrixGC):
         C = sfixMatrixGC(A.rows, B.columns)
         _matmul_gc(A, B, C)
         return C

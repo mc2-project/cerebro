@@ -82,6 +82,9 @@ class SecretFixedPointMatrixFactory(object):
             return ret
         else:
             ret = sfixMatrixGC(rows, columns)
+            for i in range(rows):
+                for j in range(columns):
+                    ret[i][j] = cfix_gc(0)
             return ret
         
     def read_input(self, rows, columns, party):
@@ -100,7 +103,6 @@ class SecretFixedPointMatrixFactory(object):
             ret = sfixMatrixGC(rows, columns)
             for i in range(ret.rows):
                 for j in range(ret.columns):
-                    v = sint_gc(Params.intp, party)
                     ret[i][j] = sfix_gc(v=None, input_party=party)
             return ret
     

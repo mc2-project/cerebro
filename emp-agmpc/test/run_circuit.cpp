@@ -7,7 +7,7 @@
 #include <emp-tool/emp-tool.h>
 #include "emp-agmpc/emp-agmpc.h"
 
-int silence_for_benchmark = 0;
+int silence_for_benchmark = 1;
 
 const static int num_parties = NUM_PARTY_FOR_RUNNING;
 // This function parses the circuit input file to determine
@@ -95,7 +95,7 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
   ios[0]->flush();
   ios[1]->flush();
   t2 = time_from(start);
-  if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
+  cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2 << " => " << t2 / 1000.00 << "ms" << " \n"<<flush;
 
   ttmp += t2;
 
@@ -128,7 +128,6 @@ void bench_once(NetIOMP<num_parties> * ios[2], ThreadPool * pool,
           v |= (1 << j);
         }
       }
-      std::cout << "v = " << unsigned(v) << std::endl;
       outfile.write((char *) &v, 1);
       v = 0;
     }
