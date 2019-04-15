@@ -428,9 +428,9 @@ class int_gc(object):
         if other > self.length:
             dest.bits = [msb for i in range(self.length)]
         else:
-            for i in range(self.length - 1, other-1, -1):
-                dest.bits[i] = self.bits[i-other]
-            for i in range(other - 1, -1, -1):
+            for i in range(0, self.length-other):
+                dest.bits[i] = self.bits[i+other]
+            for i in range(self.length-other, self.length):
                 dest.bits[i] = msb
 
         for b in dest.bits:
@@ -629,7 +629,8 @@ class cfix_gc(object):
             self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
         elif isinstance(v, float):
             # always scale if it's a float
-            self.__init__(int(v * (2 ** cfix_gc.f)))
+            value = int(v * (2 ** cfix_gc.f))
+            self.v = cint_gc(cfix_gc.k, value=value)
         elif isinstance(v, cint_gc):
             if scale:
                 self.v = v << cfix_gc.f

@@ -6,9 +6,9 @@ SPDZ = 0
 GC = 1
 
 class Params(object):
-    intp = 32
+    intp = 64
     f = 32
-    k = 32
+    k = 64
 
     @classmethod
     def set_params(cls, int_precision=32, f=32, k=64, parallelism=1):
