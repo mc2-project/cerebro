@@ -409,6 +409,7 @@ class int_gc(object):
     def __ne__(self, other):
         return ~(self == other)
 
+    # Sign extended shift
     def __rshift__(self, other):
         if not isinstance(other, int):
             raise ValueError("Shift amount must be an integer!")
@@ -418,14 +419,15 @@ class int_gc(object):
                 b.set_gid()
             return self
 
+        msb = self.bits[self.length-1]
         dest = int_gc(self.length)
         if other > self.length:
-            dest.bits = [cbits(0) for i in range(self.length)]
+            dest.bits = [msb for i in range(self.length)]
         else:
             for i in range(self.length - 1, other-1, -1):
                 dest.bits[i] = self.bits[i-other]
             for i in range(other - 1, -1, -1):
-                dest.bits[i] = cbits(0)
+                dest.bits[i] = msb
 
         for b in dest.bits:
             if not isinstance(bits, cbits):
@@ -455,7 +457,7 @@ class int_gc(object):
                 b.set_gid()
         return dest
 
-    # If new_length > current length, convert appends 0s in the more significant positions
+    # If new_length > current length, convert appends in the more significant positions using the MSB
     # Otherwise, it will truncate the most significant bits
     def convert(self, new_length):
         if new_length == self.length:
@@ -465,7 +467,7 @@ class int_gc(object):
             for i in range(0, self.length):
                 dest.bits[i] = self.bits[i]
             for i in range(self.length, new_length):
-                dest.bits[i] = cbits(0)
+                dest.bits[i] = dest.bits[self.length-1]
         else:
             dest = int_gc(new_length)
             dest.bits = [self.bits[i] for i in range(new_length, self.length)]

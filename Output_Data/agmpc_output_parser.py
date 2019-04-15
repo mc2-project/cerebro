@@ -42,9 +42,9 @@ def parse(reader, obj, level=0):
             if i == 0:
                 top_bit = bit
             int_value += (bit << (i))
-
-        if top_bit == 1:
-            k = int(obj["k"])
+            
+        k = int(obj["k"])
+        if int_value > (1L << (k-1)):
             int_value = (1L << k) - int_value
             int_value = -1 * int_value
 
