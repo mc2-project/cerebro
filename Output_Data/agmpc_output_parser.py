@@ -36,11 +36,8 @@ def parse(reader, obj, level=0):
     elif obj["type"] == "int_gc":
         num_wires = len(obj["value"])
         int_value = 0
-        top_bit = None
         for i in range(num_wires):
             bit = parse(reader, obj["value"][i], level=level+1)
-            if i == 0:
-                top_bit = bit
             int_value += (bit << (i))
             
         k = int(obj["k"])

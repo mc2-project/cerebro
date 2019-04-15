@@ -359,7 +359,11 @@ class int_gc(object):
         dest = int_gc(self.length)
         for i in range(0, self.length):
             dest.bits[i] = self.bits[self.length-1]
-        return (self + dest) ^ dest
+        ret = (self + dest) ^ dest
+        for b in ret.bits:
+            if isinstance(b, sbits):
+                b.set_gid()
+        return ret
 
     def __mul__(self, other):
         self.test_instance(other)
@@ -448,8 +452,8 @@ class int_gc(object):
             dest.bits = [cbits(0) for i in range(self.length)]
         else:
             for i in range(other, self.length):
-                dest.bits[i-other] = self.bits[i]
-            for i in range(0, self.length-other):
+                dest.bits[i] = self.bits[i-other]
+            for i in range(0, other):
                 dest.bits[i] = cbits(0)
 
         for b in dest.bits:
@@ -470,7 +474,7 @@ class int_gc(object):
                 dest.bits[i] = dest.bits[self.length-1]
         else:
             dest = int_gc(new_length)
-            dest.bits = [self.bits[i] for i in range(new_length, self.length)]
+            dest.bits = [self.bits[i] for i in range(0, new_length)]
         return dest
         
     def __str__(self):
@@ -621,15 +625,11 @@ class cfix_gc(object):
 
     def __init__(self, v=None, scale=False):
         if isinstance(v, int):
-            if scale: 
-                self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
-            else:
-                self.v = cint_gc(cfix_gc.k, value=v)
+            # always scale if it's an integer
+            self.v = cint_gc(cfix_gc.k, value=v * (2 ** cfix_gc.f))
         elif isinstance(v, float):
-            if scale:
-                self.__init__(int(v * (2 ** cfix_gc.f)))
-            else:
-                self.__init__(int(v))
+            # always scale if it's a float
+            self.__init__(int(v * (2 ** cfix_gc.f)))
         elif isinstance(v, cint_gc):
             if scale:
                 self.v = v << cfix_gc.f
@@ -787,7 +787,7 @@ class sfix_gc(object):
             raise NotImplementedError
 
     def absolute(self):
-        res = sfix_gc(v=self.v.absolute, scale=False)
+        res = sfix_gc(v=self.v.absolute(), scale=False)
         return res
 
     def __add__(self, other):
@@ -848,8 +848,9 @@ class sfix_gc(object):
                 denominator = self
             v_ex = numerator.v.convert(sfix_gc.k * 2)
             ov_ex = denominator.v.convert(sfix_gc.k * 2)
+            v_ex = v_ex << sfix_gc.f
             ret_v = v_ex / ov_ex
-            ret_v = ret_v >> sfix_gc.f
+            #ret_v = ret_v >> sfix_gc.f
             ret_v = ret_v.convert(sfix_gc.k)
             ret = sfix_gc(v=ret_v, scale=False)
             return ret

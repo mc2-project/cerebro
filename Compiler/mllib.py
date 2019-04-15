@@ -292,7 +292,7 @@ def _sigmoid_sfix(v):
 
 def _sigmoid_sfix_gc(v):
     abs_v = v.absolute()
-    denom = abs_v + 1
+    denom = abs_v + cfix_gc(1)
     res = v / denom
     return res
 
