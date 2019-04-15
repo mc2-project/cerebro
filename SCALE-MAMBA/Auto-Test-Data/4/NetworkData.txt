@@ -1,0 +1,8 @@
+RootCA.crt
+4
+0 172.31.39.112 Player1.crt P1
+1 172.31.41.155 Player2.crt P2
+2 172.31.44.33 Player3.crt P3
+3 172.31.34.59 Player4.crt P4
+1
+1
