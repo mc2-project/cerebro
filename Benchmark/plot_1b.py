@@ -42,23 +42,22 @@ def plot_dpi_ictf():
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [2, 4, 6, 8, 10, 12]
-    y1 = [26824, 22037.7, 20835.8, 20444.5, 19235.1, 19095.6]
-    y2 = [34573.1, 15369.3, 9598.62, 7089, 5541.65, 4541.09]
+    y1 = [27646, 18774.4, 17511.2, 16692.1, 16610, 16091]
+    y2 = [37362, 13345.4, 8485.42, 6442.36, 5136.55, 4279.01]
 
-    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="Many-to-all  ")
-    plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color=blue, label="Pairwise")
+    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="SH-SWHE")
+    plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color=blue, label="SH-LHE")
 
     axes = plt.gca()
     # axes.set_xscale("log", basex=2)
-    axes.set_ylim([0, 36000])
-    # axes.set_xlim([0,700])
+    axes.set_ylim([0, 40500])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("Throughput (triple/s)",fontsize=15)
-    plt.yticks(np.arange(0,36000,5000), fontsize=12)
-    plt.xlabel("Number of parties in 100Mbps network", fontsize=15)
+    plt.ylabel("\# mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0,40500,5000), fontsize=12)
+    plt.xlabel("\# parties in 100Mbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
 

@@ -45,18 +45,18 @@ def plot_dpi_ictf():
     y1 = [131143, 130911, 125127, 119390, 113552, 111843]
     y2 = [130391, 72317.6, 47682.3, 35238, 28417.5, 23841.7]
 
-    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="SH-SWHE  ")
+    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="SH-SWHE")
     plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color=blue, label="SH-LHE")
 
     axes = plt.gca()
-    axes.set_ylim([0, 140000])
+    axes.set_ylim([0, 145000])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("Throughput (triple/s)",fontsize=15)
-    plt.yticks(np.arange(0,140000,20000), fontsize=12)
-    plt.xlabel("Number of parties in 2Gbps network", fontsize=15)
+    plt.ylabel("\# mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0, 145000, 20000), fontsize=12)
+    plt.xlabel("\# parties in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
 
