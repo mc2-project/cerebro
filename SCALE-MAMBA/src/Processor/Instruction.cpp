@@ -1010,43 +1010,8 @@ void Instruction::execute_using_sacrifice_data(
     Processor &Proc, offline_control_data &OCD) const
 {
   int thread= Proc.get_thread_num();
-  // Check to see if we have to wait
-  bool wait= true;
-  while (wait)
-    {
-      OCD.sacrifice_mutex[thread].lock();
-      wait= false;
-      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < 1)
-        {
-          wait= true;
-        }
-      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < 1)
-        {
-          wait= true;
-        }
-      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < 1)
-        {
-          wait= true;
-        }
-      OCD.sacrifice_mutex[thread].unlock();
-      if (wait)
-        {
-          stringstream iss;
-          iss << "Waiting in online thread for sacrifice data\n";
-          if (opcode==TRIPLE) { iss << "\t Need " << size << " triples " <<
-          endl; }
-          if (opcode==SQUARE) { iss << "\t Need " << size << " squares " <<
-          endl; }
-          if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
-          endl; }
-          printf("%s",iss.str().c_str());
-       
-          sleep(1);
-        }
-    }
-
   // Now do the work
-  OCD.sacrifice_mutex[thread].lock();
+  //OCD.sacrifice_mutex[thread].lock();
   Proc.increment_PC();
 
   int r[3]= {this->r[0], this->r[1], this->r[2]};
@@ -1056,22 +1021,16 @@ void Instruction::execute_using_sacrifice_data(
       switch (opcode)
         {
           case TRIPLE:
-            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
-            //SacrificeD[thread].TD.ta.pop_front();
-            Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
-            //SacrificeD[thread].TD.tb.pop_front();
-            Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
-            //SacrificeD[thread].TD.tc.pop_front();
+            Proc.get_Sp_ref(r[0]).assign(0); //SacrificeD[thread].TD.ta.front());
+            Proc.get_Sp_ref(r[1]).assign(0); //SacrificeD[thread].TD.tb.front());
+            Proc.get_Sp_ref(r[2]).assign(0); //SacrificeD[thread].TD.tc.front());
             break;
           case SQUARE:
-            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
-            //SacrificeD[thread].SD.sa.pop_front();
-            Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].SD.sb.front());
-            //SacrificeD[thread].SD.sb.pop_front();
+            Proc.get_Sp_ref(r[0]).assign(0); //SacrificeD[thread].SD.sa.front());
+            Proc.get_Sp_ref(r[1]).assign(0); //SacrificeD[thread].SD.sb.front());
             break;
           case BIT:
-            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            //SacrificeD[thread].BD.bb.pop_front();
+            Proc.get_Sp_ref(r[0]).assign(0); //SacrificeD[thread].BD.bb.front());
             break;
           default:
             throw bad_value();
@@ -1084,7 +1043,7 @@ void Instruction::execute_using_sacrifice_data(
           r[2]++;
         }
     }
-  OCD.sacrifice_mutex[thread].unlock();
+  //OCD.sacrifice_mutex[thread].unlock();
 }
 
 bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
