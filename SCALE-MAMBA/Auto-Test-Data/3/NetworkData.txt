@@ -1,7 +1,0 @@
-RootCA.crt
-3
-0 172.31.39.112 Player1.crt P1
-1 172.31.41.155 Player2.crt P2
-2 172.31.44.33 Player3.crt P3
-1
-1
