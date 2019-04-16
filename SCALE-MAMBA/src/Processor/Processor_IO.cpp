@@ -28,6 +28,7 @@ void IO_Data_Wait(unsigned int player, unsigned int size, int thread,
       OCD.sacrifice_mutex[thread].unlock();
       if (wait)
         {
+	  printf("I am sleeping for IO data.\n");
           sleep(1);
         }
     }
