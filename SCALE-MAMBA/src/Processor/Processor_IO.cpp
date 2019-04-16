@@ -56,7 +56,9 @@ void Processor_IO::private_input(unsigned int player, int target, unsigned int c
   //  {
   //    i_epsilon.sub(SacrificeD[thread].ID.opened_ios.front());
   //    SacrificeD[thread].ID.opened_ios.pop_front();
-  //    i_epsilon.output(ss, false);
+  if(player == P.whoami()){
+     i_epsilon.output(ss, false);
+  }
   //  }
   //OCD.sacrifice_mutex[thread].unlock();
   Proc.increment_counters(Share::SD.M.shares_per_player(P.whoami()));
