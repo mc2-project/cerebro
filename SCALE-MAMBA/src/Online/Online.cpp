@@ -19,23 +19,6 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
          online_num);
   fflush(stdout);
 
-  // Wait until enough triples have been produced
-  bool wait= true;
-  while (wait)
-    {
-      OCD.sacrifice_mutex[online_num].lock();
-      if (OCD.totm[online_num] > OCD.minm && OCD.tots[online_num] > OCD.mins &&
-          OCD.totb[online_num] > OCD.minb)
-        {
-          wait= false;
-        }
-      OCD.sacrifice_mutex[online_num].unlock();
-      if (wait)
-        {
-          sleep(1);
-        }
-    }
- 
   auto online_start_time = std::chrono::high_resolution_clock::now();
 
   printf("Starting online phase\n");
@@ -63,36 +46,12 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
           Proc.execute(machine.progs[program], machine.get_OTI_arg(online_num), P,
                        machine, OCD);
 
-          // MAC/Hash Check
-          //if (online_num == 0)
-          //  {
-          //    Proc.RunOpenCheck(P, machine.get_IO().Get_Check());
-          //  }
-          //else
-          //  {
-          //    Proc.RunOpenCheck(P, "");
-          //  }
-
           machine.Signal_Finished_Tape(online_num);
         }
     }
 
-  // Run checks again
-  //if (online_num == 0)
-  //  {
-  //    Proc.RunOpenCheck(P, machine.get_IO().Get_Check());
-  //  }
-  //else
-  // {
-  //  Proc.RunOpenCheck(P, "");
-  //}
-
   machine.Lock_Until_Ready(online_num);
 
-  // Signal offline threads I am dying now
-  OCD.sacrifice_mutex[online_num].lock();
-  OCD.finish_offline[online_num]= 1;
-  OCD.sacrifice_mutex[online_num].unlock();
   printf("Exiting online phase : %d\n", online_num);
 
   auto online_end_time = std::chrono::high_resolution_clock::now();
