@@ -202,20 +202,20 @@ void *Main_Func(void *ptr)
       switch (num5)
         {
           case 0:
-            //mult_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
-            //           *(tinfo->PTD), *(tinfo)->industry, verbose);
+            mult_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                       *(tinfo->PTD), *(tinfo)->industry, verbose);
             break;
           case 1:
-            //square_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
-            //             *(tinfo->PTD), *(tinfo)->industry, verbose);
+            square_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                         *(tinfo->PTD), *(tinfo)->industry, verbose);
             break;
           case 2:
-            //bit_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
-            //          *(tinfo->PTD), *(tinfo)->industry, verbose);
+            bit_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                      *(tinfo->PTD), *(tinfo)->industry, verbose);
             break;
           case 3:
-            //sacrifice_phase(num_online, P, (tinfo->SD)->fake_sacrifice, *(tinfo->OCD),
-            //                *(tinfo->pk), *(tinfo->sk), *(tinfo->PTD), *(tinfo)->industry, verbose);
+            sacrifice_phase(num_online, P, (tinfo->SD)->fake_sacrifice, *(tinfo->OCD),
+                            *(tinfo->pk), *(tinfo->sk), *(tinfo->PTD), *(tinfo)->industry, verbose);
             break;
           case 4:
             online_phase(num_online, P, *(tinfo->OCD), *(tinfo)->machine);
