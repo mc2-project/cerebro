@@ -45,12 +45,12 @@ def plot_dpi_ictf():
     y1 = [2072934.4, 1737088, 1475980.8, 1279781.12, 1131412.48, 1002031.36]
     y2 = [1425858.56, 1095575.04, 760650.24, 650785.28, 540328.96, 468879.36]
 
-    y4 = [131143, 130911, 125127, 119390, 113552, 111843]
+    y3 = [133405, 127686, 125127, 119390, 113552, 111843]
 
-    plt.plot(x, y1, linestyle='--', marker='o', markersize=6, color='g', label="SH-LHE (d=100)")
-    plt.plot(x, y2, linestyle=':', marker='o', markersize=6, color='b', label="SH-LHE (d=20)")
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=6, color=red, label="SH-LHE (d=100)")
+    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE (d=20)")
 
-    plt.plot(x, y4, linestyle='-.', marker='o', markersize=6, color='k', label="SH-SWHE")
+    plt.plot(x, y3, linestyle='-.', marker='x', markersize=6, color=green, label="SH-SWHE")
 
     axes = plt.gca()
     axes.set_ylim([-10, 2400000])
@@ -58,8 +58,8 @@ def plot_dpi_ictf():
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0,2400000,300000), fontsize=12)
+    plt.ylabel("\# vectorized mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0,2400000,400000), fontsize=12)
     plt.xlabel("\# parties in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)

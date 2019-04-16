@@ -42,31 +42,25 @@ def plot_dpi_ictf():
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [2, 4, 6, 8, 10, 12]
-    y1 = [120.49, 76.4725, 54.5879, 44.1632, 35.8264, 30.7972]
-    y2 = [200.428, 111.913, 80.4253, 62.2471, 50.2785, 42.8461]
-    # y3 = [579.595, 447.296, 364, 308.474, 263.952, 226.461]
+    y1 = [1515763.2, 899285.76, 653245.44, 524305.92, 427384.32, 372197.12]
+    y2 = [760995.84, 385935.36, 246689.024, 189703.424, 154411.776, 128465.408]
 
-    y4 = [2.095625, 1.721695313, 1.627796875, 1.597226563, 1.502742188, 1.49184375]
-    y5 = [4.19125, 3.443390625, 3.25559375, 3.194453125, 3.005484375, 2.9836875]
-    # y6 = [49.21757813, 56.22460938, 60.67148438, 61.17304688, 61.50742188, 63.29570313]
+    y3 = [27646, 18774.4, 17511.2, 16692.1, 16610, 16091]
 
-    plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color='g', label="Pairwise (50d)")
-    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color='k', label="Pairwise (100d)  ")
-    # plt.plot(x, y3, linestyle='-.', marker='o', markersize=6, color=green, label="Pairwise (20d vector)")
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=6, color=red, label="SH-LHE (d=100)")
+    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE (d=20)")
 
-    plt.plot(x, y5, linestyle='--', marker='o', markersize=6, color='r', label="Many-to-all (50d)")
-    plt.plot(x, y4, linestyle=':', marker='o', markersize=6, color='b', label="Many-to-all (100d)  ")
-    # plt.plot(x, y6, linestyle='-.', marker='o', markersize=6, color=green, label="Many-to-all (20d vector)")
+    plt.plot(x, y3, linestyle='-.', marker='x', markersize=6, color=green, label="SH-SWHE")
 
     axes = plt.gca()
-    axes.set_ylim([-10, 250])
+    axes.set_ylim([-10, 1605000])
 
-    plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
+    plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("Throughput (triple/s)",fontsize=15)
-    plt.yticks(np.arange(0,250,50), fontsize=12)
-    plt.xlabel("Number of parties in 100Mbps network", fontsize=15)
+    plt.ylabel("\# vectorized mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0,1605000,400000), fontsize=12)
+    plt.xlabel("\# parties in 100Mbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
 

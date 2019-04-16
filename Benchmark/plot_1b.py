@@ -43,10 +43,16 @@ def plot_dpi_ictf():
 
     x = [2, 4, 6, 8, 10, 12]
     y1 = [27646, 18774.4, 17511.2, 16692.1, 16610, 16091]
-    y2 = [37362, 13345.4, 8485.42, 6442.36, 5136.55, 4279.01]
+    y2 = [36402.5, 13345.4, 8485.42, 6442.36, 5136.55, 4279.01]
 
-    plt.plot(x, y1, linestyle=':', marker='o', markersize=6, color=red, label="SH-SWHE")
-    plt.plot(x, y2, linestyle='--', marker='o', markersize=6, color=blue, label="SH-LHE")
+    y3 = [27271.22545, 19234.0358, 17513.54494, 16763.78202, 16343.96639, 16075.57908]
+    y4 = [31257.1195, 13738.89109, 8804.40999, 6477.824613, 5123.838602, 4238.014605]
+
+    plt.plot(x, y1, linestyle=':', marker='x', markersize=6, color=red, label="SH-SWHE")
+    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE")
+
+    plt.plot(x, y3, linestyle='--', alpha=0.5, color='m', label="SH-SWHE model")
+    plt.plot(x, y4, linestyle='--', alpha=0.5, color='g', label="SH-LHE model")
 
     axes = plt.gca()
     # axes.set_xscale("log", basex=2)

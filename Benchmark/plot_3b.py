@@ -41,36 +41,33 @@ def plot_dpi_ictf():
     # plt.plot(nrules, nb_vals, marker='o', linestyle='-', color=red)
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
-    x = [2, 4, 6, 8, 10, 12]
-    y1 = [133405, 127686, 125127, 119390, 113552, 111843]
-    y2 = [130391, 72317.6, 47682.3, 35238, 28417.5, 23841.7]
+    x = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    y1 = [4279.01, 41070.821, 77862.632, 114654.443, 151446.254, 188238.065, 225029.876, 261821.687, 298613.498, 335405.309, 372197.12]
+    y2 = [4279.01, 16697.6498, 29116.2896, 41534.9294, 53953.5692, 66372.209, 78790.8488, 91209.4886, 103628.1284, 116046.7682, 128465.408]
 
-    y3 = [136705.5998, 123500.5868, 119648.1351, 117810.6545, 116735.009, 116028.7581]
-    y4 = [136683.5473, 70150.44422, 47183.19853, 35545.58043, 28512.93598, 23803.45497]
+    y3 = [16091, 16091, 16091, 16091, 16091, 16091, 16091, 16091, 16091, 16091, 16091]            
 
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=6, color=red, label="SH-LHE (d=100)")
+    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE (d=20)")
 
-    plt.plot(x, y1, linestyle=':', marker='x', markersize=6, color=red, label="SH-SWHE")
-    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE")
-
-    plt.plot(x, y3, linestyle='--', alpha=0.5, color='m', label="SH-SWHE model")
-    plt.plot(x, y4, linestyle='--', alpha=0.5, color='g', label="SH-LHE model")
+    plt.plot(x, y3, linestyle='-.', marker='x', markersize=6, color=green, label="SH-SWHE")
 
     axes = plt.gca()
-    axes.set_ylim([0, 155000])
+    axes.set_ylim([-10, 405000])
 
-    plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
+    plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0, 155000, 30000), fontsize=12)
-    plt.xlabel("\# parties in 2Gbps network", fontsize=15)
-    xts = [2, 4, 6, 8, 10, 12]
-    plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
+    plt.ylabel("\# avg mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0,405000,80000), fontsize=12)
+    plt.xlabel("\% of vectorized mult gates in 100Mbps network", fontsize=15)
+    xts = [0, 20, 40, 60, 80, 100]
+    plt.xticks(xts, ["$0$", "$20$", "$40$", "$60$", "$80$", "$100$"], fontsize=12)
 
     fig = plt.gcf()
     fig.set_size_inches(6, 4, forward=True)
 
-    pp = PdfPages('Exp_1a_protocols_in_diff_parties.pdf')
+    pp = PdfPages('Exp_3b_protocols_mixed_protocol.pdf')
     plt.savefig(pp, format='pdf', bbox_inches='tight', dpi=fig.dpi)
     pp.close()
     plt.show()
