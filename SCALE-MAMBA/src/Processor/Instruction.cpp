@@ -1058,6 +1058,8 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
     }
   bool restart= false;
 
+  printf("the current opcode is %d\n", opcode);
+
   // First deal with the offline data input routines as these need thread locking
   if (opcode == TRIPLE || opcode == SQUARE || opcode == BIT)
     {
