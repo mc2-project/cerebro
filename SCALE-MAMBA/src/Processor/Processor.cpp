@@ -148,7 +148,6 @@ void Processor::execute(const Program &prog, int argument, Player &P,
     {
       bool restart= prog.execute_instr(PC, *this, P, machine, OCD);
 
-      printf("PC = %d, size = %d\n", PC, size);
       if (restart)
         {
           /* Call trigger 
