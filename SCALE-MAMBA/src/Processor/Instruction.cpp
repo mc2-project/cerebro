@@ -1016,15 +1016,15 @@ void Instruction::execute_using_sacrifice_data(
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
+      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < 1)
         {
           wait= true;
         }
-      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < size)
+      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < 1)
         {
           wait= true;
         }
-      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
+      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < 1)
         {
           wait= true;
         }
