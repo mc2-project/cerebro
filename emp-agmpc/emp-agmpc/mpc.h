@@ -282,9 +282,6 @@ class CMPC { public:
 				for(int j = 0; j < 4; ++j)
 					io->send_data(1, H[j]+1, sizeof(block)*(nP));
 				++ands;
-				if(ands % 10000 == 0){
-					printf("done transmission of ands %d\n", ands);
-				}
 			}
 			printf("finishing sending my circuit to party 1\n");
 			io->flush(1);
@@ -296,9 +293,6 @@ class CMPC { public:
 					for(int i = 0; i < num_ands; ++i){
 						for(int j = 0; j < 4; ++j)
 							io->recv_data(party2, GT[i][party2][j]+1, sizeof(block)*(nP));
-						if(i % 10000 == 0){
-							printf("done receiving ands %d from party %d\n", i, party2);
-						}
 					}
 				}));
 			}

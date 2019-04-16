@@ -1,7 +1,7 @@
 Params.set_params(int_precision=64, f=32, k=64)
 NUM_PARTIES = 3
 
-SGD_ITERS = 1
+SGD_ITERS = 2
 data_size = 569
 dim = 30
 BATCH_SIZE = 5

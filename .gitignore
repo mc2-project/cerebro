@@ -7,3 +7,8 @@
 .*.py
 *.a
 *~
+agmpc.txt
+agmpc.txt.input
+agmpc.txt.output
+agmpc.output
+f0

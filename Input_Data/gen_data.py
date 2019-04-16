@@ -7,7 +7,7 @@ def write_spdz(input_folder, data):
         sign = d < 0
         output = struct.pack("?", sign)
         f.write(output)
-        output = struct.pack("Q", abs(d))
+        output = struct.pack("Q", abs(int(d)))
         f.write(output)
     f.close()
 
