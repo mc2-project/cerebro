@@ -1031,7 +1031,6 @@ void Instruction::execute_using_sacrifice_data(
       OCD.sacrifice_mutex[thread].unlock();
       if (wait)
         {
-          /*
           stringstream iss;
           iss << "Waiting in online thread for sacrifice data\n";
           if (opcode==TRIPLE) { iss << "\t Need " << size << " triples " <<
@@ -1041,7 +1040,6 @@ void Instruction::execute_using_sacrifice_data(
           if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
           endl; }
           printf("%s",iss.str().c_str());
-          */
           sleep(1);
         }
     }
