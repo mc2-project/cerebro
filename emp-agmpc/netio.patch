@@ -1,0 +1,62 @@
+diff --git a/emp-tool/io/net_io_channel.h b/emp-tool/io/net_io_channel.h
+index ea19b6e..cdcb848 100644
+--- a/emp-tool/io/net_io_channel.h
++++ b/emp-tool/io/net_io_channel.h
+@@ -78,11 +78,11 @@ class NetIO: public IOChannel<NetIO> { public:
+ 				usleep(1000);
+ 			}
+ 		}
+-		set_nodelay();
+-		stream = fdopen(consocket, "wb+");
+-		buffer = new char[NETWORK_BUFFER_SIZE];
+-		memset(buffer, 0, NETWORK_BUFFER_SIZE);
+-		setvbuf(stream, buffer, _IOFBF, NETWORK_BUFFER_SIZE);
++		//set_nodelay();
++		/* stream = fdopen(consocket, "wb+"); */
++		/* buffer = new char[NETWORK_BUFFER_SIZE]; */
++		/* memset(buffer, 0, NETWORK_BUFFER_SIZE); */
++		/* setvbuf(stream, buffer, _IOFBF, NETWORK_BUFFER_SIZE); */
+ 		if(!quiet)
+ 			std::cout << "connected\n";
+ 	}
+@@ -123,26 +123,28 @@ class NetIO: public IOChannel<NetIO> { public:
+ 		counter += len;
+ 		int sent = 0;
+ 		while(sent < len) {
+-			int res = fwrite(sent + (char*)data, 1, len - sent, stream);
+-			if (res >= 0)
+-				sent+=res;
+-			else
+-				fprintf(stderr,"error: net_send_data %d\n", res);
++          // int res = fwrite(sent + (char*)data, 1, len - sent, stream);
++          int res = send(consocket, sent + (char*) data, len - sent, 0);
++          if (res >= 0)
++            sent+=res;
++          else
++            fprintf(stderr,"error: net_send_data %d\n", res);
+ 		}
+ 		has_sent = true;
+ 	}
+ 
+ 	void recv_data(void  * data, int len) {
+-		if(has_sent)
+-			fflush(stream);
++		/* if(has_sent) */
++		/* 	fflush(stream); */
+ 		has_sent = false;
+ 		int sent = 0;
+ 		while(sent < len) {
+-			int res = fread(sent + (char*)data, 1, len - sent, stream);
+-			if (res >= 0)
+-				sent += res;
+-			else 
+-				fprintf(stderr,"error: net_send_data %d\n", res);
++          //int res = fread(sent + (char*)data, 1, len - sent, stream);
++          int res = recv(consocket, sent + (char*)data, len - sent, 0);
++          if (res >= 0)
++            sent += res;
++          else 
++            fprintf(stderr,"error: net_send_data %d\n", res);
+ 		}
+ 	}
+ };
