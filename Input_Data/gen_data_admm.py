@@ -62,13 +62,13 @@ for i in range(nparties):
 	XXinv = XXinv_cache[i]
 	for j in range(d):
 		for k in range(d):
-			data.append(XXinv[j][k] * pow(2, float_precision))
+			data.append(int(XXinv[j][k] * pow(2, float_precision)))
 
 
 for i in range(nparties):
 	XTy = Xy_cache[i]
 	for j in range(d):
-		data.append(XTy[j][0] * pow(2, float_precision))
+		data.append(int(XTy[j][0] * pow(2, float_precision)))
 
 """
 data = []

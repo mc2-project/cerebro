@@ -1601,7 +1601,9 @@ class sfix(_number):
 
     def reveal(self):
         val = self.v.reveal()
-        return cfix(val, size=self.size)
+        v = cfix(val, size=self.size)
+        library.print_ln("sfix reveal's val is %s", val)
+        return v
 
 
 # this is for 20 bit decimal precision

@@ -1,4 +1,4 @@
-Params.set_params(int_precision=32, f=32, k=50)
+Params.set_params(int_precision=49, f=32, k=49)
 NUM_PARTIES = 3
 
 # Dimensions of X data matrix.
@@ -10,15 +10,15 @@ num_rows = 10
 local_compute = False
 rho = c_fix(0.01)
 l = c_fix(0.008)
-ADMM_ITER = 10
+ADMM_ITER = 3
 
 
 
 c = sfix(12.0996)
 print_ln("Test: %s", c.v.reveal())
 
-rho_val = 0.01
-l_val = 0.008
+rho_val = sfix(0.01)
+l_val = sfix(0.008)
 
 # Thresholding
 
@@ -39,6 +39,10 @@ def add_matrices(left_matrix, right_matrix, rows, cols):
     ret = s_fix_mat(rows, cols);
     for i in range(rows):
         for j in range(cols):
+            ret[i][j] = sfix(0)
+        
+    for i in range(rows):
+        for j in range(cols):
             ret[i][j] = left_matrix[i][j] + right_matrix[i][j]
 
     return ret
@@ -49,9 +53,11 @@ def add_matrices(left_matrix, right_matrix, rows, cols):
 def admm_local(XXinv, Xy, u, z):
     z_u = mat_const_mul(sfix(rho_val), matsub(z, u))
     second_term = add_matrices(Xy, z_u, num_cols, 1) #matadd(Xy, z_u)
+    reveal_all(z_u, "z_u")
+    reveal_all(Xy, "Xy")
     print_ln("Second term")
     for i in range(num_cols):
-        print_ln("%s", second_term[i][0].reveal())
+        print_ln("%s, sfix's size: %s", second_term[i][0].reveal(), second_term[i][0].size)
     print_ln("Second term integer values reveal")
     for i in range(num_cols):
         print_ln("%s", second_term[i][0].v.reveal())
@@ -123,12 +129,22 @@ def admm_coordinate(w_list, u_list, z):
         print_ln("%s", z_new[i][0].reveal())
 
     u_list_new = s_fix_mat(NUM_PARTIES * num_cols, 1)
-    neg_z = mat_const_mul(c_fix(-1), z_new)
+    reveal_all(z_new, "z_new")
+
+    neg_z = s_fix_mat(z_new.rows, z_new.columns)
+    for i in range(z_new.rows):
+        for j in range(z_new.columns):
+            neg_z[i][j] = z_new[i][j].__neg__()
+            
+    reveal_all(neg_z, "neg_z")
     for i in range(NUM_PARTIES):
         u_i = get_ith_matrix(u_list, i, num_cols, 1)
         w_i = get_ith_matrix(w_list, i, num_cols, 1)
         intermediate_vec = add_matrices(u_i, w_i, num_cols, 1)
+        reveal_all(intermediate_vec, "intermediate_vec")
+        reveal_all(neg_z, "neg_z")
         sum_vec = add_matrices(intermediate_vec, neg_z, num_cols, 1)   #matadd(matadd(u_i, w_i), neg_z)
+        reveal_all(sum_vec, "sum_vec")
         copy_ith_matrix(u_list_new, sum_vec, i, num_cols, 1)
 
 
@@ -253,9 +269,11 @@ def get_input_data():
 
 def main():
     XTX_inv_lst, XTy_lst = get_input_data()
-    for i in range(NUM_PARTIES * num_cols):
-        for j in range(num_cols):
-            print_ln("%s ", XTX_inv_lst[i][j].reveal())
+    reveal_all(XTX_inv_lst, "XTX_inv_lst")
+    reveal_all(XTy_lst, "XTy_lst")
+    # for i in range(NUM_PARTIES * num_cols):
+    #     for j in range(num_cols):
+    #         print_ln("%s ", XTX_inv_lst[i][j].reveal())
 
     w = admm(XTX_inv_lst, XTy_lst)
     return w
