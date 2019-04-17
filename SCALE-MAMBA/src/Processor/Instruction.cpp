@@ -1016,18 +1016,18 @@ void Instruction::execute_using_sacrifice_data(
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      //if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
-        //{
-         // wait= true;
-       // }
+      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
+        {
+         wait= true;
+       }
       if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < size)
         {
           wait= true;
         }
-      //if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
-      //  {
-      //    wait= true;
-      //  }
+      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
+        {
+          wait= true;
+        }
       OCD.sacrifice_mutex[thread].unlock();
       if (wait)
         {
@@ -1038,8 +1038,8 @@ void Instruction::execute_using_sacrifice_data(
           endl; }
           if (opcode==SQUARE) { iss << "\t Need " << size << " squares " <<
           endl; }
-         // if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
-         // endl; }
+         if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
+         endl; }
           printf("%s",iss.str().c_str());
           
           sleep(1);
