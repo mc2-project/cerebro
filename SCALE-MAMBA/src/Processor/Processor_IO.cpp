@@ -21,7 +21,7 @@ void IO_Data_Wait(unsigned int player, unsigned int size, int thread,
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      if (SacrificeD[thread].ID.ios[player].size() < size)
+      if (SacrificeD[thread].ID.ios[player].size() < 1)
         {
           wait= true;
         }
@@ -50,11 +50,11 @@ void Processor_IO::private_input(unsigned int player, int target, unsigned int c
   stringstream ss;
   OCD.sacrifice_mutex[thread].lock();
   rshares[player]= SacrificeD[thread].ID.ios[player].front();
-  SacrificeD[thread].ID.ios[player].pop_front();
+  //SacrificeD[thread].ID.ios[player].pop_front();
   if (player == P.whoami())
     {
       i_epsilon.sub(SacrificeD[thread].ID.opened_ios.front());
-      SacrificeD[thread].ID.opened_ios.pop_front();
+    //  SacrificeD[thread].ID.opened_ios.pop_front();
       i_epsilon.output(ss, false);
     }
   OCD.sacrifice_mutex[thread].unlock();
@@ -98,13 +98,13 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
   if (player == P.whoami())
     {
       o_epsilon= SacrificeD[thread].ID.opened_ios.front();
-      SacrificeD[thread].ID.opened_ios.pop_front();
+      //SacrificeD[thread].ID.opened_ios.pop_front();
     }
 
   vector<Share> shares(1);
   vector<gfp> values(1);
   shares[0]= SacrificeD[thread].ID.ios[player].front();
-  SacrificeD[thread].ID.ios[player].pop_front();
+  //SacrificeD[thread].ID.ios[player].pop_front();
   OCD.sacrifice_mutex[thread].unlock();
 
   shares[0].add(Proc.get_Sp_ref(source));
@@ -114,7 +114,7 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
   Proc.Open_To_All_End(values, shares, P, 1);
 
   // Guaranteed to be on online thread zero
-  Proc.RunOpenCheck(P, machine.get_IO().Get_Check(), 1);
+  //Proc.RunOpenCheck(P, machine.get_IO().Get_Check(), 1);
   if (player == P.whoami())
     {
       values[0].sub(o_epsilon);
