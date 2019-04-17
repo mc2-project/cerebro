@@ -1019,16 +1019,16 @@ void Instruction::execute_using_sacrifice_data(
       switch (opcode)
         {
           case TRIPLE:
-            Proc.write_Sp(r[0], 0);
-            Proc.write_Sp(r[1], 0);
-            Proc.write_Sp(r[2], 0);
+            Proc.get_Sp_ref(r[0]).assign_zero()
+	    Proc.get_Sp_ref(r[1]).assign_zero()
+	    Proc.get_Sp_ref(r[2]).assign_zero()
             break;
           case SQUARE:
-            Proc.write_Sp(r[0], 0);
-            Proc.write_Sp(r[1], 0);
+            Proc.get_Sp_ref(r[0]).assign_zero()
+            Proc.get_Sp_ref(r[1]).assign_zero()
             break;
           case BIT:
-            Proc.write_Sp(r[0], 0);
+            Proc.get_Sp_ref(r[0]).assign_zero()
             break;
           default:
             throw bad_value();
