@@ -31,19 +31,40 @@ def find_ranges(l):
     yield (low, prev)
         
 class ProgramGC(object):
+
+    MAX_INSTS = 500000
     
-    class BasicBlock(object):
-        def __init__(self):
-            self.instructions = []
-        
     def __init__(self, args, options, param=-1):
-        self.activeblock = ProgramGC.BasicBlock()
+        self.instructions = [None] * ProgramGC.MAX_INSTS
+        self.inst_counter = 0
+
         self.init_names(args)
+        self.num_instructions = 0
         self.total_wires = 0
         self.total_inputs = 0
         self.input_wires = {}
         self.output_wires = []
         self.output_objects = []
+
+        print "[GC compilation] Writing to file"
+        self.f = open(self.outfile, 'w')
+        # Prepend a bunch of bytes to save room
+        for i in range(2 * 100):
+            self.f.write(" ")
+
+    def add_instruction(self, inst):
+        self.num_instructions += 1
+        self.instructions[self.inst_counter] = inst
+        self.inst_counter += 1
+        if self.inst_counter >= ProgramGC.MAX_INSTS:
+            self.flush_instructions()
+            self.inst_counter = 0
+            
+    def flush_instructions(self):
+        for i in range(self.inst_counter):
+            self.f.write("\n{}".format(self.instructions[i]))
+            self.f.flush()
+        print "Processed {} instructions".format(self.num_instructions)
 
     def init_names(self, args):
         self.programs_dir=args[0];
@@ -67,35 +88,28 @@ class ProgramGC(object):
 
         self.outfile = self.programs_dir + '/agmpc.txt'
 
-    @property
-    def curr_block(self):
-        return self.activeblock
-
     def write_bytes(self, outfile=None):
         fname = self.outfile
-        if outfile is not None:
-            fname = outfile
 
-        print "[GC compilation] Writing to file"
+        # Finish outputting all instructions
+        self.flush_instructions()
 
-        f = open(fname, 'w')
-
-        f.write("{} {}\n".format(len(self.activeblock.instructions) + 1 + len(self.output_wires), self.total_wires + 1 + len(self.output_wires)))
-        f.write("{} {} {}\n".format(self.total_inputs, 0, len(self.output_wires)))
-        f.write("\n")
-
-        # Output all instructions
-        for i in self.activeblock.instructions:
-            f.write("{}\n".format(i))
+        self.f.write("\n")
 
         # Output the output wires
-        f.write("2 1 {} {} {} XOR\n".format(0, 0, self.total_wires))
+        self.f.write("2 1 {} {} {} XOR\n".format(0, 0, self.total_wires))
         wire_count = self.total_wires
         for b in self.output_wires:
             wire_count += 1
-            f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
+            self.f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
 
-        f.close()
+        # Seek to the beginning and rewrite
+        self.f.seek(0, 0)
+        self.f.write("{} {}\n".format(self.num_instructions + 1 + len(self.output_wires), self.total_wires + 1 + len(self.output_wires)))
+        self.f.write("{} {} {}\n".format(self.total_inputs, 0, len(self.output_wires)))
+        self.f.write("\n")
+
+        self.f.close()
 
         # Write input wire configuration for each party
         # format = party, wire start, wire end
