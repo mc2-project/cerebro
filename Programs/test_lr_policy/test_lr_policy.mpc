@@ -1,0 +1,58 @@
+Params.set_params(int_precision=64, f=32, k=64)
+NUM_PARTIES = 3
+
+SGD_ITERS = 2
+train_data_size = 500
+test_data_size = 69
+dim = 5
+BATCH_SIZE = 5
+
+X = s_fix_mat.read_input(train_data_size, dim, 0)
+X_test = s_fix_mat.read_input(test_data_size, dim, 0)
+y = s_fix_mat.read_input(train_data_size, 1, 0)
+y_test = s_fix_mat.read_input(test_data_size, 1, 0)
+min_score = s_fix.read_input(0)
+
+w = s_fix_mat(dim, 1)
+alpha_B = c_fix(0.002)
+
+XB = s_fix_mat(BATCH_SIZE, dim)
+yB = s_fix_mat(BATCH_SIZE, 1)
+
+for i in range(SGD_ITERS):
+    batch_low = i * BATCH_SIZE
+    batch_high = (i + 1) * BATCH_SIZE
+
+    for j in range(BATCH_SIZE):
+        for d in range(dim):
+            XB[j][d] = X[batch_low + j][d]
+        yB[j][0] = y[batch_low + j][0]
+
+    w_ret = matmul(XB, w)
+    #reveal_all(w_ret, "w_ret")
+    w_sigmoid = sigmoid(w_ret)
+    #reveal_all(w_sigmoid, "w_sigmoid")
+    w_sub = matsub(w_sigmoid, yB)
+    XB_T = transpose(XB)
+    w_1 = matmul(XB_T, w_sub)
+    #reveal_all(w_1, "w_1")
+    w_2 = mat_const_mul(alpha_B, w_1)
+    #reveal_all(w_2, "w_2")
+    w_res = matsub(w, w_2)
+    mat_assign(w, w_res)
+
+# Policy evaluation
+# NOTE! We should only evaluate the code in SPDZ
+# Predict on user test data and compare with the desired error rate
+thresh = c_fix(0.5)
+Xw = matmul(X_test, w)
+prob = sigmoid(Xw)
+score = s_fix_array(1)
+for i in range(prob.rows):
+    v = c_fix(1) * (prob[i][0] < thresh)
+    score[0] += v.__eq__(y_test[i][0])
+
+if_release = score[0].__gt__(min_score)
+w_final = mat_const_mul(if_release, w)
+print("w_final type is {}".format(type(w_final)))
+reveal_all(w_final, "w_final")
