@@ -431,8 +431,8 @@ def matinv(A, nparallel=1):
             def f3(k):
                 X[j][k] = t * X[j][k]
                 I[j][k] = t * I[j][k]
-
-            @for_range_multithread(nparallel, j, j)
+            
+            @for_range(j)
             def f4(L):
                 t = sfix(-1) * X[L][j]
                 @for_range_multithread(nparallel, n, n)
@@ -445,18 +445,18 @@ def matinv(A, nparallel=1):
                     I[L][k] = cond_assign_a(b, b1, b2)
 
             # from j+1 to n
-            @for_range_multithread(nparallel, n-j-1, n-j-1)
-            def f5(l):
-                L = l + j + 1
-                t = sfix(-1) * X[l][j]
+            @for_range(j+1, n)
+            def f5(L):
+                t = sfix(-1) * X[L][j]
                 @for_range_multithread(nparallel, n, n)
                 def g0(k):
-                    a1 = X[l][k] + t * X[j][k]
-                    a2 = X[l][k]
-                    b1 = I[l][k] + t * I[j][k]
-                    b2 = I[l][k] 
-                    X[l][k] = cond_assign_a(b, a1, a2)
-                    I[l][k] = cond_assign_a(b, b1, b2)
+                    a1 = X[L][k] + t * X[j][k]
+                    a2 = X[L][k]
+                    b1 = I[L][k] + t * I[j][k]
+                    b2 = I[L][k] 
+                    X[L][k] = cond_assign_a(b, a1, a2)
+                    I[L][k] = cond_assign_a(b, b1, b2)
+        
     return I
 
 # Assumes that the piecewise function is public for now
