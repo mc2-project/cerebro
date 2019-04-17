@@ -53,7 +53,6 @@ class Processor
   // as the Open commands are split in two
   vector<gfp> PO;
   vector<Share> Sh_PO;
-  Open_Protocol OP;
 
   int online_thread_num;
 
@@ -67,6 +66,8 @@ public:
   ~Processor();
 
   void clear_registers();
+
+  Open_Protocol OP;
 
   int get_thread_num() const
   {
