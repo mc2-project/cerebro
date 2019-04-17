@@ -275,7 +275,8 @@ void Share::add(const Share &S1, const Share &S2)
 {
   if (S1.p != S2.p)
     {
-      throw bad_value();
+       cout << "S1.p = " << S1.p << ", S2.p = " << S2.p << " ." << endl;
+      	    throw bad_value();
     }
   if (p != S1.p)
     {
