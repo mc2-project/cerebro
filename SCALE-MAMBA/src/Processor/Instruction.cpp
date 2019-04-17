@@ -1024,7 +1024,7 @@ void Instruction::execute_using_sacrifice_data(
         {
           wait= true;
         }
-      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
+      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < 1)
         {
           wait= true;
         }
@@ -1072,7 +1072,7 @@ void Instruction::execute_using_sacrifice_data(
             break;
           case BIT:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            SacrificeD[thread].BD.bb.pop_front();
+            //SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();
