@@ -40,10 +40,10 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
   // should use the open_to_one_begin/open_to_one_end
 
   // Via Channel one to avoid conflicts with START/STOP Opens
-  Proc.OP.Open_To_One_Begin(player, shares, P);
-  
+  Proc.Open_To_All_Begin(values, shares, P, 1);
+  Proc.Open_To_All_End(values, shares, P, 1);
+
   if(player == P.whoami()){
-     Proc.OP.Open_To_One_End(values, shares, P); 
      machine.get_IO().private_output_gfp(values[0], channel);
   }
 }
