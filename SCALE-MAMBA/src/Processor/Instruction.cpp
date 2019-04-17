@@ -1007,7 +1007,7 @@ ostream &operator<<(ostream &s, const Instruction &instr)
 }
 
 void Instruction::execute_using_sacrifice_data(
-    Processor &Proc, offline_control_data &OCD) const
+    Processor &Proc, Player &P, offline_control_data &OCD) const
 {
   (void)(OCD);
   Proc.increment_PC();
@@ -1060,7 +1060,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
   // First deal with the offline data input routines as these need thread locking
   if (opcode == TRIPLE || opcode == SQUARE || opcode == BIT)
     {
-      execute_using_sacrifice_data(Proc, OCD);
+      execute_using_sacrifice_data(Proc, P, OCD);
       return restart;
     }
 
