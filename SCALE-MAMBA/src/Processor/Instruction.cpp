@@ -1017,15 +1017,15 @@ void Instruction::execute_using_sacrifice_data(
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < 1)
+      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
         {
          wait= true;
        }
-      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < 1)
+      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < size)
         {
           wait= true;
         }
-      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < 1)
+      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
         {
           wait= true;
         }
@@ -1059,21 +1059,21 @@ void Instruction::execute_using_sacrifice_data(
         {
           case TRIPLE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
-            //SacrificeD[thread].TD.ta.pop_front();
+            SacrificeD[thread].TD.ta.pop_front();
             Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
-            //SacrificeD[thread].TD.tb.pop_front();
+            SacrificeD[thread].TD.tb.pop_front();
             Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
-            //SacrificeD[thread].TD.tc.pop_front();
+            SacrificeD[thread].TD.tc.pop_front();
             break;
           case SQUARE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
-            //SacrificeD[thread].SD.sa.pop_front();
+            SacrificeD[thread].SD.sa.pop_front();
             Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].SD.sb.front());
-            //SacrificeD[thread].SD.sb.pop_front();
+            SacrificeD[thread].SD.sb.pop_front();
             break;
           case BIT:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            //SacrificeD[thread].BD.bb.pop_front();
+            SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();

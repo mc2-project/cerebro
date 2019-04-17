@@ -21,14 +21,14 @@ void IO_Data_Wait(unsigned int player, unsigned int size, int thread,
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      if (SacrificeD[thread].ID.ios[player].size() < 1)
+      if (SacrificeD[thread].ID.ios[player].size() < size)
         {
           wait= true;
         }
       OCD.sacrifice_mutex[thread].unlock();
       if (wait)
         {
-          printf("waiting for IO.\n"); sleep(1);
+          sleep(1);
         }
     }
 }
@@ -42,7 +42,6 @@ void Processor_IO::private_input(unsigned int player, int target, unsigned int c
 
   IO_Data_Wait(player, 1, thread, OCD);
 
-  printf("IN1\n");
   if (player == P.whoami())
     {
       i_epsilon= machine.get_IO().private_input_gfp(channel);
@@ -51,11 +50,11 @@ void Processor_IO::private_input(unsigned int player, int target, unsigned int c
   stringstream ss;
   OCD.sacrifice_mutex[thread].lock();
   rshares[player]= SacrificeD[thread].ID.ios[player].front();
-  //SacrificeD[thread].ID.ios[player].pop_front();
+  SacrificeD[thread].ID.ios[player].pop_front();
   if (player == P.whoami())
     {
       i_epsilon.sub(SacrificeD[thread].ID.opened_ios.front());
-    //  SacrificeD[thread].ID.opened_ios.pop_front();
+      SacrificeD[thread].ID.opened_ios.pop_front();
       i_epsilon.output(ss, false);
     }
   OCD.sacrifice_mutex[thread].unlock();
@@ -81,7 +80,6 @@ void Processor_IO::private_input(unsigned int player, int target, unsigned int c
     {
       Proc.get_Sp_ref(target).add(rshares[player], i_epsilon, P.get_mac_keys());
     }
-	printf("IN2\n");
 }
 
 
@@ -94,7 +92,6 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
 
   IO_Data_Wait(player, 1, thread, OCD);
 
-	printf("OUT1\n");
   OCD.sacrifice_mutex[thread].lock();
 
   gfp o_epsilon;
@@ -102,13 +99,13 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
   if (player == P.whoami())
     {
       o_epsilon= SacrificeD[thread].ID.opened_ios.front();
-      //SacrificeD[thread].ID.opened_ios.pop_front();
+      SacrificeD[thread].ID.opened_ios.pop_front();
     }
 
   vector<Share> shares(1);
   vector<gfp> values(1);
   shares[0]= SacrificeD[thread].ID.ios[player].front();
-  //SacrificeD[thread].ID.ios[player].pop_front();
+  SacrificeD[thread].ID.ios[player].pop_front();
   OCD.sacrifice_mutex[thread].unlock();
 
   shares[0].add(Proc.get_Sp_ref(source));
@@ -124,5 +121,4 @@ void Processor_IO::private_output(unsigned int player, int source, unsigned int 
       values[0].sub(o_epsilon);
       machine.get_IO().private_output_gfp(values[0], channel);
     }
-  printf("OUT2\n");
 }
