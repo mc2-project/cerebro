@@ -1796,6 +1796,8 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_OUTPUT_PINT:
             if (p == P.whoami()) {
               printf("get thread num = %d\n", Proc.get_thread_num());
+	      flush();
+	      
 	      if (Proc.get_thread_num() != 0) {
                 throw IO_thread();
               }
