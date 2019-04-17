@@ -14,6 +14,7 @@ All rights reserved
 #include "Program.h"
 
 #include <stack>
+#include <chrono>
 using namespace std;
 
 struct TempVars
@@ -46,9 +47,6 @@ class Processor
   vector<int> rwi;
 #endif
 
-  // Program counter
-  unsigned int PC;
-
   // This is the vector of partially opened values and shares we need to store
   // as the Open commands are split in two
   vector<gfp> PO;
@@ -62,7 +60,13 @@ class Processor
 
   PRNG prng;
 
-public:
+public:  
+  // Program counter
+  unsigned int PC;
+
+  // Program last verbose timer
+  std::chrono::high_resolution_clock::time_point last_report_time;
+
   Processor(int online_thread_num, unsigned int nplayers);
   ~Processor();
 

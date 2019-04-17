@@ -16,6 +16,7 @@ All rights reserved
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <chrono>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -1091,6 +1092,11 @@ void Instruction::execute_using_sacrifice_data(
 bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
                           offline_control_data &OCD) const
 {
+  
+   std::chrono::high_resolution_clock::time_point t_now = std::chrono::high_resolution_clock::now();
+   double t_gap = std::chrono::duration_cast<std::chrono::duration<double>>(t_now - Proc.last_report_time).count();
+
+
   if (machine.verbose)
     {
       stringstream s;
@@ -1098,6 +1104,16 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
       printf("Thread %d : %s\n", Proc.get_thread_num(), s.str().c_str());
       fflush(stdout);
     }
+
+   if(t_gap > 5){
+      stringstream s;
+      s << *this;
+      printf("Thread %d : %s\n", Proc.get_thread_num(), s.str().c_str());
+      fflush(stdout);
+
+      Proc.last_report_time = t_now;
+   }
+
   bool restart= false;
 
   // First deal with the offline data input routines as these need thread locking
