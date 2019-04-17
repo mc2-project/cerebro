@@ -983,11 +983,10 @@ class ArrayGC(object):
             raise NotImplementedError
 
     def __setitem__(self, index, value):
-        v = self.data[index].conv(value)
         if isinstance(index, (sint_gc, sfix_gc)):
-            array_index_secret_store_gc(self, index, v)
+            array_index_secret_store_gc(self, index, value)
         elif isinstance(index, int):
-            self.data[index] = v
+            self.data[index] = value
         else:
             raise NotImplementedError
 
@@ -1002,7 +1001,7 @@ class MatrixGC(object):
     def __init__(self, rows, columns, value_type):
         self.rows = rows
         self.columns = columns
-        self.data = [ArrayGC(columns) for r in range(rows)]
+        self.data = [ArrayGC(columns, value_type) for r in range(rows)]
         self.value_type = value_type
 
     def __getitem__(self, index):
@@ -1019,40 +1018,40 @@ class MatrixGC(object):
 
 class cintArrayGC(ArrayGC):
     def __init__(self, length, value_type):
-        super(cintArrayGC, self).__init__(length, value_type)
+        super(cintArrayGC, self).__init__(length, cint_gc)
         self.data = [cint_gc(0) for i in range(length)]
 
 class cintMatrixGC(MatrixGC):
     def __init__(self, rows, columns, value_type):
-        super(cintMatrixGC, self).__init__(rows, columns, value_type)
+        super(cintMatrixGC, self).__init__(rows, columns, cint_gc)
         self.data = [cintArrayGC(columns, value_type) for i in range(rows)]
 
 class cfixArrayGC(ArrayGC):
     def __init__(self, length, value_type):
-        super(cfixArrayGC, self).__init__(length, value_type)
+        super(cfixArrayGC, self).__init__(length, cfix_gc)
         self.data = [cfix_gc(0) for i in range(length)]
 
 class cfixMatrixGC(MatrixGC):
     def __init__(self, rows, columns, value_type):
-        super(cfixMatrixGC, self).__init__(rows, columns, value_type)
+        super(cfixMatrixGC, self).__init__(rows, columns, cfix_gc)
         self.data = [cfixArrayGC(columns, value_type) for i in range(rows)]
 
 class sintArrayGC(ArrayGC):
-    def __init__(self, length, value_type):
-        super(sintArrayGC, self).__init__(length, value_type)
+    def __init__(self, length):
+        super(sintArrayGC, self).__init__(length, sint_gc)
         self.data = [sint_gc(32) for i in range(length)]
 
 class sintMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, value_type):
-        super(sintMatrixGC, self).__init__(rows, columns, value_type)
-        self.data = [sintArrayGC(columns, value_type) for i in range(rows)]
+    def __init__(self, rows, columns):
+        super(sintMatrixGC, self).__init__(rows, columns, sint_gc)
+        self.data = [sintArrayGC(columns) for i in range(rows)]
 
 class sfixArrayGC(ArrayGC):
-    def __init__(self, length, value_type):
-        super(sfixArrayGC, self).__init__(length, value_type)
+    def __init__(self, length):
+        super(sfixArrayGC, self).__init__(length, sfix_gc)
         self.data = [sfix_gc(0) for i in range(length)]
 
 class sfixMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, value_type):
-        super(sfixMatrixGC, self).__init__(rows, columns, value_type)
-        self.data = [sfixArrayGC(columns, value_type) for i in range(rows)]
+    def __init__(self, rows, columns):
+        super(sfixMatrixGC, self).__init__(rows, columns, sfix_gc)
+        self.data = [sfixArrayGC(columns) for i in range(rows)]
