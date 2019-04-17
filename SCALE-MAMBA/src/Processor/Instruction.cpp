@@ -1055,7 +1055,9 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
     }
   bool restart= false;
 
-  cout << "the current opcode = " << opcode << endl;
+  if(Proc.PC % 1000 == 0){
+	  cout << "Now PC = " << Prof.PC << ", opcode = " << opcode << endl;
+  }
 
   // First deal with the offline data input routines as these need thread locking
   if (opcode == TRIPLE || opcode == SQUARE || opcode == BIT)
