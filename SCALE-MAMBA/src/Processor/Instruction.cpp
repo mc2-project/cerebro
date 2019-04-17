@@ -1071,9 +1071,8 @@ void Instruction::execute_using_sacrifice_data(
             SacrificeD[thread].SD.sb.pop_front();
             break;
           case BIT:
-            Proc.get_Sp_ref(r[0]).assign_zero();
-	    //SacrificeD[thread].BD.bb.front());
-            //SacrificeD[thread].BD.bb.pop_front();
+            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
+            SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();
