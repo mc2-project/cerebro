@@ -1016,10 +1016,10 @@ void Instruction::execute_using_sacrifice_data(
     {
       OCD.sacrifice_mutex[thread].lock();
       wait= false;
-      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
-        {
-          wait= true;
-        }
+      //if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
+        //{
+         // wait= true;
+       // }
       if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < size)
         {
           wait= true;
@@ -1034,8 +1034,8 @@ void Instruction::execute_using_sacrifice_data(
           
           stringstream iss;
           iss << "Waiting in online thread for sacrifice data\n";
-          if (opcode==TRIPLE) { iss << "\t Need " << size << " triples " <<
-          endl; }
+         // if (opcode==TRIPLE) { iss << "\t Need " << size << " triples " <<
+         // endl; }
           if (opcode==SQUARE) { iss << "\t Need " << size << " squares " <<
           endl; }
          // if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
@@ -1057,12 +1057,15 @@ void Instruction::execute_using_sacrifice_data(
       switch (opcode)
         {
           case TRIPLE:
-            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
-            SacrificeD[thread].TD.ta.pop_front();
-            Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
-            SacrificeD[thread].TD.tb.pop_front();
-            Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
-            SacrificeD[thread].TD.tc.pop_front();
+            Proc.get_Sp_ref(r[0]).assign_zero();
+	    //(SacrificeD[thread].TD.ta.front());
+            //SacrificeD[thread].TD.ta.pop_front();
+            Proc.get_Sp_ref(r[1]).assign_zero();
+	    //(SacrificeD[thread].TD.tb.front());
+            //SacrificeD[thread].TD.tb.pop_front();
+            Proc.get_Sp_ref(r[2]).assign_zero();
+	    //(SacrificeD[thread].TD.tc.front());
+            //SacrificeD[thread].TD.tc.pop_front();
             break;
           case SQUARE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
