@@ -1024,10 +1024,10 @@ void Instruction::execute_using_sacrifice_data(
         {
           wait= true;
         }
-      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
-        {
-          wait= true;
-        }
+      //if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
+      //  {
+      //    wait= true;
+      //  }
       OCD.sacrifice_mutex[thread].unlock();
       if (wait)
         {
@@ -1038,8 +1038,8 @@ void Instruction::execute_using_sacrifice_data(
           endl; }
           if (opcode==SQUARE) { iss << "\t Need " << size << " squares " <<
           endl; }
-          if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
-          endl; }
+         // if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
+         // endl; }
           printf("%s",iss.str().c_str());
           
           sleep(1);
@@ -1071,8 +1071,9 @@ void Instruction::execute_using_sacrifice_data(
             SacrificeD[thread].SD.sb.pop_front();
             break;
           case BIT:
-            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            SacrificeD[thread].BD.bb.pop_front();
+            Proc.get_Sp_ref(r[0]).assign_zero();
+	    //SacrificeD[thread].BD.bb.front());
+            //SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();
