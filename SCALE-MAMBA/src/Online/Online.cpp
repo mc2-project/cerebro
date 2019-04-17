@@ -21,24 +21,6 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
 
 
 
-  // Wait until enough triples have been produced
-  bool wait= true;
-  while (wait)
-    {
-      OCD.sacrifice_mutex[online_num].lock();
-      if (OCD.totm[online_num] > OCD.minm && OCD.tots[online_num] > OCD.mins &&
-          OCD.totb[online_num] > OCD.minb)
-        {
-          wait= false;
-        }
-      OCD.sacrifice_mutex[online_num].unlock();
-      if (wait)
-        {
-          sleep(1);
-        }
-    }
-
-
   auto online_start_time = std::chrono::high_resolution_clock::now();
 
   printf("Starting online phase\n");
@@ -71,12 +53,6 @@ void online_phase(int online_num, Player &P, offline_control_data &OCD,
     }
 
   machine.Lock_Until_Ready(online_num);
-
-
-  // Signal offline threads I am dying now
-  OCD.sacrifice_mutex[online_num].lock();
-  OCD.finish_offline[online_num]= 1;
-  OCD.sacrifice_mutex[online_num].unlock();
 
   printf("Exiting online phase : %d\n", online_num);
 

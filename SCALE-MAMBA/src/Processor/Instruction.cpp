@@ -1671,7 +1671,8 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_SHARE:
             if (Proc.get_thread_num() != 0)
               {
-                throw IO_thread();
+                cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
+		throw IO_thread();
               }
             for (unsigned int i= 0; i < start.size(); i++)
               {
@@ -1681,6 +1682,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_SHARE:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             for (unsigned int i= 0; i < start.size(); i++)
@@ -1691,6 +1693,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_CLEAR:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Cp_ref(r[0])= machine.get_IO().public_input_gfp(n);
@@ -1698,6 +1701,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_INT:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Ri_ref(r[0])= machine.get_IO().public_input_int(n);
@@ -1705,6 +1709,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_CLEAR:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().public_output_gfp(Proc.read_Cp(r[0]), n);
@@ -1712,6 +1717,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_INT:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().public_output_int(Proc.read_Ri(r[0]), n);
@@ -1719,6 +1725,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OPEN_CHAN:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Ri_ref(r[0])= machine.get_IO().open_channel(n);
@@ -1726,6 +1733,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case CLOSE_CHAN:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().close_channel(n);
@@ -1733,6 +1741,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_OUTPUT:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.iop.private_output(p, r[0], m, Proc, P, machine, OCD);
@@ -1740,6 +1749,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_INPUT:
             if (Proc.get_thread_num() != 0)
               {
+		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.iop.private_input(p, r[0], m, Proc, P, machine, OCD);
@@ -1786,7 +1796,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_INPUT_PINT:
             if (p == P.whoami()) {
               if (Proc.get_thread_num() != 0) {
-                throw IO_thread();
+                printf("INPUT_PINT");throw IO_thread();
               }
               
               Proc.get_Pp_ref(r[0]) = machine.get_IO().private_input_gfp(n);
@@ -1795,11 +1805,8 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
 
           case PRIVATE_OUTPUT_PINT:
             if (p == P.whoami()) {
-              cout << "get thread num = " <<  Proc.get_thread_num() << endl;
-	      flush(cout);
-	      
 	      if (Proc.get_thread_num() != 0) {
-                throw IO_thread();
+                printf("OUTPUT_PINT"); throw IO_thread();
               }
               
               machine.get_IO().private_output_gfp(Proc.get_Pp_ref(r[0]), n);
