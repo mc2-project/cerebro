@@ -1007,9 +1007,47 @@ ostream &operator<<(ostream &s, const Instruction &instr)
 }
 
 void Instruction::execute_using_sacrifice_data(
-    Processor &Proc, Player &P, offline_control_data &OCD) const
+    Processor &Proc, offline_control_data &OCD) const
 {
-  (void)(OCD);
+  int thread= Proc.get_thread_num();
+  // Check to see if we have to wait
+  bool wait= true;
+  while (wait)
+    {
+      OCD.sacrifice_mutex[thread].lock();
+      wait= false;
+      if (opcode == TRIPLE && SacrificeD[thread].TD.ta.size() < size)
+        {
+          wait= true;
+        }
+      if (opcode == SQUARE && SacrificeD[thread].SD.sa.size() < size)
+        {
+          wait= true;
+        }
+      if (opcode == BIT && SacrificeD[thread].BD.bb.size() < size)
+        {
+          wait= true;
+        }
+      OCD.sacrifice_mutex[thread].unlock();
+      if (wait)
+        {
+          /*
+          stringstream iss;
+          iss << "Waiting in online thread for sacrifice data\n";
+          if (opcode==TRIPLE) { iss << "\t Need " << size << " triples " <<
+          endl; }
+          if (opcode==SQUARE) { iss << "\t Need " << size << " squares " <<
+          endl; }
+          if (opcode==BIT)    { iss << "\t Need " << size << " bits " <<
+          endl; }
+          printf("%s",iss.str().c_str());
+          */
+          sleep(1);
+        }
+    }
+
+  // Now do the work
+  OCD.sacrifice_mutex[thread].lock();
   Proc.increment_PC();
 
   int r[3]= {this->r[0], this->r[1], this->r[2]};
@@ -1019,16 +1057,22 @@ void Instruction::execute_using_sacrifice_data(
       switch (opcode)
         {
           case TRIPLE:
-            Proc.get_Sp_ref(r[0]).assign(0, P.get_mac_keys());
-	    Proc.get_Sp_ref(r[1]).assign(0, P.get_mac_keys());
-	    Proc.get_Sp_ref(r[2]).assign(0, P.get_mac_keys());
+            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
+            //SacrificeD[thread].TD.ta.pop_front();
+            Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
+            //SacrificeD[thread].TD.tb.pop_front();
+            Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
+            //SacrificeD[thread].TD.tc.pop_front();
             break;
           case SQUARE:
-            Proc.get_Sp_ref(r[0]).assign(0, P.get_mac_keys());
-            Proc.get_Sp_ref(r[1]).assign(0, P.get_mac_keys());
-	    break;
+            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
+            //SacrificeD[thread].SD.sa.pop_front();
+            Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].SD.sb.front());
+            //SacrificeD[thread].SD.sb.pop_front();
+            break;
           case BIT:
-            Proc.get_Sp_ref(r[0]).assign(0, P.get_mac_keys());
+            Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
+            //SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();
@@ -1041,6 +1085,7 @@ void Instruction::execute_using_sacrifice_data(
           r[2]++;
         }
     }
+  OCD.sacrifice_mutex[thread].unlock();
 }
 
 bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
@@ -1058,7 +1103,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
   // First deal with the offline data input routines as these need thread locking
   if (opcode == TRIPLE || opcode == SQUARE || opcode == BIT)
     {
-      execute_using_sacrifice_data(Proc, P, OCD);
+      execute_using_sacrifice_data(Proc, OCD);
       return restart;
     }
 
@@ -1669,8 +1714,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_SHARE:
             if (Proc.get_thread_num() != 0)
               {
-                cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
-		throw IO_thread();
+                throw IO_thread();
               }
             for (unsigned int i= 0; i < start.size(); i++)
               {
@@ -1680,7 +1724,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_SHARE:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             for (unsigned int i= 0; i < start.size(); i++)
@@ -1691,7 +1734,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_CLEAR:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Cp_ref(r[0])= machine.get_IO().public_input_gfp(n);
@@ -1699,7 +1741,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case INPUT_INT:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Ri_ref(r[0])= machine.get_IO().public_input_int(n);
@@ -1707,7 +1748,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_CLEAR:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().public_output_gfp(Proc.read_Cp(r[0]), n);
@@ -1715,7 +1755,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OUTPUT_INT:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().public_output_int(Proc.read_Ri(r[0]), n);
@@ -1723,7 +1762,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case OPEN_CHAN:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.get_Ri_ref(r[0])= machine.get_IO().open_channel(n);
@@ -1731,7 +1769,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case CLOSE_CHAN:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             machine.get_IO().close_channel(n);
@@ -1739,7 +1776,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_OUTPUT:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.iop.private_output(p, r[0], m, Proc, P, machine, OCD);
@@ -1747,7 +1783,6 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_INPUT:
             if (Proc.get_thread_num() != 0)
               {
-		      cout << "opcode: " << opcode << ", Proc.get_thread_num() = " << Proc.get_thread_num() << endl;
                 throw IO_thread();
               }
             Proc.iop.private_input(p, r[0], m, Proc, P, machine, OCD);
@@ -1794,7 +1829,7 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
           case PRIVATE_INPUT_PINT:
             if (p == P.whoami()) {
               if (Proc.get_thread_num() != 0) {
-                printf("INPUT_PINT");throw IO_thread();
+                throw IO_thread();
               }
               
               Proc.get_Pp_ref(r[0]) = machine.get_IO().private_input_gfp(n);
@@ -1803,8 +1838,8 @@ bool Instruction::execute(Processor &Proc, Player &P, Machine &machine,
 
           case PRIVATE_OUTPUT_PINT:
             if (p == P.whoami()) {
-	      if (Proc.get_thread_num() != 0) {
-                printf("OUTPUT_PINT"); throw IO_thread();
+              if (Proc.get_thread_num() != 0) {
+                throw IO_thread();
               }
               
               machine.get_IO().private_output_gfp(Proc.get_Pp_ref(r[0]), n);

@@ -111,7 +111,7 @@ void Run_Scale(unsigned int my_number, unsigned int no_online_threads,
       SacrificeD[i].initialize(SD.n);
     }
 
-  unsigned int nthreads= no_online_threads;
+  unsigned int nthreads= 5 * no_online_threads;
   // Add in the FHE threads
   unsigned int tnthreads= nthreads + number_FHE_threads;
   // Add in the OT thread
@@ -197,8 +197,33 @@ void *Main_Func(void *ptr)
 
   if (num < 10000)
     {
-      int num_online = num;
-      online_phase(num_online, P, *(tinfo->OCD), *(tinfo)->machine);
+      int num5= num % 5;
+      int num_online= (num - num5) / 5;
+      switch (num5)
+        {
+          case 0:
+            mult_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                       *(tinfo->PTD), *(tinfo)->industry, verbose);
+            break;
+          case 1:
+            square_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                         *(tinfo->PTD), *(tinfo)->industry, verbose);
+            break;
+          case 2:
+            bit_phase(num_online, P, *(tinfo->OCD), *(tinfo->pk), *(tinfo->sk),
+                      *(tinfo->PTD), *(tinfo)->industry, verbose);
+            break;
+          case 3:
+            sacrifice_phase(num_online, P, (tinfo->SD)->fake_sacrifice, *(tinfo->OCD),
+                            *(tinfo->pk), *(tinfo->sk), *(tinfo->PTD), *(tinfo)->industry, verbose);
+            break;
+          case 4:
+            online_phase(num_online, P, *(tinfo->OCD), *(tinfo)->machine);
+            break;
+          default:
+            throw bad_value();
+            break;
+        }
     }
   else if (num < 20000)
     {

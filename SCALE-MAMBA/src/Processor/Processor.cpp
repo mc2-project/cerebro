@@ -147,7 +147,6 @@ void Processor::execute(const Program &prog, int argument, Player &P,
   while (PC < size)
     {
       bool restart= prog.execute_instr(PC, *this, P, machine, OCD);
-
       if (restart)
         {
           /* Call trigger 

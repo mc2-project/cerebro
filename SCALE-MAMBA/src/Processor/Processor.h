@@ -47,12 +47,13 @@ class Processor
 #endif
 
   // Program counter
-//  unsigned int PC;
+  unsigned int PC;
 
   // This is the vector of partially opened values and shares we need to store
   // as the Open commands are split in two
   vector<gfp> PO;
   vector<Share> Sh_PO;
+  Open_Protocol OP;
 
   int online_thread_num;
 
@@ -66,10 +67,6 @@ public:
   ~Processor();
 
   void clear_registers();
-
-  Open_Protocol OP;
-unsigned int PC;
-
 
   int get_thread_num() const
   {

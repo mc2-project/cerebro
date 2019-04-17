@@ -13,7 +13,7 @@ All rights reserved
  * to base routine. For FHE based routines these are likely to
  * be exceeded by a huge amount!
  */
-#define sz_offline_batch 600
+#define sz_offline_batch 60000
 #define sz_IO_batch 1000
 
 
@@ -23,26 +23,26 @@ All rights reserved
  * can be set quite low if we want
  */
 
-#define sz_triples_sacrifice 100
-#define sz_squares_sacrifice 100
-#define sz_bits_sacrifice 100
+#define sz_triples_sacrifice 10000
+#define sz_squares_sacrifice 10000
+#define sz_bits_sacrifice 10000
 
 /* The max number of triples etc in the offline production queue 
  * These numbers are to avoid memory filling up, if data is not
  * being consumed. These are the size of the queues before sacrificing
  */
-#define max_triples_offline 600
-#define max_squares_offline 600
-#define max_bits_offline 600
+#define max_triples_offline 200000
+#define max_squares_offline 200000
+#define max_bits_offline 200000
 
 /* The max number of triples etc in the sacrifice production queue 
  * where we stop producing stuff.
  * The actual queues may end up being larger, as we dont want to throw
  * good data away
  */
-#define max_triples_sacrifice 500
-#define max_squares_sacrifice 500
-#define max_bits_sacrifice 5000
+#define max_triples_sacrifice 5000000
+#define max_squares_sacrifice 5000000
+#define max_bits_sacrifice 5000000
 // Following is per player 
 #define max_IO_sacrifice 1000
 
