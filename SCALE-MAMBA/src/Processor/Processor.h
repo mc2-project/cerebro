@@ -60,10 +60,10 @@ class Processor
 
   PRNG prng;
 
-public:  
   // Program counter
   unsigned int PC;
 
+public:  
   // Program last verbose timer
   std::chrono::high_resolution_clock::time_point last_report_time;
 
