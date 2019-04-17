@@ -221,7 +221,7 @@ public:
 
 class Instruction : public BaseInstruction
 {
-  void execute_using_sacrifice_data(Processor &Proc,
+  void execute_using_sacrifice_data(Processor &Proc, Player &P,
                                     offline_control_data &OCD) const;
 
 public:
