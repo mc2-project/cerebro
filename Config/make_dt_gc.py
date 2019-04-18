@@ -20,6 +20,7 @@ def main():
     f.write("x = s_fix_array.read_input(dim, 0)\n")
 
     for i in range(args.num_layer - 1):
+        f.write("reveal_all(w, \"layer " + str(i) + "\")\n")
         f.write("index = w[0]\n")
         f.write("split = w[1]\n")
         f.write("left_child = w[2]\n")
