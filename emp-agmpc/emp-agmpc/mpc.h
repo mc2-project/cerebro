@@ -54,6 +54,9 @@ class CMPC { public:
 			if (cf->gates[4*i+3] == AND_GATE)
 				++num_ands;
 		}
+
+		printf("num of AND gates = %d, num of any gates = %d\n", num_ands, cf->num_gate);
+
 		num_in = cf->n1+cf->n2;
 		total_pre = num_in + num_ands;
 		fpre = new FpreMP<nP>(io, pool, party, 0);
