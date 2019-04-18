@@ -30,7 +30,7 @@ def main():
         layer_end = 2 ** (i + 2) - 1
         layer_size = layer_end - layer_start
         f.write("tree_cur = sfixMatrix(" + str(layer_size) + ", 3)\n")
-        f.write("for j in range(" + str(layer_start) + ", " + str(layer_end) +"):\n")
+        f.write("for j in range(" + str(layer_size) +"):\n")
         f.write("\tfor k in range(3):\n")
         f.write("\t\ttree_cur[j][k] = tree[j + " + str(layer_start) +"][k]\n")
         f.write("w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)\n")
