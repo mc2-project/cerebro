@@ -52,6 +52,7 @@ def main():
     f.write("\t\t\tdata += [i, 2, (v + j + 1) * 2 + 1 - (2 ** (i + 1)) - 1]\n")
     f.write("test_features = [5] * " + str(args.num_layer) + "\n")
     f.write("data += test_features\n")
+    f.write("data = [d * (2 ** 32) for d in data]\n")
     f.close()
 
     os.system("python compile.py b Programs/test_dt/")

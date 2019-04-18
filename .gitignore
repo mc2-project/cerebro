@@ -12,3 +12,6 @@ agmpc.txt.input
 agmpc.txt.output
 agmpc.output
 f0
+Input_Data/gen_data_dt.py
+Programs/test_dt/test_dt.mpc
+emp-agmpc/emp-agmpc/cmpc_config.h
