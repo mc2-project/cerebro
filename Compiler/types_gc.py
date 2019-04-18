@@ -796,6 +796,26 @@ class sfix_gc(object):
         else:
             raise NotImplementedError
 
+    def __xor__(self, other):
+        if isinstance(other, bits):
+            res = sfix_gc()
+            for i in range(res.v.length):
+                res.v.bits[i] = self.v.bits[i] ^ other
+            return res
+        elif isinstance(other, (cfix_gc, sfix_gc)):
+            res = sfix_gc()
+            for i in range(res.v.length):
+                res.v.bits[i] = self.v.bits[i] ^ other.v.bits[i]
+            return res
+        elif isinstance(other, cint_gc):
+            other_cfix = cfix_gc(v=other, scale=True)
+            return self.__xor__(other_cfix)
+        elif isinstance(other, sint_gc):
+            other_sfix = sfix_gc(v=other, scale=True)
+            return self.__xor__(other_sfix)
+        else:
+            raise NotImplementedError
+
     def absolute(self):
         res = sfix_gc(v=self.v.absolute(), scale=False)
         return res
@@ -931,7 +951,7 @@ def array_index_secret_load_gc(l, index):
             res_list[i] = test & l[i]
         res = res_list[0]
         for i in range(1, l.length):
-            res = res + res_list[i]
+            res.__xor__(res_list[i])
         return res
     elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
         res_mat = sfixMatrixGC(l.rows, l.columns)
@@ -947,7 +967,7 @@ def array_index_secret_load_gc(l, index):
         res = res_mat[0]
         for j in range(l.columns):
             for i in range(1, l.rows):
-                res[j] = res[j] + res_mat[i][j]
+                res[j].__xor__(res_mat[i][j])
         return res
     else:
         raise NotImplementedError
