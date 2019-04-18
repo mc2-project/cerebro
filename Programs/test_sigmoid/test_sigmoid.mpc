@@ -1,0 +1,52 @@
+Params.set_params(int_precision=49, f=32, k=64)
+
+TAYLOR_ITER = 10
+
+fact_list = s_fix_array(TAYLOR_ITER)
+fact_list[0] = sfix(1)
+fact_list[1] = sfix(1)
+fact_list[2] = sfix(2)
+fact_list[3] = sfix(6)
+fact_list[4] = sfix(24)
+fact_list[5] = sfix(120)
+fact_list[6] = sfix(720)
+fact_list[7] = sfix(5040)
+fact_list[8] = sfix(40320)
+fact_list[9] = sfix(362880)
+
+def approx_sigmoid(x):
+	total_arr = s_fix_array(1)
+	total_arr[0] = sfix(0)
+	exp_arr = s_fix_array(1)
+	exp_arr[0] = sfix(1)
+	neg_x = sfix(-1) * x
+	for i in range(TAYLOR_ITER):
+		new_total_arr = s_fix_array(1)
+		new_total_arr[0] = total_arr[0] + exp_arr[0] / fact_list[i]
+		mat_assign(total_arr, new_total_arr)
+		new_exp_arr = s_fix_array(1)
+		new_exp_arr[0] = exp_arr[0] * neg_x
+		mat_assign(exp_arr, new_exp_arr)
+
+	res = sfix(1) / (sfix(1) + total_arr[0])
+	return res
+
+
+
+def main():
+	# For these 3 numbers at least, they match with the plaintext approximation and are close to the groundtruth.
+	val = sfix(0.05)
+	approx = approx_sigmoid(val)
+	reveal_all(approx, "Approximate sigmoid value for 0.05")
+
+	val = sfix(0.1)
+	approx = approx_sigmoid(val)
+	reveal_all(approx, "Approximate sigmoid value for 0.1")
+
+	val = sfix(-0.5)
+	approx = approx_sigmoid(val)
+	reveal_all(approx, "Approximate sigmoid value for -0.5")
+
+
+
+main()
