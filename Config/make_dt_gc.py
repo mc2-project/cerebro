@@ -10,7 +10,7 @@ def main():
     args = parser.parse_args()
     
     f = open("./Programs/test_dt/test_dt.mpc", 'w')
-    f.write("Params.set_params(int_precision=32, f=16, k=32)\n")
+    f.write("Params.set_params(int_precision=64, f=32, k=64)\n")
     f.write("dim = " + str(args.num_layer) + "\n")
     f.write("LEVELS = dim\n")
     f.write("TOTAL_NODES = (2 ** LEVELS) - 1\n")
@@ -54,6 +54,7 @@ def main():
     f.write("test_features = [5] * " + str(args.num_layer) + "\n")
     f.write("data += test_features\n")
     f.write("data = [d * (2 ** 32) for d in data]\n")
+    f.write("\n")
     f.close()
 
     os.system("python compile.py b Programs/test_dt/")
