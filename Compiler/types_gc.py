@@ -951,11 +951,9 @@ def array_index_secret_load_gc(l, index):
             res_list[i] = test & l[i]
         res = res_list[0]
         for i in range(1, l.length):
-            res.__xor__(res_list[i])
+            res[j] = res.__xor__(res_list[i])
         return res
     elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
-        info = index.reveal("index")
-        program_gc.output_objects.append(info)
         res_mat = sfixMatrixGC(l.rows, l.columns)
         for i in range(l.rows):
             if isinstance(index, sfix_gc):
@@ -963,17 +961,13 @@ def array_index_secret_load_gc(l, index):
             else:
                 v = cint_gc(index.length, i)
             test = v.__eq__(index)
-            info = test.reveal("test - test")
-            program_gc.output_objects.append(info)
             for j in range(l.columns):
                 res_mat[i][j] = test & l[i][j]
-                info = res_mat[i][j].reveal("res_mat")
-                program_gc.output_objects.append(info)
 
         res = res_mat[0]
         for j in range(l.columns):
             for i in range(1, l.rows):
-                res[j].__xor__(res_mat[i][j])
+                res[j] = res[j].__xor__(res_mat[i][j])
         return res
     else:
         raise NotImplementedError
