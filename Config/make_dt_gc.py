@@ -16,6 +16,7 @@ def main():
     f.write("TOTAL_NODES = (2 ** LEVELS) - 1\n")
     
     f.write("tree = s_fix_mat.read_input(TOTAL_NODES, 3, 0)\n")
+    f.write("reveal_all(tree, \"tree\")\n")
     f.write("w = tree[0]\n")
     f.write("x = s_fix_array.read_input(dim, 0)\n")
 
