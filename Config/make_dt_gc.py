@@ -16,12 +16,10 @@ def main():
     f.write("TOTAL_NODES = (2 ** LEVELS) - 1\n")
     
     f.write("tree = s_fix_mat.read_input(TOTAL_NODES, 3, 0)\n")
-    f.write("reveal_all(tree, \"tree\")\n")
     f.write("w = tree[0]\n")
     f.write("x = s_fix_array.read_input(dim, 0)\n")
 
     for i in range(args.num_layer - 1):
-        f.write("reveal_all(w, \"layer " + str(i) + "\")\n")
         f.write("index = w[0]\n")
         f.write("split = w[1]\n")
         f.write("left_child = w[2]\n")
@@ -35,10 +33,7 @@ def main():
         f.write("for j in range(" + str(layer_size) +"):\n")
         f.write("\tfor k in range(3):\n")
         f.write("\t\ttree_cur[j][k] = tree[j + " + str(layer_start) +"][k]\n")
-        f.write("reveal_all(tree_cur, \"tree_cur at layer " + str(i) +"\")\n")
-        f.write("reveal_all(cond, \"cond  at layer " + str(i) + "\")\n")
         f.write("w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)\n")
-        f.write("reveal_all(w_res, \"w_res at layer " + str(i) + "\")\n")
         f.write("mat_assign(w, w_res)\n")
 
     f.write("reveal_all(w[1], \"Final prediction class\")\n")
