@@ -951,7 +951,7 @@ def array_index_secret_load_gc(l, index):
             res_list[i] = test & l[i]
         res = res_list[0]
         for i in range(1, l.length):
-            res[j] = res.__xor__(res_list[i])
+            res = res.__xor__(res_list[i])
         return res
     elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
         res_mat = sfixMatrixGC(l.rows, l.columns)
