@@ -967,6 +967,8 @@ def array_index_secret_load_gc(l, index):
             program_gc.output_objects.append(info)
             for j in range(l.columns):
                 res_mat[i][j] = test & l[i][j]
+                info = res_mat[i][j].reveal("res_mat")
+                program_gc.output_objects.append(info)
 
         res = res_mat[0]
         for j in range(l.columns):
