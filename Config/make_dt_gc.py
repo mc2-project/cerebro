@@ -24,8 +24,8 @@ def main():
         f.write("reveal_all(w, \"layer " + str(i) + "\")\n")
         f.write("index = w[0]\n")
         f.write("split = w[1]\n")
-        f.write("left_child = w[2] + 1\n")
-        f.write("right_child = left_child\n")
+        f.write("left_child = w[2]\n")
+        f.write("right_child = left_child + 1\n")
         f.write("f = x[index]\n")
         f.write("cond = (f > split)\n")
         layer_start = 2 ** (i + 1) - 1
