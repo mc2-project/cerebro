@@ -800,12 +800,12 @@ class sfix_gc(object):
         if isinstance(other, bits):
             res = sfix_gc()
             for i in range(res.v.length):
-                res.v.bits[i] = self.v.bits[i] ^ other
+                res.v.bits[i] = self.v.bits[i].__xor__(other)
             return res
         elif isinstance(other, (cfix_gc, sfix_gc)):
             res = sfix_gc()
             for i in range(res.v.length):
-                res.v.bits[i] = self.v.bits[i] ^ other.v.bits[i]
+                res.v.bits[i] = self.v.bits[i].__xor__(other.v.bits[i])
             return res
         elif isinstance(other, cint_gc):
             other_cfix = cfix_gc(v=other, scale=True)
