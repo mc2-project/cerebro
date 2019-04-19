@@ -36,7 +36,9 @@ def main():
         f.write("\tfor k in range(3):\n")
         f.write("\t\ttree_cur[j][k] = tree[j + " + str(layer_start) +"][k]\n")
         f.write("reveal_all(tree_cur, \"tree_cur at layer " + str(i) +"\")\n")
+        f.write("reveal_all(cond, \"cond  at layer " + str(i) + "\")\n")
         f.write("w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)\n")
+        f.write("reveal_all(w_res, \"w_res at layer " + str(i) + "\")\n")
         f.write("mat_assign(w, w_res)\n")
 
     f.write("reveal_all(w[1], \"Final prediction class\")\n")
