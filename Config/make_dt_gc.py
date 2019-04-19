@@ -27,7 +27,7 @@ def main():
         f.write("left_child = w[2]\n")
         f.write("right_child = left_child + 1\n")
         f.write("f = x[index]\n")
-        f.write("cond = (f < split)\n")
+        f.write("cond = (f > split)\n")
         layer_start = 2 ** (i + 1) - 1
         layer_end = 2 ** (i + 2) - 1
         layer_size = layer_end - layer_start
@@ -54,7 +54,7 @@ def main():
     f.write("\t\t\tdata += [leaf, 5, leaf]\n")
     f.write("\t\telse:\n")
     f.write("\t\t\tdata += [i, 5, (2 ** i - 1 + j) * 2 + 1 - (2 ** (i + 1) - 1)]\n")
-    f.write("test_features = [5] * " + str(args.num_layer) + "\n")
+    f.write("test_features = [6] * " + str(args.num_layer) + "\n")
     f.write("data += test_features\n")
     f.write("data = [d * (2 ** 32) for d in data]\n")
     f.write("\n")
