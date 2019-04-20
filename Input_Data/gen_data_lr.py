@@ -6,7 +6,15 @@ import numpy as np
 import struct
 import argparse
 
+num_sample = 569
+# the original dataset has 569 records
+# we double this dataset so it has 1138 records
+
 X, y = load_breast_cancer(return_X_y =True)
+X = np.concatenate((X, X), axis = 0)
+y = np.concatenate((y, y), axis = 0)
+X = X[0:num_sample]
+y = y[0:num_sample]
 X = np.array(X)
 n = np.shape(X)[0]
 dim = np.shape(X)[1]
