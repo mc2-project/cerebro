@@ -366,10 +366,10 @@ def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
     supported_types_a = (sint, sfix)
     supported_types_b = (sint_gc, sfix_gc)
     if isinstance(index_1, supported_types_a) and isinstance(index_2, supported_types_a): 
-        index = (condition * index_1) + ((1 - condition) * index_2)
+        index = ((1 - condition) * index_1) + (condition * index_2)
         return array_index_secret_load_a(l, index, nparallel=nparallel)
-    elif isinstance(index_1, supported_types_b) and isinstance(index_2, supported_types_b): 
-        index = (condition & index_1) + ((~condition) & index_2)
+    elif isinstance(index_1, supported_types_b) and isinstance(index_2, supported_types_b):
+        index = ((~condition) & index_1).__xor__(condition & index_2)
         return array_index_secret_load_gc(l, index)
     else:
         raise NotImplementedError
