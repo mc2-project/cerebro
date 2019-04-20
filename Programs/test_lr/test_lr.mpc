@@ -1,16 +1,16 @@
-Params.set_params(int_precision=64, f=32, k=64)
-NUM_PARTIES = 3
+Params.set_params(int_precision=64, f=36, k=64)
+NUM_PARTIES = 6
 
-SGD_ITERS = 2
-data_size = 569
-dim = 30
-BATCH_SIZE = 5
+SGD_ITERS = 210
+data_size = 27000
+dim = 23
+BATCH_SIZE = 128
 
 X = s_fix_mat.read_input(data_size, dim, 0)
 y = s_fix_mat.read_input(data_size, 1, 0)
 
 w = s_fix_mat(dim, 1)
-alpha_B = c_fix(0.002)
+alpha_B = c_fix(0.01 / BATCH_SIZE)
 
 XB = s_fix_mat(BATCH_SIZE, dim)
 yB = s_fix_mat(BATCH_SIZE, 1)
@@ -36,5 +36,6 @@ for i in range(SGD_ITERS):
     #reveal_all(w_2, "w_2")
     w_res = matsub(w, w_2)
     mat_assign(w, w_res)
+    print_ln("Iter: %s", i)
 
 reveal_all(w, "w_final")
