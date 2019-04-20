@@ -1,24 +1,20 @@
-Params.set_params(int_precision=49, f=32, k=49)
-NUM_PARTIES = 3
+Params.set_params(int_precision=49, f=32, k=64)
+NUM_PARTIES = 6
 
 # Dimensions of X data matrix.
-num_cols = 10
-num_rows = 10
+num_cols = 11
+num_rows = 200
 
 # Constants
 
 local_compute = False
-rho = c_fix(0.01)
-l = c_fix(0.008)
-ADMM_ITER = 3
+rho = c_fix(0.05)
+l = c_fix(0.005)
+ADMM_ITER = 10
 
 
-
-c = sfix(12.0996)
-print_ln("Test: %s", c.v.reveal())
-
-rho_val = sfix(0.01)
-l_val = sfix(0.008)
+rho_val = sfix(0.05)
+l_val = sfix(0.005)
 
 # Thresholding
 
@@ -52,20 +48,8 @@ def add_matrices(left_matrix, right_matrix, rows, cols):
 # Local computation of weight vector.
 def admm_local(XXinv, Xy, u, z):
     z_u = mat_const_mul(sfix(rho_val), matsub(z, u))
-    second_term = add_matrices(Xy, z_u, num_cols, 1) #matadd(Xy, z_u)
-    reveal_all(z_u, "z_u")
-    reveal_all(Xy, "Xy")
-    print_ln("Second term")
-    for i in range(num_cols):
-        print_ln("%s, sfix's size: %s", second_term[i][0].reveal(), second_term[i][0].size)
-    print_ln("Second term integer values reveal")
-    for i in range(num_cols):
-        print_ln("%s", second_term[i][0].v.reveal())
-    
+    second_term = add_matrices(Xy, z_u, num_cols, 1)
     w = matmul(XXinv, second_term)
-    print_ln("W in admm_local")
-    for i in range(num_cols):
-        print_ln("%s", w[i][0].reveal())
     return w
 
 
@@ -97,60 +81,48 @@ def admm_coordinate(w_list, u_list, z):
         mat_assign(u_avg, new_u_avg)
 
 
-    print_ln("Check if W_avg adding correctly")
-    for i in range(num_cols):
-        print_ln("%s", w_avg[i][0].reveal())
-
-
     avg = sfix(1.0 / NUM_PARTIES)
-    print_ln("AVG")
-    print_ln("%s", avg.reveal())
     new_w_avg = mat_const_mul(avg, w_avg)
     new_u_avg = mat_const_mul(avg, u_avg)
 
-    for i in range(num_cols):
-        print_ln("%s", new_w_avg[i][0].reveal())
+    
 
     mat_assign(w_avg, new_w_avg)
     mat_assign(u_avg, new_u_avg)
-    print_ln("UAVG")
-    for i in range(num_cols):
-        print_ln("%s", u_avg[i][0].reveal())
-    print_ln("WAVG")
-    for i in range(num_cols):
-        print_ln("%s", w_avg[i][0].reveal())
 
     # Applying thresholding
     threshold = sfix(l_val/(rho_val * NUM_PARTIES))
     u_plus_w = add_matrices(w_avg, u_avg, num_cols, 1) 
     z_new = soft_threshold_vec(threshold, u_plus_w)
+    """
     print_ln("z_new")
     for i in range(num_cols):
         print_ln("%s", z_new[i][0].reveal())
-
+    """
     u_list_new = s_fix_mat(NUM_PARTIES * num_cols, 1)
-    reveal_all(z_new, "z_new")
+    #reveal_all(z_new, "z_new")
 
     neg_z = s_fix_mat(z_new.rows, z_new.columns)
     for i in range(z_new.rows):
         for j in range(z_new.columns):
             neg_z[i][j] = z_new[i][j].__neg__()
             
-    reveal_all(neg_z, "neg_z")
+    #reveal_all(neg_z, "neg_z")
     for i in range(NUM_PARTIES):
         u_i = get_ith_matrix(u_list, i, num_cols, 1)
         w_i = get_ith_matrix(w_list, i, num_cols, 1)
         intermediate_vec = add_matrices(u_i, w_i, num_cols, 1)
-        reveal_all(intermediate_vec, "intermediate_vec")
-        reveal_all(neg_z, "neg_z")
+        #reveal_all(intermediate_vec, "intermediate_vec")
+        #reveal_all(neg_z, "neg_z")
         sum_vec = add_matrices(intermediate_vec, neg_z, num_cols, 1)   #matadd(matadd(u_i, w_i), neg_z)
-        reveal_all(sum_vec, "sum_vec")
+        #reveal_all(sum_vec, "sum_vec")
         copy_ith_matrix(u_list_new, sum_vec, i, num_cols, 1)
 
-
+    """
     print_ln("Check u_list_new")
     for i in range(NUM_PARTIES * num_cols):
         print_ln("%s", u_list_new[i][0].reveal())
+    """
     return u_list_new, z_new
 
 
@@ -171,14 +143,7 @@ def admm(XTX_inv_lst, XTy_lst):
             w = admm_local(XTX_inv, XTy, u, z)
             copy_ith_matrix(w_list, w, j, num_cols, 1)
 
-        print_ln("Contents of w_list")
-        for k in range(NUM_PARTIES * num_cols):
-            print_ln("%s", w_list[k][0].reveal())
-
         new_u_lst, new_z = admm_coordinate(w_list, u_list, z)
-        print_ln("new_z")
-        for k in range(num_cols):
-            print_ln("%s", new_z[k][0].reveal())
         mat_assign(u_list, new_u_lst)
         mat_assign(z, new_z)
 
@@ -195,23 +160,23 @@ def local_compute(x_data, y_data):
     XTy_lst = s_fix_mat(NUM_PARTIES * num_cols, 1)
     for i in range(NUM_PARTIES):
         x_i = get_ith_matrix(x_data, i, num_rows, num_cols)
-        print_ln("x_i here we go!")
-        for j in range(num_rows):
-            for k in range(num_cols):
-                print_ln("%s", x_i[j][k].reveal())
         y_i = get_ith_matrix(y_data, i, num_rows, 1)
         X_T = transpose(x_i)
 
         XTX = matmul(X_T, x_i)
+        print_ln("One matmul")
+
         rho_identity = s_fix_mat(num_cols, num_cols)
         mat_const_mul(c_fix(0), rho_identity)
         for j in range(num_cols):
             rho_identity[j][j] = sfix(rho_val)
 
         XTX_rho_identity = add_matrices(XTX, rho_identity, num_cols, num_cols)
-
+        #print_ln("BEFORE INVERSE")
+        #reveal_all(XTX_rho_identity, "XTX_rho_identity")
         XTX_inv = matinv(XTX_rho_identity)
-
+        #reveal_all(XTX_inv, "XTX_inverse")
+        """
         print_ln("XTX")
         for j in range(num_cols):
             for k in range(num_cols):
@@ -220,7 +185,7 @@ def local_compute(x_data, y_data):
         for j in range(num_cols):
             for k in range(num_cols):
                 print_ln("%s", XTX_inv[j][k].reveal())
-
+        """
         copy_ith_matrix(XTX_inv_lst, XTX_inv, i, num_cols, num_cols)
         XTy = matmul(X_T, y_i)
         copy_ith_matrix(XTy_lst, XTy, i, num_cols, 1)
@@ -231,11 +196,14 @@ def local_compute(x_data, y_data):
 
 def get_input_data():
     # Assume parties send locally computed data.
-
-    """
+    #XTX_inv_lst = s_fix_mat(num_cols * NUM_PARTIES, num_cols)
+    #XTy_lst = s_fix_mat(num_cols * NUM_PARTIES, 1)
+    
     x_data = s_fix_mat.read_input(num_rows * NUM_PARTIES, num_cols, 0)
     y_data = s_fix_mat.read_input(num_rows * NUM_PARTIES, 1, 0)
-    
+    #reveal_all(x_data, "X")
+    #reveal_all(y_data, "y")
+    """
     print_ln("X DATA")
     for i in range(num_rows * NUM_PARTIES):
         for j in range(num_cols):
@@ -244,15 +212,18 @@ def get_input_data():
     print_ln("Y DATA")
     for i in range(num_rows * NUM_PARTIES):
         print_ln("%s", y_data[i][0].reveal())
+    """
 
     XTX_inv_lst, XTy_lst = local_compute(x_data, y_data)
-    """
+    #mat_assign(XTX_inv_lst, new_XTX_inv_lst)
+    #mat_assign(XTy_lst, new_XTy_lst)
     
     # If parties send locally computed data
-    XTX_inv_lst = s_fix_mat.read_input(num_cols * NUM_PARTIES, num_cols, 0)
-    XTy_lst = s_fix_mat.read_input(num_cols * NUM_PARTIES, 1, 0)
+    
+    #XTX_inv_lst = s_fix_mat.read_input(num_cols * NUM_PARTIES, num_cols, 0)
+    #XTy_lst = s_fix_mat.read_input(num_cols * NUM_PARTIES, 1, 0)
 
-
+    """
     print_ln("XTX_inv_lst")
     for i in range(num_cols * NUM_PARTIES):
         for j in range(num_cols):
@@ -261,7 +232,7 @@ def get_input_data():
     print_ln("XTy_lst")
     for i in range(num_cols * NUM_PARTIES):
         print_ln("%s", XTy_lst[i][0].reveal())
-
+    """
     return XTX_inv_lst, XTy_lst
 
 
@@ -269,18 +240,20 @@ def get_input_data():
 
 def main():
     XTX_inv_lst, XTy_lst = get_input_data()
-    reveal_all(XTX_inv_lst, "XTX_inv_lst")
-    reveal_all(XTy_lst, "XTy_lst")
+    #reveal_all(XTX_inv_lst, "XTX_inv_lst")
+    #reveal_all(XTy_lst, "XTy_lst")
     # for i in range(NUM_PARTIES * num_cols):
     #     for j in range(num_cols):
     #         print_ln("%s ", XTX_inv_lst[i][j].reveal())
 
     w = admm(XTX_inv_lst, XTy_lst)
+    print_ln("WEIGHTS")
+    for i in range(num_cols):
+        print_ln("%s", w[i][0].reveal())
     return w
 
 z = main()
 #w = main()
-
 
 
 
