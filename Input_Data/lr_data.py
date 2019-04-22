@@ -7,7 +7,8 @@ from sklearn.preprocessing import StandardScaler
 import math
 
 
-
+fp = 40
+samples = 20000
 df = pd.read_excel('credit_card.xls')
 print(df.shape)
 print(df.columns.values)
@@ -17,8 +18,9 @@ df = df[1:]
 
 print(df.columns.values)
 
-train, test = train_test_split(df, test_size=0.1)
+train, test = train_test_split(df, test_size=0.1, random_state=42)
 print(len(train), len(test))
+train = train[:samples]
 values = list(train.columns.values)
 test_y = np.array(test[values[-1:]], dtype='float32')
 test_X = np.array(test[values[0:-1]], dtype='float32')
@@ -38,7 +40,7 @@ dim = np.shape(X_)[1]
 # Plaintext version of the secure training algorithm using SGD
 print(np.shape(X_))
 BATCH_SIZE = 128
-SGD_ITERS = 210
+SGD_ITERS = len(train) / BATCH_SIZE
 
 def sigmoid(x):
     ret = []
@@ -98,6 +100,5 @@ data_x = [v for v in X_.flatten()]
 data_y = [v for v in y_.flatten()]
 
 data = data_x + data_y
-print(data)
 print(len(data))
-data = [i * pow(2, 32) for i in data]
+data = [i * pow(2, fp) for i in data]
