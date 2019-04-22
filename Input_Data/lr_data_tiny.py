@@ -8,7 +8,7 @@ import math
 
 
 fp = 40
-samples = 32
+samples = 16
 df = pd.read_excel('credit_card.xls')
 print(df.shape)
 print(df.columns.values)
