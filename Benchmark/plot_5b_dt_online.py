@@ -43,20 +43,20 @@ def plot_dpi_ictf():
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [2, 4, 6, 8, 10, 12]
-    y1 = [3.08403, 5.69959, 8.81866, 16.5831, 23.8162, 31.8367]
-    y2 = [17.84773474, 18.29361114, 19.20581401, 19.7670661, 20.91347573, 21.38849034]
+    y1 = [0.286841, 0.53484, 0.61241, 0.83911, 1.00558, 1.16675]
+    y2 = [11.771117, 12.235296, 12.825783, 12.994068, 13.853691, 14.181069]
 
     plt.plot(x, y1, linestyle='--', marker='P', markersize=7, color=green, label="Boolean")
     plt.plot(x, y2, linestyle=':', marker='*', markersize=9, color=purple, label="Arithmetic")
 
     axes = plt.gca()
-    axes.set_ylim([-1, 33])
+    axes.set_ylim([-1, 16])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("preprocessing + online time (s)",fontsize=15)
-    plt.yticks(np.arange(0,33,8), fontsize=12)
+    plt.ylabel("online time (s)",fontsize=15)
+    plt.yticks(np.arange(0,16,3), fontsize=12)
     plt.xlabel("\# parties in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
@@ -64,7 +64,7 @@ def plot_dpi_ictf():
     fig = plt.gcf()
     fig.set_size_inches(6, 4, forward=True)
 
-    pp = PdfPages('Exp_5a_dt_offline_online.pdf')
+    pp = PdfPages('Exp_5b_dt_online.pdf')
     plt.savefig(pp, format='pdf', bbox_inches='tight', dpi=fig.dpi)
     pp.close()
     plt.show()
