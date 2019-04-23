@@ -2,9 +2,9 @@ Params.set_params(int_precision=64, f=40, k=64)
 NUM_PARTIES = 6
 
 SGD_ITERS = 1
-data_size = 1000
+data_size = 16
 dim = 23
-BATCH_SIZE = 128
+BATCH_SIZE = 16
 
 X = s_fix_mat.read_input(data_size, dim, 0)
 y = s_fix_mat.read_input(data_size, 1, 0)
