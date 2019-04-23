@@ -47,9 +47,9 @@ def plot_admm():
     # Log scale
     plt.yscale('log')
 
-    plt.plot(x, y1, marker="^", markersize=8, color=red, label="With LC", linewidth=3)
-    plt.plot(x[:-1], y2[:-1], marker='x', markersize=8, color=blue, label="Without LC", linewidth=3)
-    plt.plot([30, 40], [42925.32, 91685.354], linewidth=3, marker='x', linestyle=':', markersize=8, color=blue, label="Without LC estimated")
+    plt.plot(x, y1, marker="^", markersize=8, color=red, label="With LC")
+    plt.plot(x[:-1], y2[:-1], marker='x', markersize=8, color=blue, label="Without LC")
+    plt.plot([30, 40], [42925.32, 91685.354], marker='x', linestyle=':', markersize=8, color=blue, label="Without LC estimated")
 
     axes = plt.gca()
     axes.set_ylim(0, 150000)
@@ -62,9 +62,9 @@ def plot_admm():
     
     plt.yticks([10, 100, 1000, 10000, 100000], fontsize=12)
     
-    plt.xlabel("Dimension of dataset", fontsize=15)
+    plt.xlabel("\# features in the dataset", fontsize=15)
     xts = [0, 5, 10, 20, 30, 40]
-    plt.xticks(xts, ["0$", "$5$", "$10$", "$20$", "$30$", "$40$"], fontsize=12)
+    plt.xticks(xts, ["$0$", "$5$", "$10$", "$20$", "$30$", "$40$"], fontsize=12)
 
     fig = plt.gcf()
     fig.set_size_inches(6, 4, forward=True)
