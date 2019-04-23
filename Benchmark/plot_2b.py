@@ -42,24 +42,24 @@ def plot_dpi_ictf():
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [2, 4, 6, 8, 10, 12]
-    y1 = [1515763.2, 899285.76, 653245.44, 524305.92, 427384.32, 372197.12]
-    y2 = [760995.84, 385935.36, 246689.024, 189703.424, 154411.776, 128465.408]
+    y1 = [1321036.8, 824559.36, 584314.88, 460398.08, 377550.08, 326270.72]
+    y2 = [456021.76, 198736.64, 123660.8, 90877.44, 74868.608, 62447.232]
 
-    y3 = [27646, 18774.4, 17511.2, 16692.1, 16610, 16091]
+    y3 = [23840.9, 17393.1, 15455, 15237.5, 14838.2, 14442.4]            
 
-    plt.plot(x, y1, linestyle='--', marker='x', markersize=6, color=red, label="SH-LHE (d=100)")
-    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE (d=20)")
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=7, color=red, label="LHE (d=100)")
+    plt.plot(x, y2, linestyle=':', marker='o', markersize=7, color=blue, label="LHE (d=10)")
 
-    plt.plot(x, y3, linestyle='-.', marker='x', markersize=6, color=green, label="SH-SWHE")
+    plt.plot(x, y3, linestyle='-.', marker='s', markersize=7, color=green, label="SWHE")
 
     axes = plt.gca()
-    axes.set_ylim([-10, 1605000])
+    axes.set_ylim([-50000, 1505000])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
     plt.ylabel("\# vectorized mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0,1605000,400000), fontsize=12)
+    plt.yticks(np.arange(0,1505000,300000), fontsize=12)
     plt.xlabel("\# parties in 100Mbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)

@@ -37,32 +37,34 @@ red = "#a93226"
 blue = "#2874a6"
 green = "#1e8449"
 
+purple = '#800080'
+
 def plot_dpi_ictf():
     # plt.plot(nrules, nb_vals, marker='o', linestyle='-', color=red)
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [2, 4, 6, 8, 10, 12]
-    y1 = [27646, 18774.4, 17511.2, 16692.1, 16610, 16091]
-    y2 = [36402.5, 13345.4, 8485.42, 6442.36, 5136.55, 4279.01]
+    y1 = [23840.9, 17393.1, 15455, 15237.5, 14838.2, 14442.4]
+    y2 = [31945.8, 11774.3, 7602.14, 5661.11, 4531.43, 3761.61]
 
-    y3 = [27271.22545, 19234.0358, 17513.54494, 16763.78202, 16343.96639, 16075.57908]
-    y4 = [31257.1195, 13738.89109, 8804.40999, 6477.824613, 5123.838602, 4238.014605]
+    y3 = [23883.08158, 17213.69742, 15747.82956, 15104.6939, 14743.42423, 14512.02793]
+    y4 = [27973.11135, 12168.59331, 7775.510469, 5713.010194, 4515.300067, 3732.744795]
+            
+    plt.plot(x, y1, linestyle=':', marker='x', markersize=7, color=red, label="SWHE")
+    plt.plot(x, y2, linestyle=':', marker='o', markersize=7, color=blue, label="LHE")
 
-    plt.plot(x, y1, linestyle=':', marker='x', markersize=6, color=red, label="SH-SWHE")
-    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE")
-
-    plt.plot(x, y3, linestyle='--', alpha=0.5, color='m', label="SH-SWHE model")
-    plt.plot(x, y4, linestyle='--', alpha=0.5, color='g', label="SH-LHE model")
+    plt.plot(x, y3, linestyle='--', alpha=0.5, color='m', label="SWHE model")
+    plt.plot(x, y4, linestyle='--', alpha=0.5, color=purple, label="LHE model")
 
     axes = plt.gca()
     # axes.set_xscale("log", basex=2)
-    axes.set_ylim([0, 40500])
+    axes.set_ylim([0, 32500])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 
     plt.ylabel("\# mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0,40500,5000), fontsize=12)
+    plt.yticks(np.arange(0,32500, 4000), fontsize=12)
     plt.xlabel("\# parties in 100Mbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)

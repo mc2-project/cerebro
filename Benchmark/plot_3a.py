@@ -42,24 +42,24 @@ def plot_dpi_ictf():
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
     x = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    y1 = [23841.7, 121660.666, 219479.632, 317298.598, 415117.564, 512936.53, 610755.496, 708574.462, 806393.428, 904212.394, 1002031.36]
-    y2 = [23841.7, 68345.466, 112849.232, 157352.998, 201856.764, 246360.53, 290864.296, 335368.062, 379871.828, 424375.594, 468879.36]
+    y1 = [20484.5, 106784.85, 193085.2, 279385.55, 365685.9, 451986.25, 538286.6, 624586.95, 710887.3, 797187.65, 883488]
+    y2 = [20484.5, 41775.57, 63066.64, 84357.71, 105648.78, 126939.85, 148230.92, 169521.99, 190813.06, 212104.13, 233395.2]
 
-    y3 = [111843, 111843, 111843, 111843, 111843, 111843, 111843, 111843, 111843, 111843, 111843]
+    y3 = [100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467]
 
-    plt.plot(x, y1, linestyle='--', marker='x', markersize=6, color=red, label="SH-LHE (d=100)")
-    plt.plot(x, y2, linestyle=':', marker='x', markersize=6, color=blue, label="SH-LHE (d=20)")
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=7, color=red, label="LHE (d=100)")
+    plt.plot(x, y2, linestyle=':', marker='o', markersize=6, color=blue, label="LHE (d=10)")
 
-    plt.plot(x, y3, linestyle='-.', marker='x', markersize=6, color=green, label="SH-SWHE")
+    plt.plot(x, y3, linestyle='-.', marker='s', markersize=6, color=green, label="SWHE")
 
     axes = plt.gca()
-    axes.set_ylim([-10, 1005000])
+    axes.set_ylim([-10, 905000])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
     plt.ylabel("\# avg mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0,1005000,200000), fontsize=12)
+    plt.yticks(np.arange(0, 905000, 150000), fontsize=12)
     plt.xlabel("\% of vectorized mult gates in 2Gbps network", fontsize=15)
     xts = [0, 20, 40, 60, 80, 100]
     plt.xticks(xts, ["$0$", "$20$", "$40$", "$60$", "$80$", "$100$"], fontsize=12)
