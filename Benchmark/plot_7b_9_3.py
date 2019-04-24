@@ -61,7 +61,7 @@ def plot_dpi_ictf():
 
     plt.ylabel("\# regular mult/s",fontsize=15)
     plt.yticks(np.arange(0,80500,20000), fontsize=12)
-    plt.xlabel("cross-continent bandwidth (MBps)", fontsize=15)
+    plt.xlabel("cross-region bandwidth (Mbps)", fontsize=15)
     xts = [200, 400, 600, 800, 1000, 1200]
     plt.xticks(xts, ["$200$", "$400$", "$600$", "$800$", "$1000$", "$1200$"], fontsize=12)
 

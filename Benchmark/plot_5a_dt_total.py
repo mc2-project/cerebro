@@ -46,8 +46,8 @@ def plot_dpi_ictf():
     y1 = [3.08403, 5.69959, 8.81866, 16.5831, 23.8162, 31.8367]
     y2 = [17.84773474, 18.29361114, 19.20581401, 19.7670661, 20.91347573, 21.38849034]
 
-    plt.plot(x, y1, linestyle='--', marker='P', markersize=7, color=green, label="Boolean")
-    plt.plot(x, y2, linestyle=':', marker='*', markersize=9, color=purple, label="Arithmetic")
+    plt.plot(x, y1, linestyle='solid', marker='P', markersize=7, color=green, label="Boolean")
+    plt.plot(x, y2, linestyle='solid', marker='*', markersize=9, color=purple, label="Arithmetic")
 
     axes = plt.gca()
     axes.set_ylim([-1, 33])
@@ -55,9 +55,9 @@ def plot_dpi_ictf():
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("preprocessing + online time (s)",fontsize=15)
+    plt.ylabel("total time (s)",fontsize=15)
     plt.yticks(np.arange(0,33,8), fontsize=12)
-    plt.xlabel("\# parties in 2Gbps network", fontsize=15)
+    plt.xlabel("\# parties each in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
 
