@@ -47,10 +47,10 @@ def plot_dpi_ictf():
 
     y3 = [100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467, 100467]
 
-    plt.plot(x, y1, linestyle='--', marker='x', markersize=7, color=red, label="LHE (d=100)")
-    plt.plot(x, y2, linestyle=':', marker='o', markersize=6, color=blue, label="LHE (d=10)")
+    plt.plot(x, y1, linestyle='solid', marker='x', markersize=7, color=red, label="Quadratic ($n=100$)")
+    plt.plot(x, y2, linestyle='solid', marker='o', markersize=6, color=blue, label="Quadratic ($n=10$)")
 
-    plt.plot(x, y3, linestyle='-.', marker='s', markersize=6, color=green, label="SWHE")
+    plt.plot(x, y3, linestyle='solid', marker='s', markersize=6, color=green, label="Linear")
 
     axes = plt.gca()
     axes.set_ylim([-10, 905000])
@@ -58,9 +58,9 @@ def plot_dpi_ictf():
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# avg mult gates/s",fontsize=15)
+    plt.ylabel("avg \# mult/s",fontsize=15)
     plt.yticks(np.arange(0, 905000, 150000), fontsize=12)
-    plt.xlabel("\% of vectorized mult gates in 2Gbps network", fontsize=15)
+    plt.xlabel("\% of vectorized mult in 2Gbps network", fontsize=15)
     xts = [0, 20, 40, 60, 80, 100]
     plt.xticks(xts, ["$0$", "$20$", "$40$", "$60$", "$80$", "$100$"], fontsize=12)
 

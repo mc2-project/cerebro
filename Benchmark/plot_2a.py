@@ -47,10 +47,10 @@ def plot_dpi_ictf():
 
     y3 = [119163, 119523, 113496, 106911, 102568, 100467]
 
-    plt.plot(x, y1, linestyle='--', marker='x', markersize=7, color=red, label="LHE (d=100)")
-    plt.plot(x, y2, linestyle=':', marker='o', markersize=7, color=blue, label="LHE (d=10)")
+    plt.plot(x, y1, linestyle='solid', marker='x', markersize=7, color=red, label="Quadratic ($n=100$)")
+    plt.plot(x, y2, linestyle='solid', marker='o', markersize=7, color=blue, label="Quadratic ($n=10$)")
 
-    plt.plot(x, y3, linestyle='-.', marker='s', markersize=7, color=green, label="SWHE")
+    plt.plot(x, y3, linestyle='solid', marker='s', markersize=7, color=green, label="Linear")
 
     axes = plt.gca()
     axes.set_ylim([-10, 2005000])
@@ -58,7 +58,7 @@ def plot_dpi_ictf():
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# vectorized mult gates/s",fontsize=15)
+    plt.ylabel("\# vectorized mult/s",fontsize=15)
     plt.yticks(np.arange(0,2005000,400000), fontsize=12)
     plt.xlabel("\# parties in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
@@ -67,7 +67,7 @@ def plot_dpi_ictf():
     fig = plt.gcf()
     fig.set_size_inches(6, 4, forward=True)
 
-    pp = PdfPages('Exp_2a_protocols_in_diff_parties_vectorsize.pdf')
+    pp = PdfPages('Exp_2a_protocols_in_diff_parties_vectorized.pdf')
     plt.savefig(pp, format='pdf', bbox_inches='tight', dpi=fig.dpi)
     pp.close()
     plt.show()

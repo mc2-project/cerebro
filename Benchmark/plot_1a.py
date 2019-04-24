@@ -50,20 +50,20 @@ def plot_dpi_ictf():
     y3 = [123693.5083, 111777.5609, 108299.8904, 106640.9612, 105669.7764, 105032.0879]
     y4 = [123379.9794, 61963.79904, 41370.40651, 31050.80861, 24851.70178, 20715.89765]
 
-    plt.plot(x, y1, linestyle=':', marker='x', markersize=7, color=red, label="SWHE")
-    plt.plot(x, y2, linestyle=':', marker='o', markersize=7, color=blue, label="LHE")
+    plt.plot(x, y1, linestyle='solid', marker='x', markersize=7, color=red, label="Linear")
+    plt.plot(x, y2, linestyle='solid', marker='o', markersize=7, color=blue, label="Quadratic")
 
-    plt.plot(x, y3, linestyle='--', alpha=0.5, color='m', label="SWHE model")
-    plt.plot(x, y4, linestyle='--', alpha=0.5, color=purple, label="LHE model")
+    plt.plot(x, y3, linestyle='--', alpha=0.75, color=green, label="Linear (model)")
+    plt.plot(x, y4, linestyle='--', alpha=0.75, color=purple, label="Quadratic (model)")
 
     axes = plt.gca()
-    axes.set_ylim([0, 145000])
+    axes.set_ylim([0, 155000])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# mult gates/s",fontsize=15)
-    plt.yticks(np.arange(0, 145000, 20000), fontsize=12)
+    plt.ylabel("\# regular mult/s",fontsize=15)
+    plt.yticks(np.arange(0, 155000, 30000), fontsize=12)
     plt.xlabel("\# parties in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
