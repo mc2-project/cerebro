@@ -36,38 +36,35 @@ legendsize = 40
 red = "#a93226"
 blue = "#2874a6"
 green = "#1e8449"
+purple = '#800080'
 
 def plot_dpi_ictf():
     # plt.plot(nrules, nb_vals, marker='o', linestyle='-', color=red)
     # plt.plot(nrules, sb_vals, marker='o', linestyle='-', color=green2)
 
-    x = [2, 4, 6, 8, 10, 12]
-    y1 = [1321036.8, 824559.36, 584314.88, 460398.08, 377550.08, 326270.72]
-    y2 = [456021.76, 198736.64, 123660.8, 90877.44, 74868.608, 62447.232]
+    x = [100, 300, 600, 900, 1200]
+    y1 = [9181.09, 24593.7, 43146.3, 57361.9, 66653.8]
+    y2 = [21832.2, 43854.4, 64580.2, 73689.8, 79508.2]
 
-    y3 = [23840.9, 17393.1, 15455, 15237.5, 14838.2, 14442.4]            
-
-    plt.plot(x, y1, linestyle='solid', marker='x', markersize=7, color=red, label="Quadratic ($n=100$)")
-    plt.plot(x, y2, linestyle='solid', marker='o', markersize=7, color=blue, label="Quadratic ($n=10$)")
-
-    plt.plot(x, y3, linestyle='solid', marker='s', markersize=7, color=green, label="Linear")
+    plt.plot(x, y1, linestyle='--', marker='x', markersize=7, color=red, label="Flat Linear")
+    plt.plot(x, y2, linestyle=':', marker='o', markersize=7, color=blue, label="Hierarchical Linear")
 
     axes = plt.gca()
-    axes.set_ylim([-50000, 1505000])
+    axes.set_ylim([-100, 90500])
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,4), loc="lower left",
                 mode="expand", borderaxespad=0)
 
-    plt.ylabel("\# vectorized mult/s",fontsize=15)
-    plt.yticks(np.arange(0,1505000,300000), fontsize=12)
-    plt.xlabel("\# parties in 100Mbps network", fontsize=15)
-    xts = [2, 4, 6, 8, 10, 12]
-    plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
+    plt.ylabel("\# mult gates/s",fontsize=15)
+    plt.yticks(np.arange(0,90500,15000), fontsize=12)
+    plt.xlabel("inter-continent bandwidth (MBps)", fontsize=15)
+    xts = [200, 400, 600, 800, 1000, 1200]
+    plt.xticks(xts, ["$200$", "$400$", "$600$", "$800$", "$1000$", "$1200$"], fontsize=12)
 
     fig = plt.gcf()
     fig.set_size_inches(6, 4, forward=True)
 
-    pp = PdfPages('Exp_2b_protocols_in_diff_parties_vectorized.pdf')
+    pp = PdfPages('Exp_7a_6_6.pdf')
     plt.savefig(pp, format='pdf', bbox_inches='tight', dpi=fig.dpi)
     pp.close()
     plt.show()
@@ -77,3 +74,4 @@ if __name__ == "__main__":
 
     if True:
         plot_dpi_ictf()
+

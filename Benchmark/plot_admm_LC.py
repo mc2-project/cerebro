@@ -41,18 +41,18 @@ def plot_admm():
     # x represents the dimensions of the dataset.
     x = [5, 10, 20, 30, 40]
     # Local Compute Time, no estimates
-    y1 = [90.93, 153.59, 281.52, 413.39, 549.59]
-    y2 = [891, 3425.86, 15675.83, 42925.32, 91685.354]
-    
+    y1 = [95.21107599, 166.3214619, 324.5535871, 504.5941834, 706.8332509]
+    y2 = [3736.564337, 14038.20616, 58684.93763, 146994.9658, 296647.1091]
+            
     # Log scale
     plt.yscale('log')
 
-    plt.plot(x, y1, marker="^", markersize=8, color=red, label="With LC")
-    plt.plot(x[:-1], y2[:-1], marker='x', markersize=8, color=blue, label="Without LC")
-    plt.plot([30, 40], [42925.32, 91685.354], marker='x', linestyle=':', markersize=8, color=blue, label="Without LC estimated")
+    plt.plot(x, y1, marker="^", linestyle="solid", markersize=8, color=red, label="Use LC")
+    plt.plot(x[:-1], y2[:-1], marker='x', linestyle="solid", markersize=8, color=blue, label="Not use LC")
+    plt.plot([30, 40], [146994.9658, 296647.1091], marker='x', linestyle=':', markersize=8, color=blue, label="Not use LC (estimated)")
 
     axes = plt.gca()
-    axes.set_ylim(0, 150000)
+    axes.set_ylim(0, 350500)
     #axes.set_yscale('log')
 
     plt.legend(ncol=2, columnspacing=0.2, fontsize=15, bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
@@ -60,7 +60,7 @@ def plot_admm():
 
     plt.ylabel("Time (s)",fontsize=15)
     
-    plt.yticks([10, 100, 1000, 10000, 100000], fontsize=12)
+    plt.yticks([10, 100, 1000, 10000, 100000, 1000000], fontsize=12)
     
     plt.xlabel("\# features in the dataset", fontsize=15)
     xts = [0, 5, 10, 20, 30, 40]

@@ -46,8 +46,8 @@ def plot_dpi_ictf():
     y1 = [0.286841, 0.53484, 0.61241, 0.83911, 1.00558, 1.16675]
     y2 = [11.771117, 12.235296, 12.825783, 12.994068, 13.853691, 14.181069]
 
-    plt.plot(x, y1, linestyle='--', marker='P', markersize=7, color=green, label="Boolean")
-    plt.plot(x, y2, linestyle=':', marker='*', markersize=9, color=purple, label="Arithmetic")
+    plt.plot(x, y1, linestyle='solid', marker='P', markersize=7, color=green, label="Boolean")
+    plt.plot(x, y2, linestyle='solid', marker='*', markersize=9, color=purple, label="Arithmetic")
 
     axes = plt.gca()
     axes.set_ylim([-1, 16])
@@ -57,7 +57,7 @@ def plot_dpi_ictf():
 
     plt.ylabel("online time (s)",fontsize=15)
     plt.yticks(np.arange(0,16,3), fontsize=12)
-    plt.xlabel("\# parties in 2Gbps network", fontsize=15)
+    plt.xlabel("\# parties each in 2Gbps network", fontsize=15)
     xts = [2, 4, 6, 8, 10, 12]
     plt.xticks(xts, ["$2$", "$4$", "$6$", "$8$", "$10$", "$12$"], fontsize=12)
 
