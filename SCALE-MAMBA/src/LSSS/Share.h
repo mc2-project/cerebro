@@ -21,8 +21,9 @@ class Share
 {
   int p;
   vector<gfp> a;   // The share
+#ifndef SH
   vector<gfp> mac; // Shares of the mac (when type=FULL)
-
+#endif
   // Some sanity checking that shares are assigned OK
   void check() const
   {
@@ -54,7 +55,9 @@ public:
   {
     p= S.p;
     a= S.a;
+#ifndef SH
     mac= S.mac;
+#endif
     check();
   }
 
@@ -62,7 +65,9 @@ public:
   {
     p= (int) i;
     a= sv;
+#ifndef SH
     mac= macs;
+#endif 
     check();
   }
 
@@ -76,20 +81,26 @@ public:
   { // To try and create a run time error to capture Shares
     // without a player assigned
     p= -1;
+#ifndef SH
     mac.resize(SD.nmacs);
+#endif
   }
   Share(int pp)
   {
     p= pp;
     a.resize(SD.M.shares_per_player(p));
+#ifndef SH
     mac.resize(SD.nmacs);
+#endif
     assign_zero();
   }
   Share(const Share &S)
   {
     p= S.p;
     a= S.a;
+#ifndef SH
     mac= S.mac;
+#endif
   }
   ~Share()
   {
@@ -116,7 +127,11 @@ public:
   }
   const vector<gfp> &get_macs() const
   {
+#ifndef SH
     return mac;
+#endif
+    vector<gfp> res;
+    return res;
   }
   gfp get_share(unsigned int i) const
   {
@@ -124,7 +139,10 @@ public:
   }
   gfp get_mac(unsigned int i) const
   {
+#ifndef SH
     return mac[i];
+#endif 
+    return 0;
   }
   void set_shares(const vector<gfp> &aa);
   void set_macs(const vector<gfp> &aa);
@@ -134,7 +152,9 @@ public:
   }
   void set_mac(unsigned int i, const gfp &aa)
   {
+#ifndef SH
     mac[i]= aa;
+#endif
   }
   void set_player(int pp)
   {

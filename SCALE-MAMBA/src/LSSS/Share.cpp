@@ -12,6 +12,7 @@ ShareData Share::SD;
 
 void Share::assign_zero()
 {
+#ifndef SH
   if (SD.type == Full)
     {
       a[0].assign_zero();
@@ -20,7 +21,9 @@ void Share::assign_zero()
           mac[i].assign_zero();
         }
     }
-  else if (SD.type == Shamir)
+#endif
+
+  if (SD.type == Shamir)
     {
       a[0].assign_zero();
     }
@@ -49,7 +52,7 @@ void Share::assign(const gfp &aa, const vector<gfp> &alphai)
         a[0]= aa;
       else
         a[0].assign_zero();
-
+#ifndef SH
       if (SD.type == Full)
         {
           for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -57,6 +60,7 @@ void Share::assign(const gfp &aa, const vector<gfp> &alphai)
               mac[i].mul(aa, alphai[i]);
             }
         }
+#endif
     }
   check();
 }
@@ -73,12 +77,14 @@ void Share::set_shares(const vector<gfp> &aa)
 
 void Share::set_macs(const vector<gfp> &aa)
 {
+#ifndef SH
   if (aa.size() != SD.nmacs)
     {
       throw invalid_length();
     }
   mac= aa;
   check();
+#endif
 }
 
 void Share::set_player_and_shares(int pp, const vector<gfp> &aa)
@@ -103,6 +109,7 @@ void Share::mul(const Share &S, const gfp &aa)
     {
       a[i].mul(S.a[i], aa);
     }
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -110,13 +117,14 @@ void Share::mul(const Share &S, const gfp &aa)
           mac[i].mul(S.mac[i], aa);
         }
     }
+#endif
+
   check();
 }
 
 
 void Share::add(const Share &S, const gfp &aa, const vector<gfp> &alphai)
 {
-
   if (p != S.p)
     {
       p= S.p;
@@ -142,16 +150,18 @@ void Share::add(const Share &S, const gfp &aa, const vector<gfp> &alphai)
         {
           a[0]= S.a[0];
         }
-
+#ifndef SH
       if (SD.type == Full)
-        {
+        { 
           for (unsigned int i= 0; i < SD.nmacs; i++)
             {
               tmp.mul(alphai[i], aa);
               mac[i].add(S.mac[i], tmp);
             }
         }
+#endif
     }
+
   check();
 }
 
@@ -215,7 +225,7 @@ void Share::sub(const Share &S, const gfp &aa, const vector<gfp> &alphai)
         {
           a[0]= S.a[0];
         }
-
+#ifndef SH
       if (SD.type == Full)
         {
           gfp tmp;
@@ -225,6 +235,7 @@ void Share::sub(const Share &S, const gfp &aa, const vector<gfp> &alphai)
               mac[i].sub(S.mac[i], tmp);
             }
         }
+#endif
     }
   check();
 }
@@ -257,7 +268,7 @@ void Share::sub(const gfp &aa, const Share &S, const vector<gfp> &alphai)
           a[0]= S.a[0];
           a[0].negate();
         }
-
+#ifndef SH
       if (SD.type == Full)
         {
           gfp tmp;
@@ -267,6 +278,7 @@ void Share::sub(const gfp &aa, const Share &S, const vector<gfp> &alphai)
               mac[i].sub(tmp, S.mac[i]);
             }
         }
+#endif
     }
   check();
 }
@@ -287,7 +299,7 @@ void Share::add(const Share &S1, const Share &S2)
     {
       a[i].add(S1.a[i], S2.a[i]);
     }
-
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -295,6 +307,7 @@ void Share::add(const Share &S1, const Share &S2)
           mac[i].add(S1.mac[i], S2.mac[i]);
         }
     }
+#endif
   check();
 }
 
@@ -313,6 +326,7 @@ void Share::sub(const Share &S1, const Share &S2)
     {
       a[i].sub(S1.a[i], S2.a[i]);
     }
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -320,6 +334,7 @@ void Share::sub(const Share &S1, const Share &S2)
           mac[i].sub(S1.mac[i], S2.mac[i]);
         }
     }
+#endif
   check();
 }
 
@@ -329,6 +344,7 @@ void Share::negate()
     {
       a[i].negate();
     }
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -336,6 +352,7 @@ void Share::negate()
           mac[i].negate();
         }
     }
+#endif
   check();
 }
 
@@ -372,6 +389,7 @@ gfp combine(const vector<Share> &S)
 
 bool check_macs(const vector<Share> &S, const vector<gfp> &key)
 {
+#ifndef SH
   if (Share::SD.type != Full)
     {
       return true;
@@ -391,6 +409,9 @@ bool check_macs(const vector<Share> &S, const vector<gfp> &key)
           return false;
         }
     }
+  return true;
+#endif
+  // If semihonest, macs always work. Temporary for now.
   return true;
 }
 
@@ -414,6 +435,7 @@ void Share::output(ostream &s, bool human) const
           s << " ";
         }
     }
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -425,6 +447,7 @@ void Share::output(ostream &s, bool human) const
             }
         }
     }
+#endif
   if (human)
     {
       s << endl;
@@ -462,6 +485,7 @@ void Share::input(istream &s, bool human)
     {
       a[i].input(s, human);
     }
+#ifndef SH
   if (SD.type == Full)
     {
       for (unsigned int i= 0; i < SD.nmacs; i++)
@@ -469,6 +493,7 @@ void Share::input(istream &s, bool human)
           mac[i].input(s, human);
         }
     }
+#endif
   check();
 }
 

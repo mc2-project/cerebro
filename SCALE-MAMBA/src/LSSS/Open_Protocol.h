@@ -36,7 +36,9 @@ class Open_Protocol
   /* Open Data */
   int open_cnt;
   int counter[2];
+#ifndef SH
   vector<vector<gfp>> macs;
+#endif
   vector<gfp> vals;
 
   // Add vectors to the MAC and Value list above

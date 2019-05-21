@@ -20,12 +20,16 @@ Open_Protocol::Open_Protocol()
   open_cnt= 0;
   counter[0]= 0; // Counts the balance of sends and receives in each connection
   counter[1]= 0; // Counts the balance of sends and receives in each connection
+#ifndef SH
+  cout << "Open protocol here indicating thaty fucking SH is not defined." << endl;
   macs.resize(Share::SD.nmacs);
+#endif
   SHA256_Init(&sha256);
 }
 
 void Open_Protocol::AddToMacs(const vector<Share> &shares)
 {
+#ifndef SH
   for (unsigned int i= 0; i < shares.size(); i++)
     {
       for (unsigned int j= 0; j < Share::SD.nmacs; j++)
@@ -33,6 +37,7 @@ void Open_Protocol::AddToMacs(const vector<Share> &shares)
           macs[j].push_back(shares[i].mac[j]);
         }
     }
+#endif
 }
 
 void Open_Protocol::AddToValues(const vector<gfp> &values)
@@ -121,7 +126,9 @@ void Open_Protocol::Open_To_All_End(vector<gfp> &values, const vector<Share> &S,
                 }
             }
         }
+#ifndef SH
       AddToMacs(S);
+#endif
       AddToValues(values);
       if (open_cnt > open_check_gap)
         {
@@ -221,15 +228,18 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
           for (int i= 0; i < open_cnt; i++)
             {
               r.almost_randomize(G);
+#ifndef SH
               temp.mul(r, vals[i]);
               a[j].add(temp);
-
               temp.mul(r, macs[j][i]);
               gami[j].add(temp);
+#endif
             }
+#ifndef SH
           macs[j].erase(macs[j].begin(), macs[j].begin() + open_cnt);
           temp.mul(a[j], P.get_mac_key(j));
           tau[j][P.whoami()].sub(gami[j], temp);
+#endif
         }
       vals.erase(vals.begin(), vals.begin() + open_cnt);
 
@@ -243,10 +253,12 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
             {
               t.add(tau[j][i]);
             }
+#ifndef SH
           if (!t.is_zero())
             {
               throw mac_fail();
             }
+#endif
         }
 
       // Now check everyone is OK, in case I am honest and another honest
