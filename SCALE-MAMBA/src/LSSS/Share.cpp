@@ -48,8 +48,10 @@ void Share::assign(const gfp &aa, const vector<gfp> &alphai)
     }
   else
     {
-      if (p == 0 || SD.type == Shamir)
-        a[0]= aa;
+      if (p == 0 || SD.type == Shamir || SD.type == Full) {
+        a.at(0) = aa;
+        //a.push_back(aa);
+      }
       else
         a[0].assign_zero();
 #ifndef SH

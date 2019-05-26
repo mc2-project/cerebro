@@ -21,6 +21,11 @@ void offline_FHE_triples(Player &P, list<Share> &a, list<Share> &b,
                          const FFT_Data &PTD,
                          FHE_Industry &industry);
 
+void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
+                         list<Share> &c, const FHE_PK &pk, const FHE_SK &sk,
+                         const FFT_Data &PTD,
+                         FHE_Industry &industry);
+
 void offline_FHE_squares(Player &P, list<Share> &a, list<Share> &b,
                          const FHE_PK &pk, const FHE_SK &sk,
                          const FFT_Data &PTD,
@@ -34,5 +39,6 @@ void offline_FHE_IO(Player &P, unsigned int player_num, list<Share> &a,
                     list<gfp> &opened, const FHE_PK &pk, const FHE_SK &sk,
                     const FFT_Data &PTD, Open_Protocol &OP,
                     FHE_Industry &industry);
+
 
 #endif

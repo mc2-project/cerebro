@@ -44,15 +44,19 @@ SystemData::SystemData(const string &NetworkDataFileName)
 
   fake_off = 1;
   fake_sac = 1;
+  semihonest = 1;
+#ifndef SH 
+  semihonest = 0;
+#endif
 
-  init(numplayers, RootCertName, IP_Numbers, PlayerCertFiles, PlayerNames, fake_off, fake_sac);
+  init(numplayers, RootCertName, IP_Numbers, PlayerCertFiles, PlayerNames, fake_off, fake_sac, semihonest);
 }
 
 void SystemData::init(unsigned int numplayers, const string &RootCertName,
                       const vector<string> &IP_Numbers,
                       const vector<string> &PlayerCertFiles,
                       const vector<string> &PlayerNames,
-                      int fake_off, int fake_sac)
+                      int fake_off, int fake_sac, int semihonest_param)
 {
   n= numplayers;
   RootCRT= RootCertName;
@@ -68,4 +72,5 @@ void SystemData::init(unsigned int numplayers, const string &RootCertName,
   PlayerCN= PlayerNames;
   fake_offline= 1;
   fake_sacrifice= 1;
+  semihonest = semihonest_param;
 }

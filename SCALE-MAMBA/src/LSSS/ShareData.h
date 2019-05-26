@@ -38,7 +38,8 @@ enum OfflineType {
   Fake,
   Maurer,
   Reduced,
-  SPDZ
+  SPDZ,
+  Semihonest
 };
 
 class ShareData

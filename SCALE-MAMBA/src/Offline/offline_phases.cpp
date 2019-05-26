@@ -57,6 +57,8 @@ int check_exit(int num_online, const Player &P, offline_control_data &OCD, ODtyp
           switch (T)
             {
               case Triples:
+                printf("Lock on mult mutex in check_exit on thread = %d\n", num_online);
+                printf("Max triples: %d\n", max_triples_offline);
                 OCD.mult_mutex[num_online].lock();
                 if ((TriplesD[num_online].ta.size() > max_triples_offline) || (OCD.totm[num_online] > OCD.maxm && OCD.maxm != 0))
                   {
@@ -64,6 +66,7 @@ int check_exit(int num_online, const Player &P, offline_control_data &OCD, ODtyp
                     ss= "W";
                   }
                 OCD.mult_mutex[num_online].unlock();
+                printf("Unlock on mult mutex in check_exit on thread = %d\n", num_online);
                 break;
               case Squares:
                 OCD.square_mutex[num_online].lock();
@@ -142,6 +145,7 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
               fflush(stdout);
             }
           offline_phase_triples(P, prss, przs, a, b, c, pk, sk, PTD, industry);
+          printf("Triples phase finished. \n");
           if (verbose > 1)
             {
               printf("Out of triples: thread = %d\n", num_online);
@@ -149,6 +153,7 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
             }
 
           /* Add to queues */
+          printf("Lock in mult_phase on thread = %d \n", num_online);
           OCD.mult_mutex[num_online].lock();
           it= TriplesD[num_online].ta.end();
           TriplesD[num_online].ta.splice(it, a);
@@ -157,6 +162,7 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
           it= TriplesD[num_online].tc.end();
           TriplesD[num_online].tc.splice(it, c);
           OCD.mult_mutex[num_online].unlock();
+          printf("Unlock in mult phase thread = %d \n", num_online);
         }
     }
 }
@@ -295,9 +301,11 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
 
   while (nm == 0 && ns == 0 && nb == 0 && minputs == false)
     {
+      printf("Propose number sacrifice lock on thread = %d \n", num_online);
       OCD.mult_mutex[num_online].lock();
       int ta= TriplesD[num_online].ta.size();
       OCD.mult_mutex[num_online].unlock();
+      printf("Propose number sacrifice unlock on thread = %d \n", num_online);
 
       OCD.square_mutex[num_online].lock();
       int sa= SquaresD[num_online].sa.size();
@@ -493,12 +501,15 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           while (ready == false && !exit)
             {
               ready= true;
+              printf("Sacrifice phase lock on thread = %d \n", num_online);
+
               OCD.mult_mutex[num_online].lock();
               if ((int) TriplesD[num_online].ta.size() < nm)
                 {
                   ready= false;
                 }
               OCD.mult_mutex[num_online].unlock();
+              printf("Sacrifice  phase unlock on thread = %d \n", num_online);
 
               OCD.square_mutex[num_online].lock();
               if ((int) SquaresD[num_online].sa.size() < rep * nb + ns)
@@ -530,9 +541,9 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
               printf("Sac: thread = %d : T: %d\n", num_online, nm);
               fflush(stdout);
             }
+          printf("Actual sacrifice lock on thread = %d \n", num_online);
 
           OCD.mult_mutex[num_online].lock();
-
           first= TriplesD[num_online].ta.begin();
           last= TriplesD[num_online].ta.begin();
           advance(last, nm);
@@ -550,8 +561,8 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           advance(last, nm);
           c.clear();
           c.splice(c.begin(), TriplesD[num_online].tc, first, last);
-
           OCD.mult_mutex[num_online].unlock();
+          printf("Actual sacrifice unlock on thread = %d \n", num_online);
 
           sacrifice_phase_triples(P, fake_sacrifice, a, b, c, OP);
 

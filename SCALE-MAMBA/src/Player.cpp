@@ -296,7 +296,13 @@ int main(int argc, const char *argv[])
     {
       throw data_mismatch();
     }
-  if (SD.fake_offline == 1)
+
+
+  if (SD.semihonest == 1)
+   {
+    ShD.Otype = Semihonest;
+   }
+  else if (SD.fake_offline == 1)
     {
       ShD.Otype= Fake;
     }
@@ -326,6 +332,7 @@ int main(int argc, const char *argv[])
   FHE_Params params;
   FFT_Data PTD;
   Ring Rg;
+  // Set Share::SD.type to be full.
   if (Share::SD.type == Full)
     {
       stringstream ss;

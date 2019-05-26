@@ -21,7 +21,7 @@ class SystemData
             const vector<string> &IP_Numbers,
             const vector<string> &PlayerCertFiles,
             const vector<string> &PlayerNames,
-            int fake_off, int fake_sac);
+            int fake_off, int fake_sac, int semihonest_param);
 
 public:
   unsigned int n;
@@ -32,16 +32,17 @@ public:
 
   int fake_offline;
   int fake_sacrifice;
+  int semihonest;
 
   SystemData(unsigned int numplayers, const string &RootCertName,
              const vector<string> &IP_Numbers,
              const vector<string> &PlayerCertFiles,
              const vector<string> &PlayerNames,
-             int fake_off= 0, int fake_sac= 0)
+             int fake_off= 0, int fake_sac= 0, int semihonest_param=0)
   {
     init(numplayers, RootCertName,
          IP_Numbers, PlayerCertFiles, PlayerNames,
-         fake_off, fake_sac);
+         fake_off, fake_sac, semihonest_param);
   }
 
   SystemData(const string &NetworkDataFileName);

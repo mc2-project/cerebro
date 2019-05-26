@@ -130,8 +130,8 @@ public:
 #ifndef SH
     return mac;
 #endif
-    vector<gfp> res;
-    return res;
+    
+    return a;
   }
   gfp get_share(unsigned int i) const
   {

@@ -27,6 +27,7 @@ using namespace std;
 void fake_offline_phase_triples(Player &P, list<Share> &a, list<Share> &b,
                                 list<Share> &c)
 {
+
   if (P.whoami() == 0)
     {
       PRNG PRG;
@@ -58,7 +59,7 @@ void fake_offline_phase_triples(Player &P, list<Share> &a, list<Share> &b,
           make_shares(sb, bb, bmacs, PRG);
           make_shares(sc, cc, cmacs, PRG);
 
-          /* Now send the data to all parties and fix own shares */
+          // Now send the data to all parties and fix own shares
           a.push_back(sa[0]);
           b.push_back(sb[0]);
           c.push_back(sc[0]);
@@ -228,6 +229,11 @@ void offline_phase_triples(Player &P, PRSS &prss, PRZS &przs, list<Share> &a,
     {
       offline_Reduced_triples(P, prss, przs, a, b, c);
     }
+  else if (Share::SD.Otype == Semihonest)
+    {
+      printf("Semihonest triples!\n");
+      offline_FHE_Semihonest_triples (P, a, b, c, pk, sk, PTD, industry);
+    }
   else
     {
       offline_FHE_triples(P, a, b, c, pk, sk, PTD, industry);
@@ -251,6 +257,10 @@ void offline_phase_squares(Player &P, PRSS &prss, PRZS &przs, list<Share> &a,
     {
       offline_Reduced_squares(P, prss, przs, a, b);
     }
+  else if (Share::SD.Otype == Semihonest) 
+    {
+      fake_offline_phase_squares(P, a, b);
+    }
   else
     {
       offline_FHE_squares(P, a, b, pk, sk, PTD, industry);
@@ -273,6 +283,10 @@ void offline_phase_bits(Player &P, PRSS &prss, PRZS &przs, list<Share> &b,
   else if (Share::SD.Otype == Reduced)
     {
       offline_Reduced_bits(P, prss, przs, b, OP);
+    }
+  else if (Share::SD.Otype == Semihonest)
+    {
+      fake_offline_phase_bits(P, b);
     }
   else
     {
