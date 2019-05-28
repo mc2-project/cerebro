@@ -32,6 +32,7 @@ enum ODtype {
   Bits
 };
 
+
 // Checks exit/wait, by player zero making decisions and conveying this
 // to all others. This means players are in sync with player zero. Even
 // if they know themselves they should die gracefully/wait
@@ -57,16 +58,22 @@ int check_exit(int num_online, const Player &P, offline_control_data &OCD, ODtyp
           switch (T)
             {
               case Triples:
-                printf("Lock on mult mutex in check_exit on thread = %d\n", num_online);
-                printf("Max triples: %d\n", max_triples_offline);
                 OCD.mult_mutex[num_online].lock();
+#ifndef SH
                 if ((TriplesD[num_online].ta.size() > max_triples_offline) || (OCD.totm[num_online] > OCD.maxm && OCD.maxm != 0))
                   {
                     result= 2;
                     ss= "W";
                   }
+#else   
+                // Potential race condition here!!!!
+                if ((TriplesD[num_online].ta.size() > OCD.maxm && OCD.maxm != 0) || (OCD.totm[num_online] > OCD.maxm && OCD.maxm != 0))
+                  {
+                    result= 2;
+                    ss= "W";
+                  }
+#endif
                 OCD.mult_mutex[num_online].unlock();
-                printf("Unlock on mult mutex in check_exit on thread = %d\n", num_online);
                 break;
               case Squares:
                 OCD.square_mutex[num_online].lock();
@@ -79,11 +86,19 @@ int check_exit(int num_online, const Player &P, offline_control_data &OCD, ODtyp
                 break;
               case Bits:
                 OCD.bit_mutex[num_online].lock();
-                if ((BitsD[num_online].bb.size() > max_bits_offline) || (OCD.totb[num_online] > OCD.maxb && OCD.maxb != 0))
+#ifndef SH
+                if ((BitsD[num_online].bb.size() > max_bits_offline) ||  (OCD.totb[num_online] > OCD.maxb && OCD.maxb != 0))
                   {
                     result= 2;
                     ss= "W";
                   }
+#else
+                if ((BitsD[num_online].bb.size() > OCD.maxb && OCD.maxb != 0) || (OCD.totb[num_online] > OCD.maxb && OCD.maxb != 0))
+                {
+                  result= 2;
+                  ss= "W";
+                }
+#endif
                 OCD.bit_mutex[num_online].unlock();
                 break;
               default:
@@ -122,7 +137,7 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
   while (0 == 0)
     {
       flag= check_exit(num_online, P, OCD, Triples);
-
+      printf("Mult Flag: %d\n", flag);
       /* Needs to die gracefully if online is gone */
       if (flag == 1)
         {
@@ -135,7 +150,7 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
 
       if (flag == 2)
         {
-          sleep(1);
+          sleep(5);
         }
       else
         {
@@ -145,7 +160,6 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
               fflush(stdout);
             }
           offline_phase_triples(P, prss, przs, a, b, c, pk, sk, PTD, industry);
-          printf("Triples phase finished. \n");
           if (verbose > 1)
             {
               printf("Out of triples: thread = %d\n", num_online);
@@ -153,7 +167,6 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
             }
 
           /* Add to queues */
-          printf("Lock in mult_phase on thread = %d \n", num_online);
           OCD.mult_mutex[num_online].lock();
           it= TriplesD[num_online].ta.end();
           TriplesD[num_online].ta.splice(it, a);
@@ -162,7 +175,6 @@ void mult_phase(int num_online, Player &P, offline_control_data &OCD,
           it= TriplesD[num_online].tc.end();
           TriplesD[num_online].tc.splice(it, c);
           OCD.mult_mutex[num_online].unlock();
-          printf("Unlock in mult phase thread = %d \n", num_online);
         }
     }
 }
@@ -195,7 +207,7 @@ void square_phase(int num_online, Player &P, offline_control_data &OCD,
 
       if (flag == 2)
         {
-          sleep(1);
+          sleep(5);
         }
       else
         {
@@ -228,6 +240,7 @@ void bit_phase(int num_online, Player &P, offline_control_data &OCD,
                int verbose)
 {
   // Initialize PRSS stuff
+  printf("In bit phase.\n");
   PRSS prss(P);
   PRZS przs(P);
 
@@ -239,7 +252,7 @@ void bit_phase(int num_online, Player &P, offline_control_data &OCD,
   while (0 == 0)
     {
       flag= check_exit(num_online, P, OCD, Bits);
-
+      //printf("Bit phase flag: %d\n", flag);
       /* Needs to die gracefully if online is gone */
       if (flag == 1)
         {
@@ -252,7 +265,7 @@ void bit_phase(int num_online, Player &P, offline_control_data &OCD,
 
       if (flag == 2)
         {
-          sleep(1);
+          sleep(5);
         }
       else
         {
@@ -261,7 +274,9 @@ void bit_phase(int num_online, Player &P, offline_control_data &OCD,
               printf("In bits: thread = %d\n", num_online);
               fflush(stdout);
             }
+
           offline_phase_bits(P, prss, przs, b, OP, pk, sk, PTD, industry);
+          
           if (verbose > 1)
             {
               printf("Out of bits: thread = %d\n", num_online);
@@ -301,12 +316,9 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
 
   while (nm == 0 && ns == 0 && nb == 0 && minputs == false)
     {
-      printf("Propose number sacrifice lock on thread = %d \n", num_online);
       OCD.mult_mutex[num_online].lock();
       int ta= TriplesD[num_online].ta.size();
       OCD.mult_mutex[num_online].unlock();
-      printf("Propose number sacrifice unlock on thread = %d \n", num_online);
-
       OCD.square_mutex[num_online].lock();
       int sa= SquaresD[num_online].sa.size();
       OCD.square_mutex[num_online].unlock();
@@ -314,24 +326,33 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
       OCD.bit_mutex[num_online].lock();
       int bb= BitsD[num_online].bb.size();
       OCD.bit_mutex[num_online].unlock();
-
+#ifndef SH
       nm= min((rep + 1) * sz_triples_sacrifice, ta) - 1;
       nm= (nm / (rep + 1)) * (rep + 1); // Make a round mult of (rep+1)
+#else
+      nm = ta;
+#endif
       if (nm < 0)
         {
           nm= 0;
         }
-
+#ifndef SH
       nb= min(sz_bits_sacrifice, bb) - 1;
       nb= min(nb, sa / rep) -
           10; // Leave some gap for making squares
+#else
+      nb = bb - 10; // Again, leave some gap for making squares.
+#endif
       if (nb < 0)
         {
           nb= 0;
         }
-
+#ifndef SH
       ns= min((rep + 1) * sz_squares_sacrifice, sa - rep * nb) - 1;
       ns= (ns / (rep + 1)) * (rep + 1); // Make a round mult of (rep+1)
+#else
+      ns = sa;//min((rep + 1) * sz_squares_sacrifice, sa); // Some random number TODO: Probably need to fix this later.
+#endif 
       if (ns < 0)
         {
           ns= 0;
@@ -344,10 +365,12 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
         }
 
       OCD.sacrifice_mutex[num_online].lock();
+      /*
       if (SacrificeD[num_online].TD.ta.size() > max_triples_sacrifice)
         {
           nm= 0;
         }
+      */
       if (OCD.totm[num_online] > OCD.maxm && OCD.maxm != 0)
         {
           nm= 0;
@@ -360,10 +383,12 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
         {
           ns= 0;
         }
+      /*
       if (SacrificeD[num_online].BD.bb.size() > max_bits_sacrifice)
         {
           nb= 0;
         }
+      */
       if (OCD.totb[num_online] > OCD.maxb && OCD.maxb != 0)
         {
           nb= 0;
@@ -381,14 +406,13 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
             }
         }
 
-      /* Needs to die gracefully if we are told to */
+      // Needs to die gracefully if we are told to
       // If I am exiting tell other players
       if (OCD.finish_offline[num_online] == 1)
         {
           nm= -1;
         }
       OCD.sacrifice_mutex[num_online].unlock();
-
       // Propose to other players what I have
       stringstream ss;
       ss << nm << " " << ns << " " << nb << " ";
@@ -402,6 +426,8 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
                  ss.str().c_str(), rep);
           fflush(stdout);
         }
+      if (nm != 0)
+        printf("Propose to sacrifice: %d triples. \n", nm);
       P.send_all(ss.str());
 
       // Now get data from all players taking minimum/max where necessary
@@ -433,7 +459,6 @@ bool propose_numbers_sacrifice(int num_online, Player &P, int &nm, int &ns,
           sleep(1);
         }
     }
-
   bool exit= false;
   // Signal exit if anyone signalled exit
   if (nm == -1)
@@ -468,18 +493,18 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
   bool exit= false, ready= false;
   while (0 == 0)
     {
+      //printf("In sacrifice loop!\n");
       exit= propose_numbers_sacrifice(num_online, P, nm, ns, nb, minputs, OCD,
                                       verbose - 1);
-
       // Do the input bits first as the other operations wait until
       // enough data is ready to sacrifice
+      // printf("In sacrifice while loop.\n");
       for (unsigned int i= 0; i < P.nplayers() && !exit; i++)
         {
           if (minputs[i])
             {
               make_IO_data(P, fake_sacrifice, prss, i, a, opened, pk, sk, PTD, OP, industry);
-
-              /* Add to queues */
+              // Add to queues
               OCD.sacrifice_mutex[num_online].lock();
               OCD.totI+= a.size();
               it= SacrificeD[num_online].ID.ios[i].end();
@@ -500,19 +525,19 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           ready= false;
           while (ready == false && !exit)
             {
+              printf("Waiting for more data.\n");
+              printf("Num triples: %d\n", nm);
+              printf("Num bits: %d \n", nb);
               ready= true;
-              printf("Sacrifice phase lock on thread = %d \n", num_online);
-
               OCD.mult_mutex[num_online].lock();
               if ((int) TriplesD[num_online].ta.size() < nm)
                 {
                   ready= false;
                 }
               OCD.mult_mutex[num_online].unlock();
-              printf("Sacrifice  phase unlock on thread = %d \n", num_online);
-
               OCD.square_mutex[num_online].lock();
-              if ((int) SquaresD[num_online].sa.size() < rep * nb + ns)
+              //if ((int) SquaresD[num_online].sa.size() < rep * nb + ns)
+              if ((int) SquaresD[num_online].sa.size() < ns)
                 {
                   ready= false;
                 }
@@ -525,7 +550,7 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
                 }
               OCD.bit_mutex[num_online].unlock();
 
-              /* Wait if nothing to do */
+              // Wait if nothing to do
               if (ready == false)
                 {
                   sleep(1);
@@ -533,40 +558,35 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
             }
         }
 
-      /* Do the actual work we need to do */
+      // Do the actual work we need to do 
+      //printf("Right before enter sacrifice triples. nm: %d\n", nm);
       if (nm > 0 && !exit)
+      //if (!exit)
         {
           if (verbose > 1)
             {
               printf("Sac: thread = %d : T: %d\n", num_online, nm);
               fflush(stdout);
             }
-          printf("Actual sacrifice lock on thread = %d \n", num_online);
-
           OCD.mult_mutex[num_online].lock();
           first= TriplesD[num_online].ta.begin();
           last= TriplesD[num_online].ta.begin();
           advance(last, nm);
           a.clear();
           a.splice(a.begin(), TriplesD[num_online].ta, first, last);
-
           first= TriplesD[num_online].tb.begin();
           last= TriplesD[num_online].tb.begin();
           advance(last, nm);
           b.clear();
           b.splice(b.begin(), TriplesD[num_online].tb, first, last);
-
           first= TriplesD[num_online].tc.begin();
           last= TriplesD[num_online].tc.begin();
           advance(last, nm);
           c.clear();
           c.splice(c.begin(), TriplesD[num_online].tc, first, last);
           OCD.mult_mutex[num_online].unlock();
-          printf("Actual sacrifice unlock on thread = %d \n", num_online);
-
           sacrifice_phase_triples(P, fake_sacrifice, a, b, c, OP);
-
-          /* Add to queues */
+          // Add to queues 
           OCD.sacrifice_mutex[num_online].lock();
           OCD.totm[num_online]+= a.size();
           it= SacrificeD[num_online].TD.ta.end();
@@ -578,6 +598,7 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           OCD.sacrifice_mutex[num_online].unlock();
         }
       if (ns > 0 && !exit)
+      //if (!exit)
         {
           if (verbose > 1)
             {
@@ -586,7 +607,7 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
             }
 
           OCD.square_mutex[num_online].lock();
-
+          //printf("Number of squares: %d \n", ns);
           first= SquaresD[num_online].sa.begin();
           last= SquaresD[num_online].sa.begin();
           advance(last, ns);
@@ -603,7 +624,8 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
 
           sacrifice_phase_squares(P, fake_sacrifice, a, b, OP);
 
-          /* Add to queues */
+          // Add to queues
+          printf("Number of squares sacrificed: %d\n", a.size());
           OCD.sacrifice_mutex[num_online].lock();
           OCD.tots[num_online]+= a.size();
           it= SacrificeD[num_online].SD.sa.end();
@@ -613,15 +635,15 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           OCD.sacrifice_mutex[num_online].unlock();
         }
       if (nb > 0 && !exit)
+      //if (!exit)
         {
           if (verbose > 1)
             {
               printf("Sac: thread = %d : B: %d\n", num_online, nb);
               fflush(stdout);
             }
-
           OCD.bit_mutex[num_online].lock();
-
+          //printf("Number of bits: %d \n", nb);
           first= BitsD[num_online].bb.begin();
           last= BitsD[num_online].bb.begin();
           advance(last, nb);
@@ -648,7 +670,8 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
 
           sacrifice_phase_bits(P, fake_sacrifice, a, b, c, OP);
 
-          /* Add to queues */
+          // Add to queues
+          printf("Number of bits sacrificed: %d\n", a.size());
           OCD.sacrifice_mutex[num_online].lock();
           OCD.totb[num_online]+= a.size();
           it= SacrificeD[num_online].BD.bb.end();
@@ -701,7 +724,11 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
           avg= time / btotal;
           printf("Seconds per `Thing` (all threads) %f : Total %f\n", avg, btotal);
         }
-      /* Check whether we should kill the offline phase as we have now enough data */
+      // Check whether we should kill the offline phase as we have now enough data 
+
+
+      printf("Total triples: %d\n", OCD.totm[num_online]);
+      printf("Total bits: %d \n", OCD.totb[num_online]);
       if (OCD.totm[num_online] > OCD.maxm && OCD.maxm != 0 &&
           OCD.tots[num_online] > OCD.maxs && OCD.maxs != 0 &&
           OCD.totb[num_online] > OCD.maxb && OCD.maxb != 0 &&
@@ -718,6 +745,8 @@ void sacrifice_phase(int num_online, Player &P, int fake_sacrifice,
       OCD.sacrifice_mutex[num_online].unlock();
       if (exit)
         {
+          //printf("Num triples: %d\n", OCD.totm[num_online]);
+          //printf("Num bits: %d\n", OCD.totb[num_online]);
           printf("Exiting sacrifice phase : thread = %d\n", num_online);
           return;
         }

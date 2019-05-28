@@ -166,7 +166,8 @@ void fake_offline_phase_bits(Player &P, list<Share> &b)
       gfp bb;
       vector<gfp> bmacs(Share::SD.nmacs);
       vector<Share> sb(n);
-      for (int i= 0; i < sz_offline_batch / 8; i++)
+      //for (int i= 0; i < sz_offline_batch / 8; i++)
+      for (int i = 0; i < 5634900; i++)
         {
           unsigned char u= PRG.get_uchar();
           for (int j= 0; j < 8; j++)
@@ -197,7 +198,8 @@ void fake_offline_phase_bits(Player &P, list<Share> &b)
     }
   else
     {
-      for (int i= 0; i < sz_offline_batch / 8; i++)
+      for (int i = 0; i < 5634900; i++)
+      //for (int i= 0; i < sz_offline_batch / 8; i++)
         {
           for (int j= 0; j < 8; j++)
             {
@@ -286,7 +288,7 @@ void offline_phase_bits(Player &P, PRSS &prss, PRZS &przs, list<Share> &b,
     }
   else if (Share::SD.Otype == Semihonest)
     {
-      fake_offline_phase_bits(P, b);
+      offline_FHE_Semihonest_bits(P, b, pk, sk, PTD, industry);
     }
   else
     {

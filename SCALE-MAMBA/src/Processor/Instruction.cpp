@@ -1059,11 +1059,11 @@ void Instruction::execute_using_sacrifice_data(
         {
           case TRIPLE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].TD.ta.front());
-            //SacrificeD[thread].TD.ta.pop_front();
+            SacrificeD[thread].TD.ta.pop_front();
             Proc.get_Sp_ref(r[1]).assign(SacrificeD[thread].TD.tb.front());
-            //SacrificeD[thread].TD.tb.pop_front();
+            SacrificeD[thread].TD.tb.pop_front();
             Proc.get_Sp_ref(r[2]).assign(SacrificeD[thread].TD.tc.front());
-            //SacrificeD[thread].TD.tc.pop_front();
+            SacrificeD[thread].TD.tc.pop_front();
             break;
           case SQUARE:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].SD.sa.front());
@@ -1073,7 +1073,7 @@ void Instruction::execute_using_sacrifice_data(
             break;
           case BIT:
             Proc.get_Sp_ref(r[0]).assign(SacrificeD[thread].BD.bb.front());
-            //SacrificeD[thread].BD.bb.pop_front();
+            SacrificeD[thread].BD.bb.pop_front();
             break;
           default:
             throw bad_value();

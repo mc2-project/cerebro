@@ -16,6 +16,8 @@ using std::future;
 using std::cout;
 using std::stringstream;
 
+
+/*
 void DistDecrypt(Plaintext &mess, const Ciphertext &ctx, const FHE_SK &sk, Player &P)
 {
   ThreadPool pool(64);
@@ -72,6 +74,42 @@ void DistDecrypt(Plaintext &mess, const Ciphertext &ctx, const FHE_SK &sk, Playe
     }
 
   printf("After reconstruction\n");
+  // Now get the final message
+  bigint mod= params.p0();
+  mess.set_poly_mod(vv, mod);
+}
+*/
+void DistDecrypt(Plaintext &mess, const Ciphertext &ctx, const FHE_SK &sk, Player &P)
+{
+  const FHE_Params &params= ctx.get_params();
+
+  vector<bigint> vv(params.phi_m());
+  sk.dist_decrypt_1(vv, ctx, P.whoami());
+
+  // Now pack into a string  for broadcasting
+  vector<string> vs(P.nplayers());
+  for (unsigned int i= 0; i < params.phi_m(); i++)
+    {
+      outputBigint(vs[P.whoami()], vv[i]);
+    }
+
+  // Broadcast and Receive the values
+  P.Broadcast_Receive(vs);
+
+  // Reconstruct the value mod p0 from all shares
+  vector<bigint> vv1(params.phi_m());
+  for (unsigned int i= 0; i < P.nplayers(); i++)
+    {
+      if (i != P.whoami())
+        {
+          for (unsigned int j= 0; j < params.phi_m(); j++)
+            {
+              inputBigint(vs[i], vv1[j]);
+            }
+          sk.dist_decrypt_2(vv, vv1);
+        }
+    }
+
   // Now get the final message
   bigint mod= params.p0();
   mess.set_poly_mod(vv, mod);
@@ -414,8 +452,6 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
     joinNclean(res2);
     printf("party0: sending out masked c+f done.\n");
   } else {
-    //printf("Ciphertext check to make sure this stream shit is working.\n");
-    //Ca[0].output(cout, true);
     string send_ca;
     string send_cb;
     string send_cf;
@@ -647,6 +683,239 @@ void offline_FHE_bits(Player &P, list<Share> &a, const FHE_PK &pk,
             }
         }
     }
+}
+
+
+void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
+                      const FHE_SK &sk, const FFT_Data &PTD,
+                      FHE_Industry &industry) {
+
+  unsigned char seed[SEED_SIZE];
+  memset(seed, 0, SEED_SIZE);
+  PRNG G;
+  G.SetSeed(seed);
+
+  int batch_size = 40;
+  vector<Plaintext> pa(batch_size, PTD);
+  vector<Plaintext> pc(batch_size, PTD);
+  vector<Ciphertext> Ca(batch_size, pk.get_params());
+  vector<Ciphertext> Cc(batch_size, pk.get_params());
+  int num_players = P.nplayers();
+  int my_num = P.whoami();
+
+  for (int i = 0; i < batch_size; i++) {
+    pa[i].allocate_slots(PTD.get_prime());
+    pa[i].randomize(G);
+    pc[i].allocate_slots((bigint)PTD.get_prime() << 64);
+  }
+  printf("sampling randomized a done.\n");
+
+  printf("encrypting a.\n");
+
+  PRNG G_array[omp_get_max_threads()];
+  for(int i = 0; i < omp_get_max_threads(); i++) {
+    G_array[i].SetSeed(seed);
+  }
+
+  #pragma omp parallel for
+  for(int i = 0; i < batch_size; i++) {
+    Random_Coins rc2(pk.get_params());
+    int num = omp_get_thread_num();
+    rc2.generate(G_array[num]);
+    pk.encrypt(Ca[i], pa[i], rc2);
+  }
+
+  printf("encrypting a done.\n");
+  ThreadPool pool(64);
+  if(my_num == 0) {
+    vector<future<void>> res;
+    vector<Ciphertext> Ca_others[num_players];
+    for(int i = 0; i < num_players; i++) {
+      Ca_others[i].resize(batch_size, pk.get_params());
+    }
+
+    Ca_others[0] = Ca;
+    printf("Receiving encrypted a's.\n");
+
+    for(int j = 1; j < num_players; j++){
+      int party = j;
+      res.push_back(pool.enqueue([party, &P, &Ca_others, &pk, batch_size]() {
+        string recv;
+        P.receive_from_player(party, recv);
+        istringstream ss;
+        ss.str(recv);
+        for (int i = 0; i < batch_size; i++) {
+          Ciphertext cipher(pk.get_params());
+          cipher.input(ss);
+          Ca_others[party].at(i) = cipher;
+        }
+      }));
+    }
+    joinNclean(res);
+
+    printf("party0: adding encrypted a.\n");
+    #pragma omp parallel for
+    for(int i = 0; i < batch_size; i++){
+      for(int j = 1; j < num_players; j++){
+        add(Ca_others[0][i], Ca_others[0][i], Ca_others[j][i]);
+      }
+    }
+    printf("party0: adding encrypted a done.\n");
+
+    printf("party0: multiplying encrypted a/a.\n");
+    #pragma omp parallel for
+    for(int i = 0; i < batch_size; i++){
+      mul(Cc[i], Ca_others[0][i], Ca_others[0][i], pk);
+    }
+    printf("party0: multiplying encrypted a/a done.\n");
+
+    printf("party0: sending out masked c.\n");
+
+    ostringstream output_stream;
+    for (int i = 0; i < batch_size; i++) {
+      Cc[i].output(output_stream);
+    }
+    vector<future<void>> res2;
+    for(int j = 1; j < num_players; j++){
+      int party = j;
+      res2.push_back(pool.enqueue([party, &P, &output_stream]() {
+        P.send_to_player(party, output_stream.str());
+        printf("Sent out masked c size: %d\n", output_stream.str().size());
+      }));
+    }
+    joinNclean(res2);
+    printf("party0: sending out masked c done.\n");
+  } else {
+    printf("sending encrypted a to party0.\n");
+    ostringstream cipher_a;
+    for (int i = 0; i < batch_size; i++) {
+      Ca[i].output(cipher_a);
+    }
+    P.send_to_player(0, cipher_a.str());
+    printf("sending encrypted a to party0 done.\n");
+    string recv_c;
+    P.receive_from_player(0, recv_c);
+    istringstream cipher_c;
+    cipher_c.str(recv_c);
+    printf("Receive cipher size: %d\n", recv_c.size());
+    for (int i = 0; i < batch_size; i++) {
+      Cc[i].input(cipher_c);
+    }
+    
+    printf("Received masked c. \n");
+  }
+
+  printf("See if we got the same values for encryption of c.");
+
+  printf("BITS: Start Dist Decrypt. \n");
+  for (int i = 0; i < batch_size; i++) {
+    DistDecrypt(pc[i], Cc[i], sk, P);
+  }
+  printf("BITS: Dist decrypt done. \n");
+  printf("Test we got the same values.");
+  for (int i = 0; i < 10; i++) {
+    pc[0].element(i).output(cout, true);
+    cout << endl;
+  }
+
+
+  /*
+  * Step 4: Assuming that no sum of a is a zero (only possible in semi-honest setting)
+  * Turn c=a*a to its square root inverse
+  */
+  printf("set c = inv sqrt root of c.\n");
+  int num_slots = PTD.num_slots();
+  #pragma omp parallel for
+  for(int i = 0; i < batch_size; i++){
+    printf("Index in outer loop: %d\n", i);
+
+    for(int j = 0; j < num_slots; j++){
+      gfp temp = pc[i].element(j).sqrRoot();
+      //temp.output(cout, true);
+      temp.invert();
+      pc[i].set_element(j, temp);
+      //cout << endl;
+    }
+  }
+  printf("set c = inv sqrt root of c done.\n");
+
+  /*
+  * Step 5: turn every a into ((c * a) + 1) / 2
+  */
+  printf("set a = ((c * a) + 1) / 2.\n");
+  gfp two_inv, one;
+  to_gfp(two_inv, (pa[0].get_field().get_prime() + 1) / 2);
+  one.assign_one();
+  #pragma omp parallel for
+  for(int i = 0; i < batch_size; i++){
+    for(int j = 0; j < num_slots; j++){
+      gfp a_tmp = pa[i].element(j);
+      gfp c_tmp = pc[i].element(j);
+
+      a_tmp = a_tmp * c_tmp;
+      if(my_num == 0){
+        a_tmp = a_tmp + one;
+      }
+      a_tmp = a_tmp * two_inv;
+
+      pa[i].set_element(j, a_tmp);
+    }
+  }
+  printf("set a = ((c * a) + 1) / 2 done.\n");
+  vector<gfp> macs(0);
+  for (int i = 0; i < batch_size; i++) {
+    for (int j = 0; j < (int) pk.get_params().phi_m(); j++) {
+      Share s(my_num);
+      s.assign(pa[i].element(j), macs);
+      a.push_back(s);
+    }
+  }
+
+  printf("Check results\n");
+  if (my_num == 0) {
+    vector<future<void>> res;
+    vector<gfp> a_other(num_players);
+    for(int j = 1; j < num_players; j++){
+      int party = j;
+      res.push_back(pool.enqueue([party, &PTD, &P, &a_other](){
+        string ss;
+        P.receive_from_player(party, ss);
+        istringstream stream(ss);
+        gfp recv_num;
+        recv_num.input(stream, false);
+        a_other[party] = recv_num;
+      }));
+    }
+    joinNclean(res);
+
+    printf("obtain all data from different parties.\n");
+    //Plaintext a_sum(PTD);
+    //a_sum.allocate_slots(PTD.get_prime());
+    //a_sum = a_other[0];
+    gfp a_sum = a_other[0];
+    for(int i = 1; i < num_players; i++){
+      a_sum += a_other[i];
+      cout << "a: " << a_other[i] << endl;
+    }
+    printf("\n");
+    cout << "a_sum: " << a_sum << endl;
+    //a_sum.print_evaluation(2, "a_sum ");
+
+  } else {
+    ostringstream a_out;
+    gfp output_num = pa[0].element(0);
+    output_num.output(a_out, false);
+    P.send_to_player(0, a_out.str());
+    printf("Sent data to player 0 done.\n");
+  }
+
+  printf("synchronizing all parties to end.\n");
+  vector<string> os(P.nplayers());
+  os[P.whoami()] = "true";
+  P.Broadcast_Receive(os);
+  printf("synchronizing all parties to end done.\n");
+  printf("Done with bit generation.");
+
 }
 
 void offline_FHE_IO(Player &P, unsigned int player_num, list<Share> &a,
