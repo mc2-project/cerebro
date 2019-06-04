@@ -217,10 +217,12 @@ void get_share(vector<gfp> &s, vector<gfp> &macs, const Plaintext &aa,
                const vector<Plaintext> &cc, int i)
 {
   s[0].assign(aa.element(i));
+#ifndef SH
   for (unsigned int j= 0; j < macs.size(); j++)
     {
       macs[j].assign(cc[j].element(i));
     }
+#endif
 }
 
 void offline_FHE_triples(Player &P, list<Share> &a, list<Share> &b,
@@ -281,9 +283,9 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
                          FHE_Industry &industry) {
 
   PRNG G;
+  G.ReSeed(0);
   unsigned char seed[SEED_SIZE];
   memset(seed, 0, SEED_SIZE);
-  G.SetSeed(seed);
   const FHE_Params &params = pk.get_params();
   int batch_size = 40;
   vector<Plaintext> pa(batch_size, PTD);
@@ -313,6 +315,7 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
     pb[i].randomize(G);
     pf[i].randomize(G);
   }
+
   
     
   printf("sampling randomized a/b/f done.\n");
@@ -324,7 +327,8 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
 
   PRNG G_array[omp_get_max_threads()];
   for(int i = 0; i < omp_get_max_threads(); i++){
-    G_array[i].SetSeed(seed);
+    //G_array[i].SetSeed(seed);
+    G_array[i].ReSeed(0);
   }
 
   #pragma omp parallel for
@@ -398,15 +402,8 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
     joinNclean(res);
 
 
-    printf("Ciphertext check to make sure this stream shit is working.\n");
-    printf("Party 1 Ca size: %d\n", Ca_others[1].size());
-    //Ca_others[1][0].output(cout, true);
-    stringstream temp;
-    Ca_others[1][0].output(temp);
-    printf("Size:of Party 1's first ciphertext %d \n", temp.str().size());
-    printf("Party 1's first ciphertext: %s\n", temp.str());
     printf("party0: adding encrypted a/b/f.\n");
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for(int i = 0; i < batch_size; i++){
       for(int j = 1; j < num_players; j++){
         add(Ca_others[0][i], Ca_others[0][i], Ca_others[j][i]);
@@ -523,13 +520,21 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
   {
     for (int j = 0; j < (int) pk.get_params().phi_m(); j++) {
       Share ss_a(my_num);
-      ss_a.assign(pa[i].element(j), macs);
+      vector<gfp> share_a(1);
+      share_a[0] = pa[i].element(j);
+      ss_a.assign(P.whoami(), share_a, macs);
       a.push_back(ss_a);
+
+      vector<gfp> share_b(1);
+      share_b[0] = pb[i].element(j);
       Share ss_b(my_num);
-      ss_b.assign(pb[i].element(j), macs);
+      ss_b.assign(P.whoami(), share_b, macs);
       b.push_back(ss_b);
+
+      vector<gfp> share_c(1);
+      share_c[0] = pc[i].element(j);
       Share ss_c(my_num);
-      ss_c.assign(pc[i].element(j), macs);
+      ss_c.assign(P.whoami(), share_c, macs);
       c.push_back(ss_c);
     }
   }
@@ -567,21 +572,20 @@ void offline_FHE_Semihonest_triples(Player &P, list<Share> &a, list<Share> &b,
         cout << "Sum of c, should match mul result: " << sc + share_c << endl;
     }));
   } else {
-    res.push_back(pool.enqueue([&P, &a, &b, &c]() {
+    cout << "Share a: " << share_a << " Share b:" << share_b << " Share c: " << share_c << endl;
+    cout << "Share a: " << pa[0].element(0) << " Share b: " << pb[0].element(0) << " Share c: " << pc[0].element(0) << endl;
+    res.push_back(pool.enqueue([&P, &share_a, &share_b, &share_c]() {
       ostringstream ca_stream;
       ostringstream cb_stream;
       ostringstream cc_stream;
-      a.front().get_share(0).output(ca_stream, false);
-      b.front().get_share(0).output(cb_stream, false);
-      c.front().get_share(0).output(cc_stream, false);
-      P.send_to_player(1 - P.whoami(), ca_stream.str());
-      P.send_to_player(1 - P.whoami(), cb_stream.str());
-      P.send_to_player(1 - P.whoami(), cc_stream.str());
+      share_a.output(ca_stream, false);
+      share_b.output(cb_stream, false);
+      share_c.output(cc_stream, false);
+      P.send_to_player(0, ca_stream.str());
+      P.send_to_player(0, cb_stream.str());
+      P.send_to_player(0, cc_stream.str());
     }));
   }
-  
-
-  
 
   joinNclean(res);
   printf("synchronizing all parties to end.\n");
@@ -693,8 +697,8 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
   unsigned char seed[SEED_SIZE];
   memset(seed, 0, SEED_SIZE);
   PRNG G;
-  G.SetSeed(seed);
-
+  //G.SetSeed(seed);
+  G.ReSeed(0);
   int batch_size = 40;
   vector<Plaintext> pa(batch_size, PTD);
   vector<Plaintext> pc(batch_size, PTD);
@@ -714,7 +718,8 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
 
   PRNG G_array[omp_get_max_threads()];
   for(int i = 0; i < omp_get_max_threads(); i++) {
-    G_array[i].SetSeed(seed);
+    //G_array[i].SetSeed(seed);
+    G_array[i].ReSeed(0);
   }
 
   #pragma omp parallel for
@@ -827,14 +832,10 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
   int num_slots = PTD.num_slots();
   #pragma omp parallel for
   for(int i = 0; i < batch_size; i++){
-    printf("Index in outer loop: %d\n", i);
-
     for(int j = 0; j < num_slots; j++){
       gfp temp = pc[i].element(j).sqrRoot();
-      //temp.output(cout, true);
       temp.invert();
       pc[i].set_element(j, temp);
-      //cout << endl;
     }
   }
   printf("set c = inv sqrt root of c done.\n");
@@ -866,7 +867,9 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
   for (int i = 0; i < batch_size; i++) {
     for (int j = 0; j < (int) pk.get_params().phi_m(); j++) {
       Share s(my_num);
-      s.assign(pa[i].element(j), macs);
+      vector<gfp> share(1);
+      share[0] = pa[i].element(j);
+      s.assign(P.whoami(), share, macs);
       a.push_back(s);
     }
   }
@@ -875,6 +878,7 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
   if (my_num == 0) {
     vector<future<void>> res;
     vector<gfp> a_other(num_players);
+    a_other[0] = pa[0].element(0);
     for(int j = 1; j < num_players; j++){
       int party = j;
       res.push_back(pool.enqueue([party, &PTD, &P, &a_other](){
@@ -889,18 +893,14 @@ void offline_FHE_Semihonest_bits(Player &P, list<Share> &a, const FHE_PK &pk,
     joinNclean(res);
 
     printf("obtain all data from different parties.\n");
-    //Plaintext a_sum(PTD);
-    //a_sum.allocate_slots(PTD.get_prime());
-    //a_sum = a_other[0];
     gfp a_sum = a_other[0];
+    cout << "Player 0: " << a_other[0] << endl;
     for(int i = 1; i < num_players; i++){
       a_sum += a_other[i];
-      cout << "a: " << a_other[i] << endl;
+      cout << "party: " << i << " a: " << a_other[i] << endl;
     }
     printf("\n");
     cout << "a_sum: " << a_sum << endl;
-    //a_sum.print_evaluation(2, "a_sum ");
-
   } else {
     ostringstream a_out;
     gfp output_num = pa[0].element(0);

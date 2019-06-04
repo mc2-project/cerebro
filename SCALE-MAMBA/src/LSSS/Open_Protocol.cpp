@@ -21,7 +21,6 @@ Open_Protocol::Open_Protocol()
   counter[0]= 0; // Counts the balance of sends and receives in each connection
   counter[1]= 0; // Counts the balance of sends and receives in each connection
 #ifndef SH
-  cout << "Open protocol here indicating thaty fucking SH is not defined." << endl;
   macs.resize(Share::SD.nmacs);
 #endif
   SHA256_Init(&sha256);
@@ -208,6 +207,7 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
 {
   open_cnt= 0;
   return;
+  /*
   if (Share::SD.type == Full)
     {
       uint8_t seed[SEED_SIZE];
@@ -228,18 +228,14 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
           for (int i= 0; i < open_cnt; i++)
             {
               r.almost_randomize(G);
-#ifndef SH
               temp.mul(r, vals[i]);
               a[j].add(temp);
               temp.mul(r, macs[j][i]);
               gami[j].add(temp);
-#endif
             }
-#ifndef SH
           macs[j].erase(macs[j].begin(), macs[j].begin() + open_cnt);
           temp.mul(a[j], P.get_mac_key(j));
           tau[j][P.whoami()].sub(gami[j], temp);
-#endif
         }
       vals.erase(vals.begin(), vals.begin() + open_cnt);
 
@@ -253,12 +249,10 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
             {
               t.add(tau[j][i]);
             }
-#ifndef SH
           if (!t.is_zero())
             {
               throw mac_fail();
             }
-#endif
         }
 
       // Now check everyone is OK, in case I am honest and another honest
@@ -352,6 +346,7 @@ void Open_Protocol::RunOpenCheck(Player &P, const string &aux, int connection, b
         }
     }
   open_cnt= 0;
+  */
 }
 
 void Open_Protocol::Open_To_One_Begin(unsigned int player_num,

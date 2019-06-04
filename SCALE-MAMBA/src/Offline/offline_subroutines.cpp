@@ -17,6 +17,7 @@ void make_shares(vector<Share> &share, const gfp &val, const vector<gfp> &macs,
 {
   make_shares(share, val, G);
 
+#ifndef SH
   vector<vector<gfp>> macv(share.size(), vector<gfp>(macs.size()));
 
   if (Share::SD.type == Full)
@@ -39,6 +40,7 @@ void make_shares(vector<Share> &share, const gfp &val, const vector<gfp> &macs,
     {
       share[i].set_macs(macv[i]);
     }
+#endif
 }
 
 /* This produces the sum of Schur products needed by

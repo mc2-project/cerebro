@@ -407,55 +407,69 @@ def matinv(A, nparallel=1):
 
     @for_range(n)
     def f0(j):
-        @for_range(j, n)
+        #@for_range(j, n)
+        @for_range(n)
         def f1(i):
-            b1 = X[i][j].__lt__(sfix(0.00001))
-            b2 = X[i][j].__gt__(sfix(-0.00001))
-            b = 1 - b1 * b2
-            X[i][j] = b * X[i][j]
-            @for_range_multithread(nparallel, n, n)
-            def f2(k):
-                a1 = X[j][k]
-                a2 = X[i][k]
-                X[j][k] = cond_assign_a(b, a2, a1)
-                X[i][k] = cond_assign_a(b, a1, a2)
+            @if_(i >= j)
+            def h():
+                b1 = X[i][j].__lt__(sfix(0.00001))
+                b2 = X[i][j].__gt__(sfix(-0.00001))
+                b = 1 - b1 * b2
+                X[i][j] = b * X[i][j]
+                @for_range_multithread(nparallel, n, n)
+                def f2(k):
+                    a1 = X[j][k]
+                    a2 = X[i][k]
+                    X[j][k] = cond_assign_a(b, a2, a1)
+                    X[i][k] = cond_assign_a(b, a1, a2)
 
-                a1 = I[j][k]
-                a2 = I[i][k]
-                I[j][k] = cond_assign_a(b, a2, a1)
-                I[i][k] = cond_assign_a(b, a1, a2)
+                    a1 = I[j][k]
+                    a2 = I[i][k]
+                    I[j][k] = cond_assign_a(b, a2, a1)
+                    I[i][k] = cond_assign_a(b, a1, a2)
+                    
+                xjj_inv = sfix(1).__div__(X[j][j])
+                t = cond_assign_a(b, xjj_inv, sfix(1))
+                @for_range_multithread(nparallel, n, n)
+                def f3(k):
+                    X[j][k] = t * X[j][k]
+                    I[j][k] = t * I[j][k]
                 
-            xjj_inv = sfix(1).__div__(X[j][j])
-            t = cond_assign_a(b, xjj_inv, sfix(1))
-            @for_range_multithread(nparallel, n, n)
-            def f3(k):
-                X[j][k] = t * X[j][k]
-                I[j][k] = t * I[j][k]
-            
-            @for_range(j)
-            def f4(L):
-                t = sfix(-1) * X[L][j]
-                @for_range_multithread(nparallel, n, n)
-                def g0(k):
-                    a1 = X[L][k] + t * X[j][k]
-                    a2 = X[L][k]
-                    b1 = I[L][k] + t * I[j][k]
-                    b2 = I[L][k]
-                    X[L][k] = cond_assign_a(b, a1, a2)
-                    I[L][k] = cond_assign_a(b, b1, b2)
+                #@for_range(j)
+                @for_range(n)
+                def f4(L):
+                    #cond = sint(L < j)
+                    #
+                    #t = cond_assign_a(cond, sfix(-1) * X[L][j], sfix(0))
+                    @if_(L < j)
+                    def h():
+                        t = sfix(-1) * X[L][j]
+                        @for_range_multithread(nparallel, n, n)
+                        def g0(k):
+                            a1 = X[L][k] + t * X[j][k]
+                            a2 = X[L][k]
+                            b1 = I[L][k] + t * I[j][k]
+                            b2 = I[L][k]
+                            X[L][k] = cond_assign_a(b, a1, a2)
+                            I[L][k] = cond_assign_a(b, b1, b2)
 
-            # from j+1 to n
-            @for_range(j+1, n)
-            def f5(L):
-                t = sfix(-1) * X[L][j]
-                @for_range_multithread(nparallel, n, n)
-                def g0(k):
-                    a1 = X[L][k] + t * X[j][k]
-                    a2 = X[L][k]
-                    b1 = I[L][k] + t * I[j][k]
-                    b2 = I[L][k] 
-                    X[L][k] = cond_assign_a(b, a1, a2)
-                    I[L][k] = cond_assign_a(b, b1, b2)
+                # from j+1 to n
+                #@for_range(j+1, n)
+                @for_range(n)
+                def f5(L):
+                    #cond = sint(L > j)
+                    @if_(L > j)
+                    def h():
+                        t = sfix(-1) * X[L][j]
+                    #t = cond_assign_a(cond, sfix(-1) * X[L][j], sfix(0))
+                        @for_range_multithread(nparallel, n, n)
+                        def g0(k):
+                            a1 = X[L][k] + t * X[j][k]
+                            a2 = X[L][k]
+                            b1 = I[L][k] + t * I[j][k]
+                            b2 = I[L][k] 
+                            X[L][k] = cond_assign_a(b, a1, a2)
+                            I[L][k] = cond_assign_a(b, b1, b2)
         
     return I
 

@@ -12,18 +12,18 @@ ShareData Share::SD;
 
 void Share::assign_zero()
 {
-#ifndef SH
   if (SD.type == Full)
     {
+
       a[0].assign_zero();
+#ifndef SH
       for (unsigned int i= 0; i < SD.nmacs; i++)
         {
           mac[i].assign_zero();
         }
-    }
 #endif
-
-  if (SD.type == Shamir)
+    }
+  else if (SD.type == Shamir)
     {
       a[0].assign_zero();
     }
@@ -48,9 +48,8 @@ void Share::assign(const gfp &aa, const vector<gfp> &alphai)
     }
   else
     {
-      if (p == 0 || SD.type == Shamir || SD.type == Full) {
+      if (p == 0 || SD.type == Shamir) {
         a.at(0) = aa;
-        //a.push_back(aa);
       }
       else
         a[0].assign_zero();
@@ -168,7 +167,6 @@ void Share::add(const Share &S, const gfp &aa, const vector<gfp> &alphai)
 }
 
 void Share::add_semihonest(const Share &S, const gfp &aa) {
-
   if (p != S.p)
     {
       p= S.p;

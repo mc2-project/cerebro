@@ -79,5 +79,4 @@ public:
   void RunOpenCheck(Player &P, const string &aux, int connection= 0,
                     bool verbose= false);
 };
-
 #endif
