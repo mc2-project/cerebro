@@ -1,25 +1,22 @@
-Params.set_params(int_precision=32,f=22,k=32)
+# Params.set_params(int_precision=32,f=22,k=32)
 
-# Piecewise functionality
-# The function is:
-# [-inf, -1): f(x) = 0
-# [-1, 1): f(x) = x + 1
-# [1, -inf): f(x) = 1
+# a = s_fix()
+# b = s_fix()
+# l = s_fix_array.read_input(10, 0)
 
-# fn = Piecewise(3)
-# fn.add_boundary(None, sfix(-1), sfix(0), sfix(0))
-# fn.add_boundary(sfix(-1), sfix(1), sfix(1), sfix(1))
-# fn.add_boundary(sfix(1), None, sfix(0), sfix(1))
+# if (a > s_fix(2.0)):
+#     l[0] = b
+# else:
+#     l[1] = b
 
-# v = fn.evaluate(sfix(0.5))
-# reveal_all(v)
+x = 0
+a = 12
 
-# A = s_fix_mat.read_input(3, 3, 0)
-# reveal_all(A, "A")
-# A_inv = matinv(A)
-# reveal_all(A_inv, "A_inv")
+if a > 3:
+    x = 1
+elif a < 1:
+    x = 2
+else:
+    x = 3
 
-a = s_int.read_input(0)
-b = s_int.read_input(0)
-c = a * b
-reveal_all(c, "c")
+print "Output = {}".format(x)
