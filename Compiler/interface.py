@@ -1,6 +1,10 @@
 from types import *
 from types_gc import *
 import compilerLib, library
+import ast
+import symtable
+import re
+import networkx as nx
 
 SPDZ = 0
 GC = 1
@@ -161,6 +165,7 @@ class SecretFixedPointMatrixFactory(object):
             return ret
 
 def reveal_all(v, text=""):
+    print isinstance(v, Matrix)
     if mpc_type == SPDZ:
         if isinstance(v, (sint, sfix)):
             if text == "":
@@ -207,6 +212,7 @@ import astor
 from pprint import pprint
 
 class ForLoopParser(ast.NodeTransformer):
+    num_matmul = 0
     def __init__(self):
         self.forloop_counter = 0
     
@@ -217,10 +223,10 @@ class ForLoopParser(ast.NodeTransformer):
                                    body=node.body,
                                    keywords=[],
                                    decorator_list=[dec])
+
         self.forloop_counter += 1
         ast.copy_location(new_node, node)
         ast.fix_missing_locations(new_node)
-        
         return new_node
 
     def visit_For(self, node):
@@ -235,10 +241,293 @@ class ForLoopParser(ast.NodeTransformer):
 
         raise ValueError("For loop only supports style 'for i in range(...)'")
 
-class ASTChecks(ast.NodeTransformer):
-    def visit_If(self, node):
-        raise ValueError("Currently, control flow logic like if/else is not supported. Please use alternative conditionals like array_index_secret_if")
 
+
+class ProcessDependencies(ast.NodeVisitor):
+    def __init__(self):
+
+        # map function name to function definition.
+        self.functions = {}
+        self.scope_stack = []
+        # If encounter target function call, instantly add 1
+        # Functions are nodes, dependencies are edges
+        self.G = nx.DiGraph()
+
+
+    def visit_FunctionDef(self, node):
+        # Not considering differing scopes and 
+        self.functions[node.name] = node
+
+        if node.name not in self.G.nodes:
+            self.G.add_node(node.name)
+
+        print "Visiting function: ", node.name
+        if len(self.scope_stack):
+            "Function ", node.name, " was called by ", self.scope_stack[0]
+
+        # Enter a function, put it on the stack
+        self.scope_stack.insert(0, node.name)
+        # Visit the children in the function
+        self.generic_visit(node)
+        self.scope_stack.pop(0)
+
+
+    def visit_Call(self, node):
+        if not len(self.scope_stack):
+            parent = None
+        else:
+            parent = self.scope_stack[0]
+
+        # Some nodes don't have ids?
+        if 'id' in node.func.__dict__.keys():
+            print "Function {0} called by {1}".format(node.func.id, parent)
+            self.scope_stack.insert(0, node.func.id)
+            print "First time visiting: ", node.func.id
+            self.generic_visit(node)
+            if parent:
+                self.G.add_edge(parent, node.func.id)
+
+            self.scope_stack.pop(0)
+
+    def visit_For(self, node):
+        # Parse the for loop to get the # of iterations. Won't work if variable # of iterations so try to avoid that.
+        print "For loop lineno: ", node.lineno
+        self.functions[node.lineno] = node
+        if len(self.scope_stack):
+            print "Parent:", self.scope_stack[0]
+
+
+        if node.lineno not in self.G.nodes:
+            self.G.add_node(node.lineno)
+
+        if len(self.scope_stack):
+            print "For loop: Adding edge from: {0} to {1}".format(self.scope_stack[0], node.lineno)
+            self.G.add_edge(self.scope_stack[0], node.lineno)
+
+        self.scope_stack.insert(0, node.lineno)
+        #print "Visiting for loop in function: ", self.scope_stack[0]
+        for item in node.body:
+            self.visit(item)
+
+        self.scope_stack.pop(0)
+
+    def visit_Assign(self, node):
+        self.visit(node.value)
+
+
+class CountFnCall(ast.NodeVisitor):
+    def __init__(self, G, functions, target_fn="matmul"):
+        self.functions = functions 
+        self.fns_to_calls = {}
+        self.G = G
+        self.target_fn = target_fn
+        self.counter = 0
+        # Contains ONLY the functions that are defined. Previously had to add in scopes for for-loops in self.functions. AH bad names.
+        self.only_functions = set()
+        self.only_functions.add(self.target_fn)
+
+        self.fns_to_calls[target_fn] = 1
+        # Gather all the necessary information for counting calls.
+        self.process()
+
+
+    def process(self):
+        topological_ordering = list(reversed(list(nx.topological_sort(self.G))))
+        print "Topological ordering: ", topological_ordering
+        for node in topological_ordering:
+            if node in self.functions.keys():
+                self.visit(self.functions[node])
+
+
+        # Reset the counter
+        self.counter = 0
+
+
+    def visit_FunctionDef(self, node):
+        print "Visit function: ", node.name
+        before_visit = self.counter 
+        self.generic_visit(node)
+        after_visit = self.counter
+        diff = after_visit - before_visit
+        if node.name not in self.fns_to_calls.keys():
+            self.fns_to_calls[node.name] = diff
+
+        self.only_functions.add(node.name)
+        self.counter = before_visit
+
+    def visit_For(self, node):
+        try:
+            if len(node.iter.args) == 1:
+                num_iter = node.iter.args[0].n
+            elif len(node.iter.args) == 2:
+                num_iter = node.iter.args[1].n - node.iter.args[0].n 
+            else:
+                num_iter = (node.iter.args[1].n - node.iter.args[0].n) / node.iter.args[2].n
+        except Exception as e:
+            return 
+
+        
+        if node.lineno in self.fns_to_calls.keys():
+            self.counter += self.fns_to_calls[node.lineno]
+            return
+        
+        before_visit = self.counter
+        print "In for loop: ", node.lineno
+        for item in node.body:
+            if isinstance(item, ast.For) and item.lineno in self.fns_to_calls.keys():
+                self.counter += self.fns_to_calls[item.lineno]
+            else: 
+                self.visit(item)
+
+        after_visit = self.counter
+        diff = after_visit - before_visit
+        if node.lineno not in self.fns_to_calls.keys():
+            self.fns_to_calls[node.lineno] = diff * num_iter
+
+        print "For loop {0} calls the target function {1} times".format(node.lineno, diff * num_iter)
+
+    def visit_Call(self, node):
+        before_visit = self.counter
+        if 'id' in node.func.__dict__.keys():
+            print "Calling function: ", node.func.id
+            if node.func.id not in self.fns_to_calls.keys():
+                self.generic_visit(node)
+                after_visit = self.counter 
+                diff = after_visit - before_visit
+                self.fns_to_calls[node.func.id] = diff 
+
+            self.counter = before_visit + self.fns_to_calls[node.func.id]
+            print "Function {0} calls the target_fn {1} times.".format(node.func.id, self.fns_to_calls[node.func.id])
+
+    def visit_Assign(self, node):
+        self.visit(node.value)
+
+
+
+    def subtract_initial(self):
+        res = self.counter
+        for k in self.fns_to_calls.keys():
+            pass
+            #if k not in self.only_functions:
+                # Subtract away the initial definitions that occurred when I initially parsed the file.
+                #res -= self.fns_to_calls[k]
+
+        return res
+
+class ConstantMaker(ast.NodeTransformer):
+    """NodeTransformer that will inline any Number and String 
+    constants defined on the module level wherever they are used
+    throughout the module. Any Number or String variable matching [A-Z_]+ 
+    on the module level will be used as a constant"""
+
+    def __init__(self):
+        self._constants = {}
+        super(ConstantMaker, self).__init__()
+
+    def visit_Module(self, node):
+        """Find eglible variables to be inlined and store
+        the Name->value mapping in self._constants for later use"""
+
+        assigns = [x for x in node.body if type(x) == ast.Assign]
+
+        for assign in assigns:
+            if type(assign.value) in (ast.Num, ast.Str):
+                for name in assign.targets:
+                    self._constants[name] = assign.value
+
+        return self.generic_visit(node)
+
+    def visit_Name(self, node):
+        """If node.id is in self._constants, replace the
+        loading of the node with the actual value"""
+        
+        #return self._constants.get(node.id, node)
+        for k in self._constants.keys():
+            if node.lineno == k.lineno:
+                return node
+            elif node.id == k.id:
+                return self._constants[k]
+
+        return node
+
+
+class ASTChecks(ast.NodeTransformer):
+    def __init__(self):
+        self.if_stack = []
+        self.test_name = "test"
+        self.test_counter = 0
+
+    def merge_test_single(self, test):
+        if test[1]:
+            return ast.Name(id=test[0], ctx=ast.Load())
+        else: 
+            return ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=ast.Name(id=test[0], ctx=ast.Load()))
+
+    def merge_test_list(self, test_list):
+        ret = test_list[0]
+        ret = self.merge_test_single(ret)
+        for test in test_list[1:]:
+            ret = ast.BinOp(left=ret, op=ast.Mult(), right=self.merge_test_single(test))
+
+        return ret
+
+    def assign_transform(self, target, test_list, a, b):
+        test_v = self.merge_test_list(test_list)
+        left_sum = ast.BinOp(left=test_v, op=ast.Mult(), right=a)
+        test_neg = ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=test_v)
+        right_sum = ast.BinOp(left=test_neg, op=ast.Mult(), right=b)
+        return ast.Assign(targets=[target], value=ast.BinOp(left=left_sum, op=ast.Add(), right=right_sum))
+    
+    def visit_If(self, node):
+        if not isinstance(node.test, ast.Compare):
+            raise ValueError("Currently, the if conditional has to be a single Compare expression")
+        if len(node.body) > 1:
+            raise ValueError("We also don't allow multiple statements inside an if statement")
+
+        statements = []
+        test_name = self.test_name + str(self.test_counter)
+        self.test_counter += 1
+        test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
+        statements.append(test_assign)
+
+        print "Statements: ", test_name, statements
+
+        self.if_stack.append((test_name, True))
+        for n in node.body:
+            if isinstance(n, ast.If):
+                statements += self.visit(n)
+            elif isinstance(n, ast.Assign):
+                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
+                if not isinstance(s, list):
+                    statements.append(s)
+                else:
+                    statements += s
+            else:
+                raise ValueError("Does not support non-assignment statments within if statements")
+        self.if_stack.pop()
+
+        self.if_stack.append((test_name, False))
+        for n in node.orelse:
+            if isinstance(n, ast.If):
+                statements += self.visit(n)
+            elif isinstance(n, ast.Assign):
+                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
+                if not isinstance(s, list):
+                    statements.append(s)
+                else:
+                    statements += s
+            else:
+                raise ValueError("Does not support non-assignment statments within if statements")
+        self.if_stack.pop()
+        
+        ast.copy_location(statements[0], node)
+        counter = 0
+        for s in statements:
+            s.lineno = statements[0].lineno + counter
+            s.col_offset = statements[0].col_offset
+            counter += 1
+
+        return statements
 
 class ASTParser(object):
     
@@ -254,6 +543,22 @@ class ASTParser(object):
 
     def parse(self):
         # Run through a bunch of parsers
+        # hardcoded to count the # of matmul calls.
+        target = "matmul"
+        self.tree = ConstantMaker().visit(self.tree)
+        dep = ProcessDependencies()
+        dep.visit(self.tree)
+        print dep.G.edges()
+        print dep.G.nodes()
+        count_calls = CountFnCall(dep.G, dep.functions, target)
+        count_calls.visit(self.tree)
+        #process.visit(self.tree)
+        print "Number of matmul calls before: ", count_calls.counter
+        counter = count_calls.subtract_initial()
+
+        
+        print "Number of matmul calls: ", counter
+        print "Functions to calls: ", count_calls.fns_to_calls
         self.tree = ForLoopParser().visit(self.tree)
         self.tree = ASTChecks().visit(self.tree)
 
