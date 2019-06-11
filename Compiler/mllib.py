@@ -151,6 +151,7 @@ def _matmul_gc(A, B, C):
             C[i][j] = v
 
 def matmul(A, B, nparallel=1):
+    # Tentative, very janky. Yep, this doesn't work :(. Buyer BEWARE!
     if isinstance(A, sintMatrix) and isinstance(B, sintMatrix):
         C = sintMatrix(A.rows, B.columns)
         D = sintArray(A.rows * B.columns * A.columns)
@@ -190,10 +191,18 @@ def matadd(A, B, nparallel=1):
     
     if isinstance(A, cintMatrix) and isinstance(B, cintMatrix):
         C = cintMatrix(A.rows, A.columns)
-        return _matadd(A, B, C, cint, nparallel)
+        _matadd(A, B, C, cint, nparallel)
+        return C 
     elif isinstance(A, sintMatrix) and isinstance(B, sintMatrix):
         C = sintMatrix(A.rows, A.columns)
-        return _matadd(A, B, C, sint, nparallel)
+        _matadd(A, B, C, sint, nparallel)
+        return C 
+
+    elif isinstance(A, sfixMatrix) and isinstance(B, sfixMatrix):
+        C = sfixMatrix(A.rows, A.columns)
+        _matadd(A, B, C, sfix, nparallel)
+        return C
+
 
 def _matsub(A, B, C, int_type, nparallel=1):
     @for_range_multithread(nparallel, A.rows * A.columns, A.rows * A.columns)
@@ -435,12 +444,8 @@ def matinv(A, nparallel=1):
                     X[j][k] = t * X[j][k]
                     I[j][k] = t * I[j][k]
                 
-                #@for_range(j)
                 @for_range(n)
                 def f4(L):
-                    #cond = sint(L < j)
-                    #
-                    #t = cond_assign_a(cond, sfix(-1) * X[L][j], sfix(0))
                     @if_(L < j)
                     def h():
                         t = sfix(-1) * X[L][j]
@@ -454,14 +459,11 @@ def matinv(A, nparallel=1):
                             I[L][k] = cond_assign_a(b, b1, b2)
 
                 # from j+1 to n
-                #@for_range(j+1, n)
                 @for_range(n)
                 def f5(L):
-                    #cond = sint(L > j)
                     @if_(L > j)
                     def h():
                         t = sfix(-1) * X[L][j]
-                    #t = cond_assign_a(cond, sfix(-1) * X[L][j], sfix(0))
                         @for_range_multithread(nparallel, n, n)
                         def g0(k):
                             a1 = X[L][k] + t * X[j][k]
