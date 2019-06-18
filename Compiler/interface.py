@@ -720,10 +720,83 @@ class ConstantPropagation(ast.NodeTransformer):
         node.value = self.visit(node.value)
         return node
 
-
 class ASTChecks(ast.NodeTransformer):
+    def __init__(self):
+        self.if_stack = []
+        self.test_name = "test"
+        self.test_counter = 0
+
+    def merge_test_single(self, test):
+        if test[1]:
+            return ast.Name(id=test[0], ctx=ast.Load())
+        else: 
+            return ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=ast.Name(id=test[0], ctx=ast.Load()))
+
+    def merge_test_list(self, test_list):
+        ret = test_list[0]
+        ret = self.merge_test_single(ret)
+        for test in test_list[1:]:
+            ret = ast.BinOp(left=ret, op=ast.Mult(), right=self.merge_test_single(test))
+
+        return ret
+
+    def assign_transform(self, target, test_list, a, b):
+        test_v = self.merge_test_list(test_list)
+        left_sum = ast.BinOp(left=test_v, op=ast.Mult(), right=a)
+        test_neg = ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=test_v)
+        right_sum = ast.BinOp(left=test_neg, op=ast.Mult(), right=b)
+        return ast.Assign(targets=[target], value=ast.BinOp(left=left_sum, op=ast.Add(), right=right_sum))
+    
     def visit_If(self, node):
-        raise ValueError("Currently, control flow logic like if/else is not supported. Please use alternative conditionals like array_index_secret_if")
+        if not isinstance(node.test, ast.Compare):
+            raise ValueError("Currently, the if conditional has to be a single Compare expression")
+        if len(node.body) > 1:
+            raise ValueError("We also don't allow multiple statements inside an if statement")
+
+        statements = []
+        test_name = self.test_name + str(self.test_counter)
+        self.test_counter += 1
+        test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
+        statements.append(test_assign)
+
+        print "Statements: ", test_name, statements
+
+        self.if_stack.append((test_name, True))
+        for n in node.body:
+            if isinstance(n, ast.If):
+                statements += self.visit(n)
+            elif isinstance(n, ast.Assign):
+                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
+                if not isinstance(s, list):
+                    statements.append(s)
+                else:
+                    statements += s
+            else:
+                raise ValueError("Does not support non-assignment statments within if statements")
+        self.if_stack.pop()
+
+        self.if_stack.append((test_name, False))
+        for n in node.orelse:
+            if isinstance(n, ast.If):
+                statements += self.visit(n)
+            elif isinstance(n, ast.Assign):
+                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
+                if not isinstance(s, list):
+                    statements.append(s)
+                else:
+                    statements += s
+            else:
+                raise ValueError("Does not support non-assignment statments within if statements")
+        self.if_stack.pop()
+        
+        ast.copy_location(statements[0], node)
+        counter = 0
+        for s in statements:
+            s.lineno = statements[0].lineno + counter
+            s.col_offset = statements[0].col_offset
+            counter += 1
+
+        return statements
 
 
 class ASTParser(object):
