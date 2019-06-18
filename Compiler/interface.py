@@ -717,8 +717,38 @@ class ConstantPropagation(ast.NodeTransformer):
 
 
     def visit_Assign(self, node):
+        print "Node value: ", node.value.__dict__
         node.value = self.visit(node.value)
-        return node
+        try:
+            if not isinstance(node.value, ast.Tuple):
+
+                val = self.eval_args_helper(node.value)
+                node.value = ast.Num(val)
+                # So far don't allow multi-assignment, not sure how to go about this.
+                self._constants[node.targets[0].id] = node.value
+                return node
+            else:
+                print "Tuple: ", node.value.__dict__
+        except Exception as e:
+            # For some reason, cannot evaluate the right hand side
+            print e
+            return node
+
+
+
+    def postprocess(self):
+        pass
+
+
+    def eval_args_helper(self, node):
+        if hasattr(node, 'n'):
+            return node.n
+        else:
+            left_val = self.eval_args_helper(node.left)
+            right_val = self.eval_args_helper(node.right)
+            res = operators[type(node.op)](left_val, right_val)
+            return res
+
 
 class ASTChecks(ast.NodeTransformer):
     def __init__(self):
