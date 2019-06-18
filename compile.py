@@ -8,6 +8,7 @@
 
 import argparse
 import Compiler
+import Compiler.planning as planning
 
 def main():
     parser = argparse.ArgumentParser(description="A compiler for generating arithmetic or GC circuits from .mpc files")
@@ -46,6 +47,9 @@ def main():
     parser.add_argument("-f", "--fdflag", action="store_false",
                       dest="fdflag", default=True,
                       help="de-activates under-over flow check for sfloats")
+
+    # Add argument for constants file
+    parser.add_argument("-cf", "--constant_file", dest="constant_file", default="", help="File for the constants")
     args = parser.parse_args()
     options = args
     args = [options.mpc_type, options.filename]
@@ -58,7 +62,7 @@ def main():
         if options.asmoutfile:
             for tape in prog.tapes:
                 tape.write_str(options.asmoutfile + '-' + tape.name)
-
+        
     if options.profile:
         import cProfile
         p = cProfile.Profile().runctx('compilation()', globals(), locals())

@@ -72,6 +72,11 @@ class Program(object):
         self.free_threads = set()
         self.public_input_file = open(self.programs_dir + '/%s' % self.name, 'w')
         self.types = {}
+
+        # Added in here
+        self.rounds = 0
+        self.invocations = 0
+
         Program.prog = self
         
         self.reset_values()
@@ -137,6 +142,7 @@ class Program(object):
         self.finalize_tape(self.curr_tape)
         if self.tape_stack:
             self.curr_tape = self.tape_stack.pop()
+
         return tape_index
 
     def run_tape(self, tape_index, arg):
@@ -543,9 +549,11 @@ class Tape:
                     numrounds = merger.longest_paths_merge()
                     if numrounds > 0:
                         print 'Program requires %d rounds of communication' % numrounds
+                        self.program.rounds += numrounds
                     numinv = sum(len(i.args) for i in block.instructions if isinstance(i, Compiler.instructions.startopen_class))
                     if numinv > 0:
                         print 'Program requires %d invocations' % numinv
+                        self.program.invocations += numinv
                 if options.dead_code_elimination:
                     block.instructions = filter(lambda x: x is not None, block.instructions)
         if not (options.merge_opens and self.merge_opens):
@@ -731,6 +739,17 @@ class Tape:
                     inst.add_usage(self)
             res = reduce(lambda x,y: x + y.aggregate(self.name),
                          self.children, self.num)
+            
+            # Debugging
+            if float('inf') in res.values():
+                print "ReqNode"
+                print res
+                print self.name
+                print "Children"
+                for child in self.children:
+                    for s in child.nodes:
+                        print s.name                          
+
             return res
         def increment(self, data_type, num=1):
             self.num[data_type] += num
