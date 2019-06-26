@@ -101,23 +101,6 @@ class NetIO: public IOChannel<NetIO> { public:
 
 			openssl_init();
 			ssl = SSL_new(get_ssl_ctx());
-
-			/*BIO* rbio_with_buf = BIO_new(BIO_s_bio());
-			BIO* wbio_with_buf = BIO_new(BIO_s_bio());
-
-			if(rbio_with_buf == NULL || wbio_with_buf == NULL){
-				perror("Failed to create the BIO");
-				exit(1);
-		  }
-
-			if(BIO_set_write_buf_size(rbio_with_buf,  64 * 1024) != 1
-				|| BIO_set_write_buf_size(wbio_with_buf, 64 * 1024) != 1
-				|| BIO_make_bio_pair(rbio_with_buf, wbio_with_buf) != 1){
-					perror("Failed to create a proper BIO buffer");
-					exit(1);
-			}
-
-			SSL_set_bio(ssl, rbio_with_buf, wbio_with_buf);*/
 			SSL_set_fd(ssl, consocket);
 
 			if(is_server == true){
