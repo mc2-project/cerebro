@@ -755,13 +755,20 @@ class ASTChecks(ast.NodeTransformer):
         self.if_stack = []
         self.test_name = "test"
         self.test_counter = 0
+        self.scope_level = 0
+        self.assignments = {} # indexed by the assignment targets, along with the assigned values
+        self.depth = 0
+
+    def negate_condition(self, cond):
+        return ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=cond)
 
     def merge_test_single(self, test):
         if test[1]:
             return ast.Name(id=test[0], ctx=ast.Load())
         else: 
-            return ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=ast.Name(id=test[0], ctx=ast.Load()))
+            return self.negate_condition(ast.Name(id=test[0], ctx=ast.Load()))
 
+    # Given a list of (condition_name, True/False), merge these conditions into a single condition
     def merge_test_list(self, test_list):
         ret = test_list[0]
         ret = self.merge_test_single(ret)
@@ -770,12 +777,37 @@ class ASTChecks(ast.NodeTransformer):
 
         return ret
 
+    # First, merge the conditions into a single condition, then negate the entire condition
+    def neg_merge_test_list(self, test_list):
+        test_v = self.merge_test_list(test_list)
+        return self.negate_condition(test_v)
+
     def assign_transform(self, target, test_list, a, b):
         test_v = self.merge_test_list(test_list)
         left_sum = ast.BinOp(left=test_v, op=ast.Mult(), right=a)
         test_neg = ast.BinOp(left=ast.Num(1), op=ast.Sub(), right=test_v)
         right_sum = ast.BinOp(left=test_neg, op=ast.Mult(), right=b)
         return ast.Assign(targets=[target], value=ast.BinOp(left=left_sum, op=ast.Add(), right=right_sum))
+
+    # Given multiple conditions of the form (condition_list, value)
+    # where condition_list is a list of conditions, and value is a RHS single value for assignment
+    def assign_transform_multi(self, target, conditions_list):
+        current_sum = None
+        current_condition_list = []
+        for (test_list, value) in conditions_list:
+            test_v = self.merge_test_list(test_list)
+            current_condition_list += test_list
+            prod = ast.BinOp(left=test_v, op=ast.Mult(), right=value)
+            if current_sum is None:
+                current_sum = prod
+            else:
+                current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=prod)
+
+        neg_cond = self.neg_merge_test_list(current_condition_list)
+        final_prod = ast.BinOp(left=neg_cond, op=ast.Mult(), right=target)
+        current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=final_prod)
+
+        return ast.Assign(targets=[target], value=current_sum)
     
     def visit_If(self, node):
         if not isinstance(node.test, ast.Compare):
@@ -789,36 +821,41 @@ class ASTChecks(ast.NodeTransformer):
         test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
         statements.append(test_assign)
 
-        print "Statements: ", test_name, statements
-
         self.if_stack.append((test_name, True))
+        self.depth += 1
         for n in node.body:
             if isinstance(n, ast.If):
                 statements += self.visit(n)
             elif isinstance(n, ast.Assign):
-                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
-                if not isinstance(s, list):
-                    statements.append(s)
-                else:
-                    statements += s
+                for target in n.targets:
+                    if target.id not in self.assignments:
+                        self.assignments[target.id] = []
+                    self.assignments[target.id].append(([x for x in self.if_stack], n.value))
             else:
                 raise ValueError("Does not support non-assignment statments within if statements")
+        self.depth -= 1
         self.if_stack.pop()
 
         self.if_stack.append((test_name, False))
+        self.depth += 1
         for n in node.orelse:
             if isinstance(n, ast.If):
                 statements += self.visit(n)
             elif isinstance(n, ast.Assign):
-                s = self.assign_transform(n.targets[0], self.if_stack, n.value, n.targets[0])
-                if not isinstance(s, list):
-                    statements.append(s)
-                else:
-                    statements += s
+                for target in n.targets:
+                    if target.id not in self.assignments:
+                        self.assignments[target.id] = []
+                    self.assignments[target.id].append(([x for x in self.if_stack], n.value))
             else:
                 raise ValueError("Does not support non-assignment statments within if statements")
+        self.depth -= 1
         self.if_stack.pop()
-        
+
+        if self.depth == 0:
+            for (name, test_list) in self.assignments.iteritems():
+                statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list)
+                statements.append(statement)
+
         ast.copy_location(statements[0], node)
         counter = 0
         for s in statements:
@@ -846,6 +883,8 @@ class ASTParser(object):
         # hardcoded to count the # of matmul calls. Returns the # of matmul calls.
         target = "matmul"
         # Try inlining
+        self.tree = ASTChecks().visit(self.tree)
+                
         self.tree = ConstantPropagation().visit(self.tree)
         dep = ProcessDependencies()
         dep.visit(self.tree)
@@ -860,7 +899,6 @@ class ASTParser(object):
         print "Vectorized Triples requirement: ", count_calls.vectorized_calls
 
         self.tree = ForLoopParser().visit(self.tree)
-        self.tree = ASTChecks().visit(self.tree)
 
         return count_calls.vectorized_calls
 

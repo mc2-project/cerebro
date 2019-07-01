@@ -10,13 +10,13 @@
 #     l[1] = b
 
 x = 0
-a = 12
+a = 3
 
-if a > 3:
+if a == 3:
     x = 1
-elif a < 1:
+elif a == 1:
     x = 2
 else:
-    x = 3
+    x = 15
 
 print "Output = {}".format(x)
