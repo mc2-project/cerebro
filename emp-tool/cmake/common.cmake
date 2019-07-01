@@ -47,3 +47,36 @@ macro (add_test_with_lib _name libs)
 	add_executable(${_name} "test/${_name}.cpp")
 	target_link_libraries(${_name}  ${RELIC_LIBRARIES} ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${GMP_LIBRARIES} ${libs}) 
 endmacro()
+
+
+OPTION(NETIO_USE_TLS "Turning on TLS for NetIO" OFF)
+OPTION(NETIO_USE_TLS_NONAMECHECK "Skipping certificate common name/IP matching check in NetIO TLS" OFF)
+
+set(NETIO_CA_CERTIFICATE "" CACHE STRING "Alternative CA certificate file location")
+set(NETIO_MY_CERTIFICATE "" CACHE STRING "Alternative this party's certificate and private key file location")
+
+IF(${NETIO_USE_TLS})
+	add_definitions(-DNETIO_USE_TLS)
+	message("${Green}-- TLS: ON${ColourReset}")
+
+	IF(${NETIO_USE_TLS_NONAMECHECK})
+		add_definitions(-DNETIO_USE_TLS_NONAMECHECK)
+		message("${Red}-- TLS insecure: No certificate name check${ColourReset}")
+	ENDIF(${NETIO_USE_TLS_NONAMECHECK})
+
+	IF(NOT "${NETIO_CA_CERTIFICATE}" STREQUAL "")
+		add_definitions(-DNETIO_CA_CERTIFICATE=\"${NETIO_CA_CERTIFICATE}\")
+		message("${Green}-- TLS CA certificate: ${NETIO_CA_CERTIFICATE}${ColourReset}")
+	ELSE(NOT "${NETIO_CA_CERTIFICATE}" STREQUAL "")
+		message("${Green}-- TLS CA certificate: ./certificates/ca.pem (default}${ColourReset}")
+	ENDIF(NOT "${NETIO_CA_CERTIFICATE}" STREQUAL "")
+
+	IF(NOT "${NETIO_MY_CERTIFICATE}" STREQUAL "")
+		add_definitions(-DNETIO_MY_CERTIFICATE=\"${NETIO_MY_CERTIFICATE}\")
+		message("${Green}-- TLS my certificate and private key: ${NETIO_MY_CERTIFICATE}${ColourReset}")
+	ELSE(NOT "${NETIO_MY_CERTIFICATE}" STREQUAL "")
+		message("${Green}-- TLS my certificate and private key: ./certificates/my_private_key.pem (default)${ColourReset}")
+	ENDIF(NOT "${NETIO_MY_CERTIFICATE}" STREQUAL "")
+ELSE(${NETIO_USE_TLS})
+	message("${Red}-- TLS: OFF${ColourReset}")
+ENDIF(${NETIO_USE_TLS})

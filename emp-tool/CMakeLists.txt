@@ -5,7 +5,6 @@ set(NAME "emp-tool")
 include(cmake/common.cmake)
 include(cmake/source_of_randomness.cmake)
 include(cmake/threading.cmake)
-include(cmake/tls.cmake)
 
 find_package(OpenSSL REQUIRED)
 find_package(relic REQUIRED)
