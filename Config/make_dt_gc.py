@@ -55,7 +55,7 @@ def main():
     f.write("\n")
     f.close()
 
-    os.system("python compile.py b Programs/test_dt/")
+    os.system("cd ./SCALE-MAMBA && python compile.py b Programs/test_dt/")
     os.system("cd ./Input_Data && python gen_data.py . gen_data_dt")
 
 main()
