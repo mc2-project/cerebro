@@ -757,6 +757,7 @@ class ASTChecks(ast.NodeTransformer):
         self.test_counter = 0
         self.scope_level = 0
         self.assignments = {} # indexed by the assignment targets, along with the assigned values
+        self.sub_assignments = {}
         self.depth = 0
 
     def negate_condition(self, cond):
@@ -828,11 +829,17 @@ class ASTChecks(ast.NodeTransformer):
                 statements += self.visit(n)
             elif isinstance(n, ast.Assign):
                 for target in n.targets:
-                    if target.id not in self.assignments:
-                        self.assignments[target.id] = []
-                    self.assignments[target.id].append(([x for x in self.if_stack], n.value))
+                    if isinstance(target, ast.Name):
+                        if target.id not in self.assignments:
+                            self.assignments[target.id] = []
+                        self.assignments[target.id].append(([x for x in self.if_stack], n.value))
+                    elif isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name):
+                        if target.value.id not in self.sub_assignments:
+                            self.sub_assignments[target.value.id] = [[], []]
+                        self.sub_assignments[target.value.id][0].append(([x for x in self.if_stack], target.slice))
+                        self.sub_assignments[target.value.id][1].append(([x for x in self.if_stack], n.value))
             else:
-                raise ValueError("Does not support non-assignment statments within if statements")
+                raise ValueError("Does not support non-assignment statements within if statements")
         self.depth -= 1
         self.if_stack.pop()
 
@@ -843,11 +850,17 @@ class ASTChecks(ast.NodeTransformer):
                 statements += self.visit(n)
             elif isinstance(n, ast.Assign):
                 for target in n.targets:
-                    if target.id not in self.assignments:
-                        self.assignments[target.id] = []
-                    self.assignments[target.id].append(([x for x in self.if_stack], n.value))
+                    if isinstance(target, ast.Name):
+                        if target.id not in self.assignments:
+                            self.assignments[target.id] = []
+                        self.assignments[target.id].append(([x for x in self.if_stack], n.value))
+                    elif isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name):
+                        if target.value.id not in self.sub_assignments:
+                            self.sub_assignments[target.value.id] = [[], []]
+                        self.sub_assignments[target.value.id][0].append(([x for x in self.if_stack], target.slice))
+                        self.sub_assignments[target.value.id][1].append(([x for x in self.if_stack], n.value))
             else:
-                raise ValueError("Does not support non-assignment statments within if statements")
+                raise ValueError("Does not support non-assignment statements within if statements")
         self.depth -= 1
         self.if_stack.pop()
 
@@ -855,6 +868,19 @@ class ASTChecks(ast.NodeTransformer):
             for (name, test_list) in self.assignments.iteritems():
                 statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list)
                 statements.append(statement)
+            for (name, l) in self.sub_assignments.iteritems():
+                statements.append(ast.Assign(targets=[ast.Name(id=name+"_index", ctx=ast.Load)], value=ast.Num(-1)))
+                statements.append(ast.Assign(targets=[ast.Name(id=name+"_value", ctx=ast.Load)], value=ast.Num(-1)))
+                
+                index_test_list = l[0]
+                index_statement = self.assign_transform_multi(ast.Name(id=name+"_index", ctx=ast.Store), index_test_list)
+                value_test_list = l[1]
+                value_statement = self.assign_transform_multi(ast.Name(id=name+"_value", ctx=ast.Store), value_test_list)
+                statements.append(index_statement)
+                statements.append(value_statement)
+                sub = ast.Subscript(value=ast.Name(id=name, ctx=ast.Load), slice=ast.Name(id=name+"_index", ctx=ast.Load), ctx=ast.Store)
+                assign = ast.Assign(targets=[sub], value=ast.Name(id=name+"_value", ctx=ast.Load))
+                statements.append(assign)
 
         ast.copy_location(statements[0], node)
         counter = 0
@@ -884,7 +910,7 @@ class ASTParser(object):
         target = "matmul"
         # Try inlining
         self.tree = ASTChecks().visit(self.tree)
-                
+        
         self.tree = ConstantPropagation().visit(self.tree)
         dep = ProcessDependencies()
         dep.visit(self.tree)
