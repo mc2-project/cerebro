@@ -151,6 +151,7 @@ class NetIO: public IOChannel<NetIO> { public:
 	}
 
 	~NetIO(){
+		sync();
 		flush();
 		#ifdef NETIO_USE_TLS
 			SSL_free(ssl);
