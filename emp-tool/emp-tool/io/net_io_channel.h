@@ -152,6 +152,9 @@ class NetIO: public IOChannel<NetIO> { public:
 
 	~NetIO(){
 		flush();
+		#ifdef NETIO_USE_TLS
+			SSL_free(ssl);
+		#endif
 		close(consocket);
 		delete[] buffer;
 	}
@@ -209,7 +212,7 @@ class NetIO: public IOChannel<NetIO> { public:
 			if (res >= 0)
 				sent += res;
 			else{
-				fprintf(stderr,"error: net_send_data %d\n", res);
+				fprintf(stderr,"error: net_recv_data %d\n", res);
 				exit(1);
 			}
 		}
