@@ -27,8 +27,7 @@ def main():
         serial_num = serial_num + 1
         os.system("cd ./Certificates/ && openssl genrsa -out " + server_ip +".key 2048")
         os.system("cd ./Certificates/ && openssl req -new -key " + server_ip + ".key -out " + server_ip + "_presign.pem -subj \"/C=US/ST=California/L=Berkeley/O=RISELab/OU=MC2/CN=" + server_ip + "/emailAddress=w.k@berkeley.edu\"")
-        os.system("cd ./Certificates/ && openssl x509 -req -days 3000 -in " + server_ip + "_presign.pem -CA ca.pem -set_serial=" + str(serial_num) + " -CAkey ca.key -out " + server_ip + "_pubkey.pem -sha256")
-        os.system("cd ./Certificates/ && cat " + server_ip + "_pubkey.pem " + server_ip + ".key >> " + server_ip + ".pem")
+        os.system("cd ./Certificates/ && openssl x509 -req -days 3000 -in " + server_ip + "_presign.pem -CA ca.pem -set_serial " + str(serial_num) + " -CAkey ca.key -out " + server_ip + ".pem -sha256")
 
 main()
 

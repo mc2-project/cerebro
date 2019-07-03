@@ -241,14 +241,18 @@ class NetIO: public IOChannel<NetIO> { public:
 			SSL_CTX_set_min_proto_version(tmp_ctx, TLS1_3_VERSION);
 			SSL_CTX_set_max_proto_version(tmp_ctx, TLS1_3_VERSION);
 
-			if(!SSL_CTX_set_ciphersuites(tmp_ctx, "TLS_AES_128_GCM_SHA256")) {
-	      perror("Failed to set cipher suite for TLS");
-	      exit(1);
+			if(!SSL_CTX_set_ciphersuites(tmp_ctx, "TLS_AES_128_GCM_SHA256")){
+			       	perror("Failed to set cipher suite for TLS");
+				exit(1);
 			}
 
 			SSL_CTX_set_verify(tmp_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 			#ifndef NETIO_MY_CERTIFICATE
-				#define NETIO_MY_CERTIFICATE "./certificates/my_private_key.pem"
+				#define NETIO_MY_CERTIFICATE "./certificates/my_certificate.pem"
+			#endif
+
+			#ifndef NETIO_MY_PRIVATE_KEY
+				#define NETIO_MY_PRIVATE_KEY "./certificates/my_private_key.key"
 			#endif
 
 			if(access(NETIO_MY_CERTIFICATE, R_OK) != 0){
@@ -257,7 +261,7 @@ class NetIO: public IOChannel<NetIO> { public:
 			}
 
 			SSL_CTX_use_certificate_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM);
-			SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM);
+			SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_PRIVATE_KEY, SSL_FILETYPE_PEM);
 
 			#ifndef NETIO_CA_CERTIFICATE
 				#define NETIO_CA_CERTIFICATE "./certificates/ca.pem"
