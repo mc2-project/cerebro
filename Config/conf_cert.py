@@ -13,16 +13,18 @@ def main():
 
     cwd = os.getcwd()
 
+    param = "-DNETIO_USE_TLS=on -DNETIO_CA_CERTIFICATE=\"" + cwd + "/Certificates/ca.pem\" -DNETIO_MY_CERTIFICATE=\"" + cwd + "/Certificates/" + server_ip + ".pem\" -DNETIO_MY_PRIVATE_KEY=\"" + cwd + "/Certificates/" + server_ip + ".key\""
+
     os.system("cd ./emp-tool/ && rm -rf CMakeFiles && rm -rf CMakeCache.txt")
-    os.system("cd ./emp-tool/ && cmake . -DNETIO_USE_TLS=on -DNETIO_CA_CERTIFICATE=\"" + cwd + "/Certificates/ca.pem\" -DNETIO_MY_CERTIFICATE=\"" + cwd + "/Certificates/" + server_ip + ".pem\"") 
+    os.system("cd ./emp-tool/ && cmake . " + param) 
     os.system("cd ./emp-tool/ && make && sudo make install")
 
     os.system("cd ./emp-ot/ && rm -rf CMakeFiles && rm -rf CMakeCache.txt")
-    os.system("cd ./emp-ot/ && cmake . -DNETIO_USE_TLS=on -DNETIO_CA_CERTIFICATE=\"" + cwd + "/Certificates/ca.pem\" -DNETIO_MY_CERTIFICATE=\"" + cwd + "/Certificates/" + server_ip + ".pem\"")
+    os.system("cd ./emp-ot/ && cmake . " + param)
     os.system("cd ./emp-ot/ && make && sudo make install")
 
     os.system("cd ./emp-agmpc/ && rm -rf CMakeFiles && rm -rf CMakeCache.txt")
-    os.system("cd ./emp-agmpc/ && cmake . -DNETIO_USE_TLS=on -DNETIO_CA_CERTIFICATE=\"" + cwd + "/Certificates/ca.pem\" -DNETIO_MY_CERTIFICATE=\"" + cwd + "/Certificates/" + server_ip + ".pem\"")
+    os.system("cd ./emp-agmpc/ && cmake . " + param)
     os.system("cd ./emp-agmpc/ && make") 
 
 main()
