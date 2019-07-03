@@ -256,12 +256,24 @@ class NetIO: public IOChannel<NetIO> { public:
 			#endif
 
 			if(access(NETIO_MY_CERTIFICATE, R_OK) != 0){
-				fprintf(stderr, "Failed to load this party's private key file %s\n%s\n", NETIO_MY_CERTIFICATE, strerror(errno));
+				fprintf(stderr, "Failed to load this party's certificate file %s\n%s\n", NETIO_MY_CERTIFICATE, strerror(errno));
 				exit(1);
 			}
 
-			SSL_CTX_use_certificate_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM);
-			SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_PRIVATE_KEY, SSL_FILETYPE_PEM);
+			if(access(NETIO_MY_PRIVATE_KEY, R_OK) != 0){
+				fprintf(stderr, "Failed to load this party's private key file %s\n%s\n", NETIO_MY_PRIVATE_KEY, strerror(errno));
+                                exit(1);
+			}
+
+			if(SSL_CTX_use_certificate_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM) != 1){
+				perror("Failed to set the party's certificate");
+				exit(1);
+			}
+			
+			if(SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_PRIVATE_KEY, SSL_FILETYPE_PEM) != 1){
+				perror("Failed to set the party's private key");
+                                exit(1);
+			}
 
 			#ifndef NETIO_CA_CERTIFICATE
 				#define NETIO_CA_CERTIFICATE "./certificates/ca.pem"
