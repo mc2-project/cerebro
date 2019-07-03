@@ -80,7 +80,7 @@ IF(${NETIO_USE_TLS})
 	ENDIF(NOT "${NETIO_MY_CERTIFICATE}" STREQUAL "")
 
 	IF(NOT "${NETIO_MY_PRIVATE_KEY}" STREQUAL "")
-		add_definitions(-DNETIO_MY_PRIVATE_KEY=\"{$NETIO_MY_PRIVATE_KEY}\")
+		add_definitions(-DNETIO_MY_PRIVATE_KEY=\"${NETIO_MY_PRIVATE_KEY}\")
 		message("${Green}-- TLS my private key: ${NETIO_MY_PRIVATE_KEY}${ColourReset}")
 	ELSE(NOT "${NETIO_MY_PRIVATE_KEY}" STREQUAL "")
 		message("${Green}-- TLS my private key: ./certificates/my_private_key.key (default)${ColourReset}")
