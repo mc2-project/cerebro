@@ -48,6 +48,7 @@ class ProgramGC(object):
 
         print "[GC compilation] Writing to file"
         self.f = open(self.outfile, 'w')
+        
         # Prepend a bunch of bytes to save room
         for i in range(2 * 100):
             self.f.write(" ")
@@ -91,6 +92,10 @@ class ProgramGC(object):
     def write_bytes(self, outfile=None):
         fname = self.outfile
 
+        print "**********************************"
+        print self.outfile
+        print "*********************************"
+
         # Finish outputting all instructions
         self.flush_instructions()
 
@@ -109,7 +114,7 @@ class ProgramGC(object):
         self.f.write("{} {} {}\n".format(self.total_inputs, 0, len(self.output_wires)))
         self.f.write("\n")
 
-        self.f.close()
+        #self.f.close()
 
         # Write input wire configuration for each party
         # format = party, wire start, wire end

@@ -151,7 +151,11 @@ class NetIO: public IOChannel<NetIO> { public:
 	}
 
 	~NetIO(){
+		sync();
 		flush();
+		#ifdef NETIO_USE_TLS
+			SSL_free(ssl);
+		#endif
 		close(consocket);
 		delete[] buffer;
 	}
@@ -209,7 +213,7 @@ class NetIO: public IOChannel<NetIO> { public:
 			if (res >= 0)
 				sent += res;
 			else{
-				fprintf(stderr,"error: net_send_data %d\n", res);
+				fprintf(stderr,"error: net_recv_data %d\n", res);
 				exit(1);
 			}
 		}
@@ -241,23 +245,39 @@ class NetIO: public IOChannel<NetIO> { public:
 			SSL_CTX_set_min_proto_version(tmp_ctx, TLS1_3_VERSION);
 			SSL_CTX_set_max_proto_version(tmp_ctx, TLS1_3_VERSION);
 
-			if(!SSL_CTX_set_ciphersuites(tmp_ctx, "TLS_AES_128_GCM_SHA256")) {
-	      perror("Failed to set cipher suite for TLS");
-	      exit(1);
+			if(!SSL_CTX_set_ciphersuites(tmp_ctx, "TLS_AES_128_GCM_SHA256")){
+			       	perror("Failed to set cipher suite for TLS");
+				exit(1);
 			}
 
 			SSL_CTX_set_verify(tmp_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 			#ifndef NETIO_MY_CERTIFICATE
-				#define NETIO_MY_CERTIFICATE "./certificates/my_private_key.pem"
+				#define NETIO_MY_CERTIFICATE "./certificates/my_certificate.pem"
+			#endif
+
+			#ifndef NETIO_MY_PRIVATE_KEY
+				#define NETIO_MY_PRIVATE_KEY "./certificates/my_private_key.key"
 			#endif
 
 			if(access(NETIO_MY_CERTIFICATE, R_OK) != 0){
-				fprintf(stderr, "Failed to load this party's private key file %s\n%s\n", NETIO_MY_CERTIFICATE, strerror(errno));
+				fprintf(stderr, "Failed to load this party's certificate file %s\n%s\n", NETIO_MY_CERTIFICATE, strerror(errno));
 				exit(1);
 			}
 
-			SSL_CTX_use_certificate_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM);
-			SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM);
+			if(access(NETIO_MY_PRIVATE_KEY, R_OK) != 0){
+				fprintf(stderr, "Failed to load this party's private key file %s\n%s\n", NETIO_MY_PRIVATE_KEY, strerror(errno));
+                                exit(1);
+			}
+
+			if(SSL_CTX_use_certificate_file(tmp_ctx, NETIO_MY_CERTIFICATE, SSL_FILETYPE_PEM) != 1){
+				perror("Failed to set the party's certificate");
+				exit(1);
+			}
+			
+			if(SSL_CTX_use_PrivateKey_file(tmp_ctx, NETIO_MY_PRIVATE_KEY, SSL_FILETYPE_PEM) != 1){
+				perror("Failed to set the party's private key");
+                                exit(1);
+			}
 
 			#ifndef NETIO_CA_CERTIFICATE
 				#define NETIO_CA_CERTIFICATE "./certificates/ca.pem"
