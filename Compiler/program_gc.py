@@ -92,10 +92,6 @@ class ProgramGC(object):
     def write_bytes(self, outfile=None):
         fname = self.outfile
 
-        print "**********************************"
-        print self.outfile
-        print "*********************************"
-
         # Finish outputting all instructions
         self.flush_instructions()
 

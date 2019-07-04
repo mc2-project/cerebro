@@ -132,33 +132,23 @@ def run_gc(args, options, param=-1, merge_opens=True, \
 
     interface.mpc_type = interface.GC
 
-    print "1"
-
     _interface = [t[1] for t in inspect.getmembers(interface, inspect.isclass)]
     for op in _interface:
         VARS[op.__name__] = op
     
-    print "2"
-
     prog = ProgramGC(args, options, param)
     instructions_gc.program_gc = prog
     types_gc.program_gc = prog
     interface.program_gc = prog
     VARS['program_gc'] = prog
 
-    print "3"
-
     print 'Compiling file', prog.infile
     a = ASTParser(prog.infile, debug=True)
     a.parse()
     a.execute(VARS)
 
-    print "4"
-
     # Write output
     prog.write_bytes(prog.outfile)
-
-    print "5"
 
     return prog
 
@@ -166,12 +156,12 @@ def run_gc(args, options, param=-1, merge_opens=True, \
 def run(args, options, param=-1, merge_opens=True, \
         reallocate=True, debug=False):
 
-    if args[0] == 'a':
-        a = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
-        return a
-    elif args[0] == 'b':
-        b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
-        return b
+    #if args[0] == 'a':
+    a = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    #return a
+    #elif args[0] == 'b':
+    b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    #return b
 
     if options.constant_file:
         d_b = planning.agmpc_cost(b, options.constant_file)
