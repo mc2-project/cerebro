@@ -66,6 +66,24 @@ In this file, list the IP addresses in the order of party IDs. For example, if y
 ```
 This implies that `172.31.39.112` is the first party.
 
+### Turn on/off TLS for AG-MPC
+
+To turn on TLS, one needs to first generate the certificates. 
+```
+python Config/gen_cert.py Config/wk3.txt 6
+```
+where `Config/wk3.txt` is the file that lists the servers' IP addresses.
+
+And then one should recompile the AG-MPC stack to turn on TLS.
+```
+python Config/conf_cert.py
+```
+
+To turn off TLS, one recompiles the AG-MPC without TLS.
+```
+python Config/turnoff_tls.py
+```
+
 ### Run SCALE-MAMBA on test_dt for four parties
 Below is the code for running SCALE-MAMBA on `test_dt` for four parties. If you want to run on different number of parties, change the line 2, where the last number indicates the number of parties in this computation. If you want to run different types of algorithms, change line 5 and line 8 (for compiling and input generation).
 ```
