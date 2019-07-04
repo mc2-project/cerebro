@@ -2,6 +2,7 @@
 #define NETIOMP_H__
 #include <emp-tool/emp-tool.h>
 #include "cmpc_config.h"
+#include <omp.h>
 using namespace emp;
 
 template<int nP>
@@ -57,6 +58,7 @@ class NetIOMP { public:
 	}
 
 	~NetIOMP() {
+		#pragma omp parallel for
 		for(int i = 1; i <= nP; ++i)
 			if(i != party) {
 				delete ios[i];
