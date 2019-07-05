@@ -207,6 +207,11 @@ def matadd(A, B, nparallel=1):
         _matadd(A, B, C, sfix, nparallel)
         return C
 
+    elif type(A) in (sfixMatrix, cfixMatrix) and type(B) in (sfixMatrix, cfixMatrix):
+        C = sfixMatrix(A.rows, A.columns)
+        _matadd(A, B, C, sfix, nparallel)
+        return C
+
 
 def _matsub(A, B, C, int_type, nparallel=1):
     @for_range_multithread(nparallel, A.rows * A.columns, A.rows * A.columns)
@@ -330,8 +335,11 @@ def sigmoid(v, nparallel=1):
         raise NotImplementedError
 
 def mat_const_mul(c, m, nparallel=1):
-    if isinstance(m, sfixMatrix):
-        res = sfixMatrix(m.rows, m.columns)
+    if isinstance(m, sfixMatrix) or isinstance(m, cfixMatrix):
+        if isinstance(m, sfixMatrix):
+            res = sfixMatrix(m.rows, m.columns)
+        else:
+            res = cfixMatrix(m.rows, m.columns)
         """
         @for_range_multithread(nparallel, m.rows * m.columns, m.rows * m.columns)
         def f(i):
@@ -346,12 +354,16 @@ def mat_const_mul(c, m, nparallel=1):
             res[i_index][j_index] = c * m[i_index][j_index]
         
         return res
-    elif isinstance(m, sfixMatrixGC):
-        res = sfixMatrixGC(m.rows, m.columns)
+    elif isinstance(m, sfixMatrixGC) or isinstance(m, cfixMatrixGC):
+        if isinstance(m, sfixMatrixGC):
+            res = sfixMatrixGC(m.rows, m.columns)
+        else:
+            res = cfixMatrixGC(m.rows, m.columns)
         for i in range(m.rows):
             for j in range(m.columns):
                 res[i][j] = c * m[i][j]
         return res
+
     else:
         raise NotImplementedError
 
@@ -417,7 +429,7 @@ def get_identity_matrix(value_type, n):
         raise NotImplementedError
 
 def matinv(A, nparallel=1):
-    if not isinstance(A, sfixMatrix):
+    if not isinstance(A, sfixMatrix) and not isinstance(A, cfixMatrix):
         raise NotImplementedError
     
     n = A.rows
