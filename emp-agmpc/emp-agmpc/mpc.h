@@ -117,14 +117,14 @@ class CMPC { public:
 		if(party != 1)
 			prg.random_block(labels, total_pre);
 
-		printf("before fpre->compute.\n");
+		//printf("before fpre->compute.\n");
 		fpre->compute(ANDS_mac, ANDS_key, ANDS_value, num_ands);
-		printf("after fpre->compute.\n");
+		//printf("after fpre->compute.\n");
 
 		prg.random_bool(preprocess_value, total_pre);
-		printf("before abit->compute.\n");
+		//printf("before abit->compute.\n");
 		fpre->abit->compute(preprocess_mac, preprocess_key, preprocess_value, total_pre);
-		printf("after abit->compute.\n");
+		//printf("after abit->compute.\n");
 		for(int i = 1; i <= nP; ++i) {
 			memcpy(key[i], preprocess_key[i], num_in * sizeof(block));
 			memcpy(mac[i], preprocess_mac[i], num_in * sizeof(block));
@@ -137,14 +137,14 @@ class CMPC { public:
 		bool * x[nP+1];
 		bool * y[nP+1];
 
-		printf("creating x, y\n");
+		//printf("creating x, y\n");
 		for(int i = 1; i <= nP; ++i) {
 			x[i] = new bool[num_ands];
 			y[i] = new bool[num_ands];
 		}
 
 
-		printf("assigning key and mac.\n");
+		//printf("assigning key and mac.\n");
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
 				for(int j = 1; j <= nP; ++j) {
@@ -156,7 +156,7 @@ class CMPC { public:
 			}
 		}
 
-		printf("computing gates.\n");
+		//printf("computing gates.\n");
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == XOR_GATE) {
 				for(int j = 1; j <= nP; ++j) {
@@ -177,7 +177,7 @@ class CMPC { public:
 			}
 		}
 
-		printf("using ANDS_value.\n");
+		//printf("using ANDS_value.\n");
 		ands = 0;
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
@@ -187,22 +187,22 @@ class CMPC { public:
 			}
 		}
 
-		printf("sending out the ANDS masks.\n");
+		//printf("sending out the ANDS masks.\n");
 		vector<future<void>>	 res;
 		for(int i = 1; i <= nP; ++i) for(int j = 1; j <= nP; ++j) if( (i < j) and (i == party or j == party) ) {
 			int party2 = i + j - party;
 			res.push_back(pool->enqueue([this, x, y, party2]() {
-				printf("prepare to send x to %d.\n", party2);
+		//		printf("prepare to send x to %d.\n", party2);
 				io->send_data(party2, x[party], num_ands);
-				printf("prepare to send y to %d.\n", party2);
+		//		printf("prepare to send y to %d.\n", party2);
 				io->send_data(party2, y[party], num_ands);
-				printf("flushing the connection to %d\n", party2);
+		//		printf("flushing the connection to %d\n", party2);
 				io->flush(party2);
 			}));
 			res.push_back(pool->enqueue([this, x, y, party2]() {
-				printf("waiting to receive x from %d\n", party2);
+		//		printf("waiting to receive x from %d\n", party2);
 				io->recv_data(party2, x[party2], num_ands);
-				printf("waiting to receive y from %d\n", party2); 
+		//		printf("waiting to receive y from %d\n", party2); 
 				io->recv_data(party2, y[party2], num_ands);
 			}));
 		}
@@ -212,7 +212,7 @@ class CMPC { public:
 			y[1][j] = y[1][j] != y[i][j];
 		}
 
-		printf("compute sigma\n");
+		//printf("compute sigma\n");
 		ands = 0;
 		for(int i = 0; i < cf->num_gate; ++i) {
 			if (cf->gates[4*i+3] == AND_GATE) {
@@ -247,7 +247,7 @@ class CMPC { public:
 		}//sigma_[] stores the and of input wires to each AND gates
 		
 
-		printf("building the circuit\n");
+	//	printf("building the circuit\n");
 		ands = 0;
 		block H[4][nP+1];
 		block K[4][nP+1], M[4][nP+1];
@@ -286,13 +286,13 @@ class CMPC { public:
 					io->send_data(1, H[j]+1, sizeof(block)*(nP));
 				++ands;
 			}
-			printf("finishing sending my circuit to party 1\n");
+	//		printf("finishing sending my circuit to party 1\n");
 			io->flush(1);
 		} else {
 			for(int i = 2; i <= nP; ++i) {
 				int party2 = i;
 				res.push_back(pool->enqueue([this, party2]() {
-					printf("prepare to receive circuit from %d\n", party2);
+		//			printf("prepare to receive circuit from %d\n", party2);
 					for(int i = 0; i < num_ands; ++i){
 						for(int j = 0; j < 4; ++j)
 							io->recv_data(party2, GT[i][party2][j]+1, sizeof(block)*(nP));
@@ -322,7 +322,7 @@ class CMPC { public:
 				memcpy(GTv[ands], r, sizeof(bool)*4);
 				++ands;
 			}
-			printf("done receiving all the circuits\n");
+	//		printf("done receiving all the circuits\n");
 			joinNclean(res);
 		}
 		for(int i = 1; i <= nP; ++i) {
@@ -332,6 +332,8 @@ class CMPC { public:
 	}
 
 	void online (bool * input, bool * output) {
+		printf("1\n");
+
 		bool * mask_input = new bool[cf->num_wire];
 		for(int i = 0; i < num_in; ++i)
 			mask_input[i] = input[i] != value[i];
@@ -363,6 +365,8 @@ class CMPC { public:
 			joinNclean(res);
 			for(int i = 2; i <= nP; ++i) delete[] tmp[i];
 		}
+
+		printf("2\n");
 	
 		if(party!= 1) {
 			for(int i = 0; i < num_in; ++i) {
@@ -417,6 +421,10 @@ class CMPC { public:
 				}
 			}
 		}
+
+
+		printf("3\n");
+
 		if(party != 1) {
 			io->send_data(1, value+cf->num_wire - cf->n3, cf->n3);
 			io->flush(1);
@@ -441,6 +449,8 @@ class CMPC { public:
 			for(int i = 2; i <= nP; ++i) delete[] tmp[i];
 			memcpy(output, mask_input + cf->num_wire - cf->n3, cf->n3);
 		}
+
+		printf("4\n");
 		delete[] mask_input;
 	}
 	void Hash(block H[4][nP+1], const block & a, const block & b, uint64_t idx) {

@@ -147,7 +147,6 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     a.parse()
     a.execute(VARS)
 
-
     # Write output
     prog.write_bytes(prog.outfile)
 
@@ -159,8 +158,11 @@ def run(args, options, param=-1, merge_opens=True, \
 
     #if args[0] == 'a':
     a = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    #return a
     #elif args[0] == 'b':
     b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    #return b
+
     if options.constant_file:
         d_b = planning.agmpc_cost(b, options.constant_file)
         print "AG-MPC cost: ", d_b['total_cost']
