@@ -1,0 +1,157 @@
+Params.set_params(int_precision=49, f=36, k=64)
+NUM_PARTIES = 2
+
+# Dimensions of X data matrix.
+num_cols = 10
+num_rows = 10
+
+# Constants
+
+local_compute = False
+rho = c_fix(0.05)
+l = c_fix(0.005)
+ADMM_ITER = 10
+
+def local_compute(x_data, y_data):
+    X_T = transpose(x_data)
+    XTy = matmul(X_T, y_data, num_cols, num_rows, num_rows, 1, sfix)
+    XTX = matmul(X_T, x_data, num_cols, num_rows, num_rows, num_cols, sfix)
+    rho_identity = c_fix_mat(num_cols, num_cols)
+    zero = c_fix(0)
+    mat_const_mul(zero, rho_identity)
+    for j in range(num_cols):
+        rho_identity[j][j] = rho
+
+    XTX_rho_identity = matadd(XTX, rho_identity)
+    XTX_inv = matinv(XTX_rho_identity)
+    return XTX_inv, XTy
+
+
+
+# Local computation of weight vector.
+def admm_local(XXinv, Xy, u, z):
+    #reveal_all(XXinv, "XXinv")
+    #reveal_all(Xy, "Xy")
+    z_minus_u = matsub(z, u)
+    z_u = mat_const_mul(rho, z_minus_u)
+    second_term = matadd(Xy, z_u)
+    #reveal_all(second_term, "Xy*z_u")
+    w = matmul(XXinv, second_term, num_cols, num_cols, num_cols, 1, sfix)
+    return w
+
+
+def soft_threshold_vec(threshold, vec):
+    vec_new = s_fix_mat(num_cols, 1)
+    neg_one = c_fix(-1)
+    neg_threshold = neg_one * threshold
+    for i in range(num_cols):
+        threshold_fn = Piecewise(3)
+        lower = vec[i][0] + threshold
+        upper = vec[i][0] - threshold
+        threshold_fn.add_boundary(None, neg_threshold, sfix(0), lower)
+        threshold_fn.add_boundary(neg_threshold, threshold, sfix(0), sfix(0))
+        threshold_fn.add_boundary(threshold, None, sfix(0), upper)
+        input = vec[i][0]
+        val = threshold_fn.evaluate(input)
+        vec_new[i][0] = val
+
+    return vec_new
+
+def admm_coordinate(w_list, u_list, z):
+    w_avg = s_fix_mat(num_cols, 1)
+    u_avg = s_fix_mat(num_cols, 1)
+    zero = c_fix(0)
+    w_avg = mat_const_mul(zero, w_avg)
+    u_avg = mat_const_mul(zero, u_avg)
+
+    for i in range(NUM_PARTIES):
+        w = w_list[i]
+        u = u_list[i]
+        w_avg = matadd(w_avg, w)
+        u_avg = matadd(u_avg, u)
+
+
+
+    #reveal_all(w_avg, "w_avg_b")
+    avg = sfix(1.0 / NUM_PARTIES)
+    w_avg = mat_const_mul(avg, w_avg)
+    u_avg = mat_const_mul(avg, u_avg)
+    reveal_all(w_avg, "w_avg_a")
+    
+    # Applying thresholding
+    threshold = sfix(0.005/(0.05 * NUM_PARTIES))
+    u_plus_w = matadd(w_avg, u_avg)
+    #reveal_all(u_avg, "u_avg")
+    #reveal_all(w_avg, "w_avg")
+    reveal_all(u_plus_w, "before_thresh")
+    z_new = soft_threshold_vec(threshold, u_plus_w)
+    reveal_all(z_new, "z")
+    #reveal_all(u_plus_w, "u_plus_w")
+
+    u_list_new = []
+    
+    for i in range(NUM_PARTIES):
+        u_i = u_list[i]
+        w_i = w_list[i]
+        intermediate_vec = matadd(u_i, w_i)
+        sum_vec = matsub(intermediate_vec, z_new)
+        u_list_new.append(sum_vec)
+
+    
+    return u_list_new, z_new
+
+
+def admm(XTX_inv_lst, XTy_lst):
+    w_list = [] 
+    u_list = []
+    for i in range(NUM_PARTIES):
+        w = s_fix_mat(num_cols, 1)
+        u = s_fix_mat(num_cols, 1)
+        w_list.append(w)
+        u_list.append(u)
+
+
+
+    z = s_fix_mat(num_cols, 1)
+    # Init these to 0
+    #w_list = mat_const_mul(sfix(0), w_list)
+    #u_list = mat_const_mul(sfix(0), u_list)
+    #mat_const_mul(sfix(0), z)
+    for i in range(ADMM_ITER):
+        for j in range(NUM_PARTIES):
+            XTX_inv = XTX_inv_lst[j]
+            XTy = XTy_lst[j]
+            u = u_list[j]
+            w = admm_local(XTX_inv, XTy, u, z)
+            reveal_all(w, 'w_local')
+            w_list[j] = w
+        u_list, z = admm_coordinate(w_list, u_list, z)
+        #reveal_all(z, "inter")
+    return z
+
+def get_input_data():
+    XTX_inv_lst = []
+    XTy_lst = []
+    for i in range(NUM_PARTIES):
+        x_data = s_fix_mat.read_input(num_rows, num_cols, i)
+        y_data = s_fix_mat.read_input(num_rows, 1, i)
+        #reveal_all(x_data, "x_data")
+        #reveal_all(y_data, "y_data")
+        XTX_inv, XTy = local_compute(x_data, y_data)
+        XTX_inv_lst.append(XTX_inv)
+        XTy_lst.append(XTy)
+    return XTX_inv_lst, XTy_lst
+
+
+def main():
+    XTX_inv_lst, XTy_lst = get_input_data()
+    w = admm(XTX_inv_lst, XTy_lst)
+    return w
+
+
+what = main()
+reveal_all(what, "weights")
+
+
+
+

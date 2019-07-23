@@ -5,6 +5,8 @@ import planning
 import ast
 import types
 from collections import deque
+import os
+
 
 def run_arithmetic(args, options, param=-1, merge_opens=True, \
                    reallocate=True, debug=False):
@@ -17,7 +19,7 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     import interface
     from interface import ASTParser as ASTParser
     import inspect
-
+    import copy
     interface.mpc_type = interface.SPDZ
 
     _interface = [t[1] for t in inspect.getmembers(interface, inspect.isclass)]
@@ -50,8 +52,19 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     sys.path.insert(0, 'Compiler')
     # create the tapes
     print 'Compiling file', prog.infile
-    a = ASTParser(prog.infile, debug=True)
-    vectorized_calls = a.parse()
+    party = options.party
+
+
+    a = ASTParser(prog.infile, party, debug=True)
+    vectorized_calls, local_program = a.parse()
+
+    local_file = open(os.path.join(options.filename, "local.py"), "w")
+    local_file.write(local_program)
+    local_file.close()
+    interface.mpc_type = interface.LOCAL 
+    a.execute_local(local_program, VARS)
+
+    interface.mpc_type = interface.SPDZ
     a.execute(VARS)
 
     # optimize the tapes
@@ -121,7 +134,7 @@ def sub_vectorized_triples(vectorized_calls, req_num):
 
 
 # Similar 
-def run_gc(args, options, param=-1, merge_opens=True, \
+def run_gc(args, options, party, param=-1, merge_opens=True, \
            reallocate=True, debug=False):
 
     from Compiler.program_gc import ProgramGC
@@ -160,10 +173,12 @@ def run(args, options, param=-1, merge_opens=True, \
     a = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
     #return a
     #elif args[0] == 'b':
-    b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+    # b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
     #return b
 
     if options.constant_file:
+
+        """
         d_b = planning.agmpc_cost(b, options.constant_file)
         print "AG-MPC cost: ", d_b['total_cost']
         d_a = planning.spdz_cost(a, options.constant_file)
@@ -181,6 +196,8 @@ def run(args, options, param=-1, merge_opens=True, \
             print "Decision: ", d_a['decision']
             print "Cost: ", d_a['total_cost']
             print "---------------------------------------------"
+        """
+        pass
 
     else:
        print "---------------------------------------------"
@@ -188,7 +205,7 @@ def run(args, options, param=-1, merge_opens=True, \
        print "---------------------------------------------" 
     if args[0] == 'a':
         return a
-    elif args[0] == 'b':
-        return b
+    #elif args[0] == 'b':
+        #return b
     else:
         raise ValueError("Must choose either arithmetic (a) or GC (b)")

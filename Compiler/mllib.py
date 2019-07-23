@@ -11,6 +11,8 @@ from Compiler.types_gc import *
 
 from operator import itemgetter
 
+import numpy as np
+
 def get_diff_types(data_list):
     cint_data = [d for d in data_list if type(d) == cint]
     pint_data = [(d, d.pid) for d in data_list if type(d) == pint]
@@ -93,6 +95,9 @@ def _transpose_gc(A, B):
             B[j][i] = A[i][j]    
 
 def transpose(A):
+    if isinstance(A, np.ndarray):
+        return A.transpose()
+
     if not isinstance(A, (Matrix, MatrixGC)):
         raise ValueError("Only matrix can be transposed")
 
@@ -151,6 +156,11 @@ def _matmul_gc(A, B, C):
             C[i][j] = v
 
 def matmul(A, B, left_rows, left_cols, right_rows, right_cols, mat_type, nparallel=1):
+
+    if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
+        return np.matmul(A, B)
+
+
     # Tentative, very janky. Yep, this doesn't work :(. Buyer BEWARE!
     if isinstance(A, sintMatrix) and isinstance(B, sintMatrix):
         C = sintMatrix(A.rows, B.columns)
@@ -190,6 +200,9 @@ def _matadd(A, B, C, int_type, nparallel=1):
         C[i_index][j_index] = A[i_index][j_index] + B[i_index][j_index]
     
 def matadd(A, B, nparallel=1):
+    if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
+        return np.add(A, B)
+
     if A.rows != B.rows or A.columns != B.columns:
         raise NotImplementedError
     
@@ -227,6 +240,9 @@ def _matsub_gc(A, B, C):
             C[i][j] = A[i][j] - B[i][j]
         
 def matsub(A, B, nparallel=1):
+    if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
+        return np.subtract(A, B)
+
     if A.rows != B.rows or A.columns != B.columns:
         raise ValueError("[matsub] Matrices must have the same sizes")
     
@@ -335,6 +351,14 @@ def sigmoid(v, nparallel=1):
         raise NotImplementedError
 
 def mat_const_mul(c, m, nparallel=1):
+
+    if isinstance(m, np.ndarray):
+        if type(c) in (float, int):
+            return c * m 
+        else:
+            raise ValueError("Type of constant is: {0} when expected float and int.".format(type(c)))
+
+
     if isinstance(m, sfixMatrix) or isinstance(m, cfixMatrix):
         if isinstance(m, sfixMatrix):
             res = sfixMatrix(m.rows, m.columns)
@@ -429,6 +453,11 @@ def get_identity_matrix(value_type, n):
         raise NotImplementedError
 
 def matinv(A, nparallel=1):
+    if isinstance(A, np.ndarray):
+        return np.linalg.inv(A)
+
+
+
     if not isinstance(A, sfixMatrix) and not isinstance(A, cfixMatrix):
         raise NotImplementedError
     

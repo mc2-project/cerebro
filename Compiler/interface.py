@@ -4,9 +4,11 @@ import compilerLib, library
 import symtable
 import re
 import checker
+import numpy as np
 
 SPDZ = 0
 GC = 1
+LOCAL = 2
 
 class Params(object):
     intp = 64
@@ -27,6 +29,8 @@ class ClearIntegerFactory(object):
     def __call__(self, value):
         if mpc_type == SPDZ:
             return cint(value)
+        elif mpc_type == LOCAL:
+            return int(value)
         else:
             return cint_gc(Params.intp, value)
         
@@ -62,6 +66,8 @@ class ClearFixedPointFactory(object):
     def __call__(self, value):
         if mpc_type == SPDZ:
             return cfix(value)
+        elif mpc_type == LOCAL:
+            return float(value)
         else:
             return cfix_gc(v=value, scale=True)
 
@@ -103,10 +109,13 @@ class SecretFixedPointArrayFactory(object):
                 ret[i] = sfix_gc(v=None, input_party=party)
             return ret
 
+import struct
 class SecretFixedPointMatrixFactory(object):
     def __call__(self, rows, columns):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
+        if mpc_type == LOCAL:
+            raise ValueError("Shouldn't be local.")
         if mpc_type == SPDZ:
             ret = sfixMatrix(rows, columns)
             return ret
@@ -120,6 +129,10 @@ class SecretFixedPointMatrixFactory(object):
     def read_input(self, rows, columns, party):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
+
+        if mpc_type == LOCAL:
+            raise ValueError("Shouldn't be local.")
+
         if mpc_type == SPDZ:
             ret = sfixMatrix(rows, columns)
             @library.for_range(ret.rows)
@@ -135,7 +148,26 @@ class SecretFixedPointMatrixFactory(object):
                 for j in range(ret.columns):
                     ret[i][j] = sfix_gc(v=None, input_party=party)
             return ret
-    
+
+
+    # Reads input from file.
+    def read_clear_input(self, rows, columns, party, f, input_file="../Input_Data/f0"):
+        input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
+        lst_inputs = np.fromfile(f, input_type, rows * columns)
+        precision = sfix.f
+        assert(len(lst_inputs) >= rows * columns)
+        res = np.zeros((rows, columns))
+        for i in range(rows):
+            for j in range(columns):
+                entry = lst_inputs[i * columns + j]
+                if entry[0]:
+                    factor = -1
+                else:
+                    factor = 1
+                res[i][j] = factor * entry[1] * 1.0 / (2 ** precision)
+
+        return res
+
     # Read horizontally partitioned data from multiple parties
     # input config should be of the form: (party_id, rows, columns)
     def read_input_variable_rows(self, columns, input_config):
@@ -163,6 +195,57 @@ class SecretFixedPointMatrixFactory(object):
                 rows_offset += r
             return ret
 
+
+class ClearFixedPointMatrixFactory(object):
+    def __call__(self, rows, columns):
+        if mpc_type == SPDZ:
+            return cfixMatrix(rows, columns)
+        elif mpc_type == LOCAL:
+            return np.zeros((rows, columns))
+        else:
+            ret = cfixMatrixGC(rows, columns)
+            for i in range(ret.rows):
+                for j in range(ret.columns):
+                    ret[i][j] = cfix_gc(0)
+            return ret
+             
+
+class PrivateFixedPointMatrix(object):
+    def preprocess(self, precision=36):
+        input_file="../Input_Data/f0"
+        input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
+        lst_inputs = np.fromfile(input_file, input_type)
+
+        data = lst_inputs.flatten().tolist()
+
+        lst_data = []
+        for i in range(len(data)):
+            entry = data[i]
+            if entry[0]:
+                factor = -1
+            else:
+                factor = 1
+
+
+            val = factor * entry[1] * 1.0 / (2 ** precision)
+            lst_data.append(val)
+
+        self.data = lst_data
+
+        #print "READ DATA", self.data
+
+    def read_input(self, rows, columns, party):
+        assert(len(self.data) >= rows * columns)
+        res = np.zeros((rows, columns))
+        for i in range(rows):
+            for j in range(columns):
+                entry = self.data.pop(0)
+                res[i][j] = entry
+
+
+        return res
+
+
 def reveal_all(v, text=""):
     if mpc_type == SPDZ:
         if isinstance(v, (sint, sfix)):
@@ -189,9 +272,36 @@ def reveal_all(v, text=""):
         info = v.reveal(name=text)
         program_gc.output_objects.append(info)
 
+
+import numpy as np
+import struct
+# lst_data is a list of matrices right now, sort of hard coded to the specific program
+def write_private_data(lst_data):
+
+    lst_private_data = []
+    for matrix in lst_data:
+        lst_private_data += matrix.flatten().tolist()
+
+
+    print "PRIVATE DATA OUTPUT: ", lst_private_data
+    print "Length: ", len(lst_private_data)
+    lst_private_data = [e * pow(2, 36) for e in lst_private_data]
+    f = open("../Input_Data" + "/f0", 'w')
+    for d in lst_private_data:
+        sign = d < 0
+        output = struct.pack("?", sign)
+        f.write(output)
+        output = struct.pack("Q", abs(int(d)))
+        f.write(output)
+    f.close()
+    
+
+
+
 ClearInteger = ClearIntegerFactory()
 SecretInteger = SecretIntegerFactory()
 ClearFixedPoint = ClearFixedPointFactory()
+ClearFixedPointMatrix = ClearFixedPointMatrixFactory()
 SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
@@ -201,8 +311,11 @@ compilerLib.VARS["s_int"] = SecretInteger
 compilerLib.VARS["c_fix"] = ClearFixedPoint
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
+compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
+compilerLib.VARS["p_mat"] = PrivateFixedPointMatrix
 compilerLib.VARS["reveal_all"] = reveal_all
+compilerLib.VARS["write_private_data"] = write_private_data
 
 
 import ast
@@ -273,7 +386,7 @@ class ProcessDependencies(ast.NodeVisitor):
         # Not considering differing scopes and same name.
         if node.name != self.target_fn and node.name not in self.mllib_fn:
             self.functions[node.name] = node
-            print "Private type inference, visit function def: ", node.name
+            #print "Private type inference, visit function def: ", node.name
             args = []
             for arg in node.args.args:
                 args.append(arg.id)
@@ -401,7 +514,7 @@ class CountFnCall(ast.NodeVisitor):
         self.matmul_to_dims = {}
         # Maps a matmul node to how many times it has been called.
         self.matmul_to_calls = {}
-        self.G = G
+        self.G = G.copy()
         self.target_fn = target_fn
         self.counter = 0
         # Maps for loop to the number of iterations.
@@ -470,11 +583,11 @@ class CountFnCall(ast.NodeVisitor):
                 else:
                     # Look at node's parent for for-loops.
                     multiplicative_factor = self.propagate_for(node)
-                    print "Postprocess: {0}, {1}".format(node, neighbor)
+                    print "Count fn_call Postprocess: {0}, {1}".format(node, neighbor)
                     self.G[node][neighbor]['weight'] = self.fns_to_calls.get(neighbor, 0) * multiplicative_factor
 
                 if self.G[node][neighbor]['weight'] != 0:
-                    print "WEIGHT", node, neighbor, self.G[node][neighbor]['weight']
+                    print "Count fn_call WEIGHT", node, neighbor, self.G[node][neighbor]['weight']
 
 
         # Extract info from the edges. # of calls to a matmul is the sum of the incoming weights to each matmul node.
@@ -696,6 +809,8 @@ class CountFnCall(ast.NodeVisitor):
     def visit_Assign(self, node):
         self.visit(node.value)
 
+
+import copy
 # TODO: Incorporate scope possibly.
 class ConstantPropagation(ast.NodeTransformer):
     """NodeTransformer that will inline any Number and String 
@@ -705,7 +820,6 @@ class ConstantPropagation(ast.NodeTransformer):
 
     def __init__(self):
         self._constants = {}
-        #super(ConstantPropagation, self).__init__()
 
     def visit_Module(self, node):
         """Find eglible variables to be inlined and store
@@ -720,33 +834,55 @@ class ConstantPropagation(ast.NodeTransformer):
     def visit_Name(self, node):
         """If node.id is in self._constants, replace the
         loading of the node with the actual value"""
-        
-        #return self._constants.get(node.id, node)
-        #print "Visit name: ", node.id
         for k in self._constants.keys():
             if node.id == k:
                 print "Name: {0}, value: {1}".format(node.id, self._constants[k].n)
-                print node.__dict__
-                return self._constants[k]
+                #print node.__dict__
+                return ast.Num(self._constants[k].n) #self._constants[k]
 
         return node
 
     def visit_Assign(self, node):
-        node.value = self.visit(node.value)
+        copy_assign = copy.deepcopy(node) #ast.Assign(value=node.value, targets=node.targets)
+        #node.value = self.visit(node.value)
+        copy_assign.value = self.visit(copy_assign.value)
         try:
             # No multiassignment such as a,b = c,d
-            if not isinstance(node.value, ast.Tuple):
-                val = self.eval_args_helper(node.value)
-                node.value = ast.Num(val)
+            if not isinstance(copy_assign.value, ast.Tuple):
+                if type(copy_assign.value) not in (ast.Call, ast.Name):
+                    val = self.eval_args_helper(copy_assign.value)
+                    copy_assign.value = ast.Num(n=val)
                 # So far don't allow multi-assignment, not sure how to go about this.
-                self._constants[node.targets[0].id] = node.value
-                return node
+                    self._constants[copy_assign.targets[0].id] = copy_assign.value
             else:
-                print "Multiassignment not supported: ", node.value.__dict__
+                for i in range(len(copy_assign.value.elts)):
+                    try:
+                        obj = copy_assign.value.elts[i]
+                        if type(obj) not in (ast.Call, ast.Name):
+                            val = self.eval_args_helper(obj)
+                            self._constants[copy_assign.targets[0].elts[i].id] = val
+                            obj.value = val
+                    except Exception as e:
+                        print "Exception in assign multiassignment: ", e
+
+                #print "Multiassignment not supported: ", node.value.__dict__
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
             print e
-            return self.generic_visit(node)
+        
+
+        # Visit the left hand side of the assignment
+    
+        if isinstance(copy_assign.targets[0], ast.Subscript):
+            copy_assign.targets[0] = self.visit(copy_assign.targets[0])
+        
+        return copy_assign
+
+
+
+
+    def visit_Subscript(self, node):
+        return self.generic_visit(node)
 
     def eval_args_helper(self, node):
         if hasattr(node, 'n'):
@@ -756,6 +892,15 @@ class ConstantPropagation(ast.NodeTransformer):
             right_val = self.eval_args_helper(node.right)
             res = operators[type(node.op)](left_val, right_val)
             return res
+
+    def visit_BinOp(self, node):
+        try:
+            val = self.eval_args_helper(node)
+            return ast.Num(n=val)
+        except Exception as e:
+            print e 
+            print "ConstantPropagation Exception"
+            return self.generic_visit(node)
 
 
 class ASTChecks(ast.NodeTransformer):
@@ -912,186 +1057,181 @@ class MC2_Types(Enum):
     PRIVATE = "PRIVATE"
     
 
-class PrivateTypeInference(ast.NodeVisitor):
+import heapq
+# Gather information about the program
 
+# Combine dimension inference here
 
-    def __init__(self, fns_to_nodes, fns_to_params, G):
-        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix"]
-        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat"]
-        self.private_inputs = ["read_input_from", "read_input"]
-        # Map function names to function_def nodes
-        self.fns_to_nodes = fns_to_nodes
-        self.global_scope = "GLOBAL"
-        self.scope_stack = []
-        # Dependency/Call Graph
-        self.G = G
-        # Map function to list of names of its parameters.
-        self.fns_to_params = fns_to_params
-        # Map name and scope (parent) to "type" of object?
-        self.var_tracker = {}
-        # Maps functions to types of their outputs
-        # self.fns_to_outputs = {}
+class ProgramSplitterHelper(ast.NodeVisitor):
 
-        # Track dependencies between variables. Variables are nodes. 
-        # If B depends on A, then draw edge from A -> B
+    def __init__(self):
+        self.lst_private_vars = [] 
         self.var_graph = nx.DiGraph()
-        self.preprocess()
+        # Key is (name, lineno), value is the type of the variable
+        self.var_tracker = {}
+
+        # Map (mat_name, lineno) to dimension of matrix
+        self.mat_to_dim = {}
+        self.vectorized_calls = {}
+
+        self.name_to_node = {}
+
+        # Hardcoded for SCALE-MAMBA
+        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix", "Piecewise"]
+        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat"]
+        self.python_clear = ["True", "False"]
+        self.private_inputs = ["read_input_from", "read_input"]
+
+        self.private_node_counter = 0
+        self.var_to_count = {}
+
+        self.global_counter = 0
+        self.pq = []
 
 
-    def preprocess(self):
-        topological_ordering = list(nx.topological_sort(self.G))
-        print "Topological ordering", topological_ordering
-
-        for node in topological_ordering:
-            # Essentially visit the first relevant function that is called by the program. Since python doesn't have a main function like C that gets automatically called.
-            if node in self.fns_to_nodes.keys():
-                self.scope_stack.insert(0, node)
-                self.visit(self.fns_to_nodes[node])
-                self.scope_stack.pop(0)
-                return
-
-    # Retrieve the parent at the current time from the scope stack. If no parent exists, then return self.global_scope as the parent.
-    def get_parent(self):
-        if len(self.scope_stack):
-            return self.scope_stack[0]
-        else:
-            return self.global_scope
-
-    def lookup(self, name):
-        for scope in self.scope_stack[::-1]:
-            if (name, scope) in self.var_tracker.keys():
-                return self.var_tracker[(name, scope)]
-
-        return self.var_tracker.get((name, self.global_scope), (MC2_Types.SECRET, ""))
 
 
+    # Skip function definitions. Assume entire program has been unrolled.
     def visit_FunctionDef(self, node):
-        self.scope_stack.insert(0, node.name)
-        self.generic_visit(node)
-        self.scope_stack.pop(0)
+        return
 
 
-
-    def visit_For(self, node):
-        self.scope_stack.insert(0, node.lineno)
-        for item in node.body:
-            self.visit(item)
-        self.scope_stack.pop(0)
-
-
+    # Function calls like .append(), needs to be marked secret
     def visit_Call(self, node):
-        parent = self.get_parent()
-        if hasattr(node.func, "id") and node.func.id in self.fns_to_nodes.keys():
-            fn_name = self.get_fn_name(node)
-            print "Calling function: ", fn_name
-            # Bind parameters to arguments
-            self.bind_params_to_args(node)
-            self.scope_stack.insert(0, fn_name)
-            self.visit(self.fns_to_nodes[fn_name])
-            self.scope_stack.pop(0)
-            # if output of function is private.
-            print "Function: {0}, has output: {1}".format(fn_name, self.var_tracker[(fn_name, fn_name)])
-        else:
-            # Probably a library function, so check types of args.
-            pass
+        if isinstance(node.func, ast.Attribute):
+            #print "ATTRIBUTE HELP:", node.__dict__, node.func.__dict__
+            name = node.func.value.id
+            if self.name_exists(name):
+                next_lineno = self.get_next_var_num(name)
+                self.var_graph.add_node((name,next_lineno), mc2_type=self.lookup_type(name), op=node)
+                self.name_to_node[(name, next_lineno)] = node
+
+                args = node.args
+                for arg in node.args:
+                    if isinstance(arg, ast.Name):
+                        if self.name_exists(arg.id):
+                            self.var_graph.add_edge((arg.id, self.var_to_count[arg.id]), (name, next_lineno))
+
+            # Deal with this dimension crap.
+            try:
+                ref_to_name = self.lookup(name)
+            except ValueError as e:
+                return 
+            if ref_to_name in self.mat_to_dim.keys():
+                attr = node.func.attr
+                if attr in ("append", "placeholder"):
+                    first_arg = node.args[0].id
+                    ref_to_first_arg = self.lookup(first_arg)
+                    if ref_to_first_arg in self.mat_to_dim.keys():
+                        self.mat_to_dim[ref_to_name].append(self.mat_to_dim[ref_to_first_arg])
+                    else:
+                        self.mat_to_dim[ref_to_name].append(None)
 
 
-    # Bind the types of arguments to the parameters of the function so when we enter the function, we actually know all the variables and what is going on.
-    def bind_params_to_args(self, node):
-        #fn_name = node.func.id
-        fn_name = self.get_fn_name(node)
-        parent = self.get_parent()
-        lst_params = self.fns_to_params[fn_name]
-        for i in range(len(lst_params)):
-            arg = node.args[i]
-            param = lst_params[i]
-            if isinstance(arg, ast.Num):
-                self.var_tracker[(param, parent)] = (MC2_Types.CLEAR, "")
-            else:
-                mc2_type = self.lookup(arg.id)
-                self.var_tracker[(param, parent)] = mc2_type
-                # Add dependency edge between parameter of function and argument passed in.
-                if (arg.id, parent) in self.var_graph:
-                    # No real operation here, just binding parameters to arguments. How to account for this in the actual code?
-                    self.var_graph.add_node((param, fn_name), mc2_type=mc2_type, op=None)
-                    self.var_graph.add_edge((arg.id, parent), (param, fn_name))
-                #print "Argument: {0}, parent: {1}".format(arg.id, parent)
+    def add_to_graph(self, node, var_name, mc2_type):
+        lineno = self.get_next_var_num(var_name)
+        self.var_tracker[(var_name, lineno)] = mc2_type
+        self.var_graph.add_node((var_name, lineno), mc2_type=mc2_type, op=node, counter=lineno)
+        self.name_to_node[(var_name, lineno)] = node
 
 
-    def visit_Return(self, node):
-        parent = self.get_parent()
-        # Multiple ret vals
-        if isinstance(node.value, ast.Tuple):
-            lst_types_retvals = []
-            for i in range(len(node.value.elts)):
-                retval_obj = node.value.elts[i]
-                if isinstance(retval_obj, ast.Num):
-                    lst_types_retvals.append((MC2_Types.CLEAR, ""))
-                else:
-                    #print "RETURNING ", retval_obj.id
-                    lst_types_retvals.append(self.lookup(retval_obj.id))
-
-            self.var_tracker[(parent, parent)] = lst_types_retvals
-        # One ret val
-        else:
-            retval_obj = node.value
-            if isinstance(retval_obj, ast.Num):
-                self.var_tracker[(parent, parent)] = (MC2_Types.CLEAR, "")
-            else:
-                self.var_tracker[(parent, parent)] = self.lookup(retval_obj.id)
-
-        #print "RETURN Function: {0} has retval of type: {1}".format(parent, self.var_tracker[(parent, parent)])
-
-
-    def get_fn_name(self, node):
-        if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
-            return node.func.id 
+    def process_mat_declare(self, name, lineno, args):
+        rows = args[0].n 
+        cols = args[1].n 
+        self.mat_to_dim[(name, lineno)] = (rows, cols)
 
 
 
+    # HOLY SHIT this is very messy.
     def visit_Assign(self, node):
-        parent = self.get_parent()
         # multi-assignment, figure out later
         if isinstance(node.targets[0], ast.Tuple):
             lst_var_names = []
             for name_obj in node.targets[0].elts:
                 lst_var_names.append(name_obj.id)
 
+            # Assume right now don't have library functions that return multiple values.            
             if isinstance(node.value, ast.Call):
-                fn_name = self.get_fn_name(node.value)
-                self.visit(node.value)
-                lst_types_retvals = self.var_tracker[(fn_name, fn_name)]
-                for i in range(len(lst_var_names)):
-                    var_name = lst_var_names[i]
-                    retval_type = lst_types_retvals[i]
-                    self.var_tracker[(var_name, parent)] = retval_type
+                fn_name = self.get_fn_name(node)
+                if fn_name in self.secret_types:
+                    for var_name in lst_var_names:
+                        self.add_to_graph(node, var_name, (MC2_Types.SECRET, ""))
+                # a = cfix(5)
+                elif fn_name in self.clear_types:
+                    for var_name in lst_var_names:
+                        self.add_to_graph(node, var_name, (MC2_Types.CLEAR, ""))
 
-                print "jesus: ", fn_name, self.var_tracker[(fn_name, fn_name)]
-                lst_ = [x[0] in (MC2_Types.PRIVATE, MC2_Types.CLEAR) for x in self.var_tracker[(fn_name, fn_name)]]
-                if any(lst_): 
-                    print "jesus", fn_name
-                    self.track_input_output_dependencies(node.value.args, [node.targets[0]], self.fns_to_nodes[fn_name], add_to_graph=True)
+                # HACKY Way just in case another case didn't consider, basically this is calling library functions.
                 else:
-                    self.track_input_output_dependencies(node.value.args, [node.targets[0]], self.fns_to_nodes[fn_name], add_to_graph=False)
+                    if len(node.value.args) > 1:
+                        res_type = self.check_types(node.value.args)
+                    else:
+                        if isinstance(node.value.args[0], ast.Num):
+                            res_type = (MC2_Types.CLEAR, "")
+                        else:
+                            res_type = self.lookup_type(node.value.args[0].id)
 
-            # Multiassignment of variables like a,b = c, d, currently not supported.
+
+                    for var_name in lst_var_names:
+                        new_lineno = self.get_next_var_num(var_name)
+                        self.var_tracker[(var_name, new_lineno)] = res_type
+
+                    # Track dependencies between input and output
+                    self.track_input_output_dependencies(node.value.args, lst_var_names, node, res_type)
+            
+            # Multiassignment of variables like a,b = c, d, currently barely supported.
+            # Probably do not want to support this. The graph gets completely fucked up by this.
             elif isinstance(node.value, ast.Tuple):
+                print "MULTIASSIGNMENT"
                 right_hand_side_var_names = []
                 for name_obj in node.value.elts:
                     right_hand_side_var_names.append(name_obj.id)
 
+                # Make sure number of vars on LHS == number of vars on RHS
                 assert(len(lst_var_names) == len(right_hand_side_var_names))
-                for i in range(len(lst_var_names)):
-                    var_name = lst_var_names[i]
-                    rhs_var_name = right_hand_side_var_names[i]
-                    self.var_tracker[(var_name, parent)] = self.lookup(rhs_var_name)
+                next_lineno = self.get_next_var_num(lst_var_names[0])
+                for lhs_var_name in lst_var_names:
+                    self.var_to_count[lhs_var_name] = next_lineno
 
+                mc2_type = self.check_types([ast.Name(id=rhs_var_name) for rhs_var_name in right_hand_side_var_names])
+                self.var_graph.add_node((tuple(lst_var_names), next_lineno), op=node, mc2_type=mc2_type)
+                for lhs_var_name in lst_var_names:
+                    self.var_tracker[(lhs_var_name, self.var_to_count[lhs_var_name])] = mc2_type
+                for i in range(len(right_hand_side_var_names)):
+                    lhs_var_name = lst_var_names[i]
+                    rhs_var_name = right_hand_side_var_names[i]
+                    most_recent_right_ref = self.lookup(rhs_var_name)
+                    if most_recent_right_ref in self.mat_to_dim.keys():
+                        self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
+
+                    self.var_graph.add_edge((rhs_var_name, self.var_to_count[rhs_var_name]), (tuple(lst_var_names), self.var_to_count[lhs_var_name]))
+                """
+                for i in range(len(lst_var_names)):
+                    lhs_var_name = lst_var_names[i]
+                    rhs_var_name = right_hand_side_var_names[i]
+                    mc2_type = self.check_(rhs_var_name)
+                    most_recent_right_ref = self.lookup(rhs_var_name)
+                    #self.add_to_graph(node, lhs_var_name, mc2_type)
+                    self.var_graph.add_edge((rhs_var_name, self.var_to_count[rhs_var_name]), (lhs_var_name, self.var_to_count[lhs_var_name]))
+                    next_lineno = self.var_to_count[lhs_var_name]
+                    if most_recent_right_ref in self.mat_to_dim.keys():
+                        self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
+                """
+
+                    
 
         else:
-            # Something like a = 5
-            if isinstance(node.value, ast.Num):
-                self.var_tracker[(node.targets[0].id, parent)] = (MC2_Types.CLEAR, "")
-                self.var_graph.add_node((node.targets[0].id, parent), mc2_type=(MC2_Types.CLEAR, ""), op=node)
+            # Encounter subscript object like A[i] = b
+            if isinstance(node.targets[0], ast.Subscript):
+                subscript_obj = node.targets[0]
+                subscript_name = self.get_subscript_name(subscript_obj)
+                next_lineno = self.get_next_var_num(subscript_name)
+                self.var_graph.add_node((subscript_name, next_lineno), mc2_type=self.lookup_type(subscript_name), op=node)
+                self.name_to_node[(subscript_name, next_lineno)] = node
+
+            # Something like a = 4
+            elif isinstance(node.value, ast.Num):
+                self.add_to_graph(node, node.targets[0].id, (MC2_Types.CLEAR, ""))
 
 
             # Calling .read_input essentially
@@ -1100,96 +1240,282 @@ class PrivateTypeInference(ast.NodeVisitor):
                     raise ValueError("Last argument of read_input is a party which must be a number!")
 
                 party_num = node.value.args[len(node.value.args) - 1].n 
-                self.var_tracker[(node.targets[0].id, parent)] = (MC2_Types.PRIVATE, party_num)
-                # Add vertex which represents private node.
-                self.var_graph.add_node((node.targets[0].id, parent), mc2_type=(MC2_Types.PRIVATE, party_num), op=node)
+                self.add_to_graph(node, node.targets[0].id, (MC2_Types.PRIVATE, party_num))
+                self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
 
-            # Calling a function that is NOT a library function
+            # Calling a function that is a library function
             elif isinstance(node.value, ast.Call):
+
                 # a = sfix(5)
                 fn_name = self.get_fn_name(node.value)
-
                 if fn_name in self.secret_types:
-                    self.var_tracker[(node.targets[0].id, parent)] = (MC2_Types.SECRET, "")
+                    self.add_to_graph(node, node.targets[0].id, (MC2_Types.SECRET, ""))
+                    # Add dimension 
+                    if fn_name in ("s_fix_mat", "sfixMatrix"):
+                        self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
+
+
                 # a = cfix(5)
                 elif fn_name in self.clear_types:
-                    self.var_tracker[(node.targets[0].id, parent)] = (MC2_Types.CLEAR, "")
-                    self.var_graph.add_node((node.targets[0].id, parent), mc2_type=(MC2_Types.CLEAR, ""), op=node)
-                elif fn_name in self.fns_to_nodes.keys():
-                    self.visit(node.value)
-                    self.var_tracker[(node.targets[0].id, parent)] = self.lookup(fn_name)
-                    print "jesus: ", fn_name, self.var_tracker[(fn_name, fn_name)]
-                    if self.var_tracker[(fn_name, fn_name)] in (MC2_Types.PRIVATE, MC2_Types.CLEAR):
-                        print "jesus", fn_name
-                        self.track_input_output_dependencies(node.value.args, [node.targets[0]], self.fns_to_nodes[fn_name], add_to_graph=True)
-                    else:
-                        self.track_input_output_dependencies(node.value.args, [node.targets[0]], self.fns_to_nodes[fn_name], add_to_graph=False)
+                    #self.var_tracker[(node.targets[0].id, next_lineno)] = (MC2_Types.CLEAR, "")
+                    #self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=(MC2_Types.CLEAR, ""), op=node)
+                    #next_lineno = self.get_next_var_num(node.targets[0].id)
+
+                    self.add_to_graph(node, node.targets[0].id, (MC2_Types.CLEAR, ""))
+
+                    if fn_name in ("c_fix_mat", "cfixMatrix"):
+                        #rows = node.value.args[0].n
+                        #cols = node.value.args[1].n
+                        #self.mat_to_dim[(node.targets[0].id, next_lineno)]
+                        self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
+
 
                 # HACKY Way just in case another case didn't consider, basically this is calling library functions.
-                elif node.value.func.id not in self.fns_to_nodes.keys():
-                    print "LIBRARY FUNCTION: ", node.value.func.id
-                    if len(node.value.args) > 1:
-                        res_type = self.check_types(node.value.args)
+                else:
+                    if isinstance(node.value.func, ast.Attribute):
+                        self.visit_Call(node.value)
                     else:
-                        if isinstance(node.value.args[0], ast.Num):
-                            res_type = (MC2_Types.CLEAR, "")
+                        print "LIBRARY FUNCTION: ", node.value.func.id
+                        if len(node.value.args) > 1:
+                            res_type = self.check_types(node.value.args)
                         else:
-                            res_type = self.lookup(node.value.args[0].id)
+                            # Hack
+                            if len(node.value.args) == 0:
+                                print "0 PARAMETER FUNCTION CALL. Skip for now!"
+                                res_type = (MC2_Types.SECRET, "")
+                                return 
+                            elif isinstance(node.value.args[0], ast.Num):
+                                res_type = (MC2_Types.CLEAR, "")
+                            else:
+                                res_type = self.lookup_type(node.value.args[0].id)
 
-                    self.var_tracker[(node.targets[0].id, parent)] = res_type
 
-                    # Track dependencies between input and output
-                    self.track_input_output_dependencies(node.value.args, [node.targets[0]], node, add_to_graph=True)
+                        rows, cols = self.track_dim_library_fn(fn_name, node.targets[0].id, node.value.args)
+                        next_lineno = self.get_next_var_num(node.targets[0].id)
+                        self.mat_to_dim[(node.targets[0].id, next_lineno)] = (rows, cols)
+                        # print "Library fn: {0} outputs this: {1}".format(fn_name, node.targets[0].id), rows, cols
+
+                        self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
+                        # print node.targets[0].id, res_type
+                        print "Var: {0} has type: {1}".format(node.targets[0].id, res_type)
+                        # Track dependencies between input and output
+                        self.track_input_output_dependencies(node.value.args, [node.targets[0]], node, res_type)
+
+
 
             # a = b, where b is another variable
             elif isinstance(node.value, ast.Name) and not isinstance(node.targets[0], ast.Subscript):
                 # Sometimes you have arr[i][j] = ... and I guess we're not doing copying or containers, that'd be very difficult.
-                print "Assign name: {0} to value: {1}".format(node.targets[0].id, node.value.id)
-                print "Check value is correct type. Val: {0}, type: {1}".format(node.value.id, self.lookup(node.value.id))
-                mc2_type = self.lookup(node.value.id)
-                self.var_tracker[(node.targets[0].id, parent)] = mc2_type
-                if (node.value.id, parent) in self.var_graph.nodes():
-                    self.var_graph.add_node((node.targets[0].id, parent), mc2_type=mc2_type, op=node)
-                    self.var_graph.add_edge((node.value.id, parent), (node.targets[0].id, parent))
+                #print "Assign name: {0} to value: {1}".format(node.targets[0].id, node.value.id)
+                #print "Check value is correct type. Val: {0}, type: {1}".format(node.value.id, self.lookup_type(node.value.id))
+                if node.value.id in self.python_clear:
+                    mc2_type = (MC2_Types.CLEAR, "")
+                    next_lineno = self.get_next_var_num(node.targets[0].id)
+
+                else:
+                    mc2_type = self.lookup_type(node.value.id)
+                    # Check dimensions. Have to avoid cases with python types like "True" and "False"
+                    latest_ref = self.lookup(node.value.id)
+                    next_lineno = self.get_next_var_num(node.targets[0].id)
+                    if latest_ref in self.mat_to_dim.keys():
+                        self.mat_to_dim[(node.targets[0].id, next_lineno)] = self.mat_to_dim[latest_ref]
+
+
+
+
+                self.var_tracker[(node.targets[0].id, next_lineno)] = mc2_type
+
+                if self.name_exists(node.value.id):
+                    rhs_var_name = self.lookup(node.value.id)
+                    self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=mc2_type, op=node)
+                    self.var_graph.add_edge(rhs_var_name, (node.targets[0].id, next_lineno))
+                    self.name_to_node[(node.targets[0].id, next_lineno)] = node
+
+
+
+                
 
 
             # a = b + c
             elif isinstance(node.value, ast.BinOp):
-                res_type = self.check_types([node.value.left, node.value.right])
-                self.var_tracker[(node.targets[0].id, parent)] = res_type
+                left_name = self.get_subscript_name(node.value.left)
+                right_name = self.get_subscript_name(node.value.right)
+                res_type = self.check_types([ast.Name(id=left_name), ast.Name(id=right_name)])
+                #print "Subscript left name: {0}, left_type: {1}, right name: {2}, right type: {3}, res_type:{4}".format(left_name, self.lookup_type(left_name), right_name, self.lookup_type(right_name), res_type)
+                next_lineno = self.get_next_var_num(node.targets[0].id)
+                self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
 
                 try:
-                    if (node.value.left.id, parent) in self.var_graph.nodes():
-                        self.var_graph.add_node((node.targets[0].id, parent), mc2_type=res_type, op=node)
-                        self.var_graph.add_edge((node.value.left.id, parent), (node.targets[0].id, parent))
-                    if (node.value.right.id, parent) in self.var_graph.nodes():
-                        self.var_graph.add_node((node.targets[0].id, parent), mc2_type=res_type, op=node)
-                        self.var_graph.add_edge((node.value.right.id, parent), (node.targets[0].id, parent))
+                    if self.name_exists(left_name):
+                        ref_to_rhs = self.lookup(left_name)
+                        self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
+                        self.var_graph.add_edge(ref_to_rhs, (node.targets[0].id, next_lineno))
+                    if self.name_exists(right_name):
+                        ref_to_rhs = self.lookup(right_name)
+                        self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
+                        self.var_graph.add_edge(ref_to_rhs, (node.targets[0].id, next_lineno))
+
+                    self.name_to_node[(node.targets[0].id, next_lineno)] = node
                 except ValueError as e:
                     print e
                     print "Probably encountered an ast.Num object"
 
-    # Add edges between private inputs (if they exist) and the outputs.
-    def track_input_output_dependencies(self, lst_args, lst_retvals, node, add_to_graph=False):
-        parent = self.get_parent()
-        for arg in lst_args:
-            for retval in lst_retvals:
-                try:
-                    print "I'm here. Argument: {0}, parent: {1}".format(arg.id, parent)
-                    if (arg.id, parent) in self.var_graph.nodes():
-                        if add_to_graph:
-                            self.var_graph.add_node((retval.id, parent), mc2_type=self.lookup(arg.id), op=node)
-                        else:
-                            self.var_graph.add_node((retval.id, parent), mc2_type=self.lookup(arg.id), op=None)
-                        self.var_graph.add_edge((arg.id, parent), (retval.id, parent))
-                except AttributeError as e:
-                    #print e
-                    print "ast Num Object"
 
+            
+            elif isinstance(node.value, ast.List):
+                mc2_type = (MC2_Types.SECRET, "")
+                #self.var_tracker[(node.targets[0].id, next_lineno)] = mc2_type
+                #self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=mc2_type, op=node)
+                #next_lineno = self.get_next_var_num(node.targets[0].id)
+                self.add_to_graph(node, node.targets[0].id, mc2_type)
+                self.mat_to_dim[(node.targets[0].id, self.var_to_count[node.targets[0].id])] = []
+
+                for ele in node.value.elts:
+                    if isinstance(ele, ast.Name):
+                        ele_name = ele.id
+                        self.var_graph.add_edge((ele_name, self.var_to_count[rhs_var_name]), (node.targets[0].id, next_lineno))
+
+                        ref_to_element = self.lookup(ele_name)
+                        lineno = self.var_to_count[node.targets[0].id]
+                        if ref_to_element in self.mat_to_dim.keys():
+                            self.mat_to_dim[(node.targets[0].id, lineno)].append(self.mat_to_dim[ref_to_element])
+                        else:
+                            self.mat_to_dim[(node.targets[0].id, lineno)].append(None)
+
+            elif isinstance(node.value, ast.Subscript):
+                subscript_obj = node.value
+                subscript_name = self.get_subscript_name(subscript_obj)
+                mc2_type = self.lookup_type(subscript_name)
+                next_lineno = self.get_next_var_num(node.targets[0].id)
+                self.var_tracker[(node.targets[0].id, next_lineno)] = mc2_type
+                if self.name_exists(subscript_name):
+                    self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=mc2_type, op=node)
+                    self.var_graph.add_edge((subscript_name, self.var_to_count[subscript_name]), (node.targets[0].id, next_lineno))
+                    self.name_to_node[(node.targets[0].id, next_lineno)] = node
+
+                ref_to_subscript = self.lookup(subscript_name)
+                if ref_to_subscript in self.mat_to_dim.keys():
+                    if isinstance(subscript_obj.slice.value, ast.Num) and isinstance(self.mat_to_dim[ref_to_subscript], list):
+                        index = subscript_obj.slice.value.n
+                        mat_dim = self.mat_to_dim[ref_to_subscript][index]
+                        if mat_dim != None:
+                            self.mat_to_dim[(node.targets[0].id, next_lineno)] = mat_dim
+
+    # Track dimensions of amtrix from library calls
+    def track_dim_library_fn(self, fn_name, name, args):
+        if fn_name in ("matinv", "matadd", "matsub", "placeholder"):
+            first_arg = args[0].id 
+            latest_ref = self.lookup(first_arg)
+            #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
+            return self.mat_to_dim[latest_ref]
+
+        elif fn_name in ("transpose", "placeholder"):
+            first_arg = args[0].id
+            latest_ref = self.lookup(first_arg)
+            rows, cols = self.mat_to_dim[latest_ref]
+            return (cols, rows)
+        elif fn_name in ("mat_const_mul", "placeholder"):
+            second_arg = args[1].id 
+            latest_ref = self.lookup(second_arg)
+            #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
+            return self.mat_to_dim[latest_ref]
+        elif fn_name in ("matmul", "placeholder"):
+            # DO SHIT HERE???????
+            first_arg = args[0].id 
+            second_arg = args[1].id
+            latest_ref_first = self.lookup(first_arg)
+            latest_ref_second = self.lookup(second_arg)
+            left_rows, left_cols = self.mat_to_dim[latest_ref_first]
+            right_rows, right_cols = self.mat_to_dim[latest_ref_second]
+            #self.mat_to_dim[(name, lineno)] = (left_rows, right_cols)
+            key = (left_rows, left_cols, right_rows, right_cols, 'sfix')
+            if key not in self.vectorized_calls.keys():
+                self.vectorized_calls[key] = 0
+            
+
+            self.vectorized_calls[key] += 1
+
+            return (left_rows, right_cols)
+
+    def get_subscript_name(self, node):
+        if isinstance(node, ast.Name):
+            return node.id
+        subscript_obj = node
+        while isinstance(subscript_obj, ast.Subscript):
+            subscript_obj = subscript_obj.value
+
+        return subscript_obj.id
+
+
+
+
+    # Add edges between private inputs (if they exist) and the outputs of a function call.
+    def track_input_output_dependencies(self, lst_args, lst_retvals, node, res_type):
+        for retval in lst_retvals:
+            for arg in lst_args:
+                try:
+                    if self.name_exists(arg.id):
+                        ref_to_arg = self.lookup(arg.id)
+                        next_lineno = self.var_to_count[retval.id]
+                        self.var_graph.add_node((retval.id, next_lineno), mc2_type=res_type, op=node)
+                        self.var_graph.add_edge(ref_to_arg, (retval.id, next_lineno))
+                        self.name_to_node[(retval.id, next_lineno)] = node
+
+                except AttributeError as e:
+                    print e
+                    print "Exception: Mapping input types to output types. ast Num Object"
+
+
+
+    # Check if a call node is a private input. Basically checks if the expression is of the form "*.read_input" or something of the sort.
     def check_private_input(self, node):
-        # Check if a call node is a private input. Basically checks if the expression is of the form "*.read_input" or something of the sort.
         return isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr in self.private_inputs
     
+
+
+    def get_fn_name(self, node):
+        if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
+            return node.func.id 
+
+    # Returns the "most recent" reference to name. Returns the name along with line number of this variable.
+    def lookup(self, name):
+        lst_matching_names = []
+        for k in self.var_tracker.keys():
+            if k[0] == name:
+                lst_matching_names.append(k)
+
+        if not lst_matching_names:
+            raise ValueError("No name: {0}".format(name))
+
+        # Return the latest instance of name.
+        return sorted(lst_matching_names, key=lambda item: -item[1])[0]
+
+
+    def name_exists(self, name):
+        lst_matching_names = []
+        for k in self.var_tracker.keys():
+            if k[0] == name:
+                return True 
+
+        return False
+
+    # Look up the mc2_type for name
+    def lookup_type(self, name):
+        target_node = self.lookup(name)
+        lst_nodes = list(self.var_graph.nodes(data=True))
+        for node in lst_nodes:
+            if target_node == node[0]:
+                return node[1]['mc2_type']
+
+        return (MC2_Types.SECRET, "")
+
+
+    # Gets the next counter for name. Stores it in var_to_count dictionary
+    def get_next_var_num(self, name):
+        self.var_to_count[name] = self.global_counter
+        self.global_counter += 1
+        return self.var_to_count[name]
+
 
     # Given a list of MC2 input types (usually arguments) output the correct MC2 output type according to the paper.
     def check_types(self, lst_args):
@@ -1198,54 +1524,334 @@ class PrivateTypeInference(ast.NodeVisitor):
             # HARDCODE, matmul so far requires 'sfix' as an argument which this function doesn't recognize, ugh.
             if not isinstance(arg, ast.Num):
                 if arg.id not in self.secret_types:
-                    lookup_type = self.lookup(arg.id)
-                    if lookup_type  == (MC2_Types.SECRET, ""):
+                    #print "Arg: {0}, type: {1}".format(arg.id, self.lookup_type(arg.id))
+                    lookup_type = self.lookup_type(arg.id)
+                    if lookup_type[0]  == MC2_Types.SECRET:
                         return (MC2_Types.SECRET, "")
                     elif lookup_type[0] == MC2_Types.PRIVATE:
                         if party is None:
                             party = lookup_type[1]
                         elif lookup_type[1] != party:
                             return (MC2_Types.SECRET, "")
+            
         if party is not None:
             return (MC2_Types.PRIVATE, party)
         else:
             return (MC2_Types.CLEAR, "")
 
 
+
+    def postprocess(self):
+        for name, lineno in sorted(self.name_to_node.keys(), key=lambda item: item[1]):
+            self.name_to_node[(name, lineno)].lineno = lineno
+
+
+        #print "Postprocessing graph, adding line-numbers"
+        #for name, lineno in sorted(self.name_to_node.keys(), key=lambda item: item[1]):
+            #print name, lineno, self.name_to_node[(name, lineno)].lineno
+        
+
+
+
+    def trace_private_computation(self, party):
+        # List of local
+        lst_local_ops = []
+        # List of operations that you want to "get rid of" in the main program.
+        lst_private = []
+        secret_to_dependents = {}
+        d = {}
+        print "NUMBER OF NODES: ", len(self.var_graph.nodes())
+        for node in self.var_graph.nodes(data=True):
+            d[node[0]] = node
+
+
+        for node in self.var_graph.nodes():
+            dict_entry = d[node]
+            mc2_type =  dict_entry[1]['mc2_type']
+            if mc2_type[0] in (MC2_Types.CLEAR, MC2_Types.PRIVATE):
+                heapq.heappush(self.pq, (node[1], node))
+
+        while self.pq:
+            priority, node = heapq.heappop(self.pq)
+            node_type = d[node][1]['mc2_type']
+            print "Node type: ", node_type
+
+            if node_type[0] == MC2_Types.SECRET and self.check_if_source_private(node):
+                lst_local_ops.append(d[node])
+                # lst_private.append(d[node])
+                if self.var_graph.in_edges(node):
+                    lst_priv_dependents = []
+                    for source, target in self.var_graph.in_edges(node):
+                        source_type = d[source][1]['mc2_type']
+                        if source_type[0] in (MC2_Types.PRIVATE, "Placeholder"):
+                            source_party = source_type[1]
+                            priv_dependent = ((source[0], source[1]), source_party)
+                            lst_priv_dependents.append(priv_dependent)
+
+                    secret_to_dependents[node] = lst_priv_dependents
+            elif node_type[0] != MC2_Types.SECRET:
+                check_private = (node_type[0] == MC2_Types.PRIVATE and node_type[1] == party)
+                #print "CHECK PRIVATE: ", check_private, node_type, node_type[1], party
+                if node_type[0] == MC2_Types.PRIVATE:
+                    lst_private.append(d[node])
+
+                if check_private or node_type[0] == MC2_Types.CLEAR:
+                    lst_local_ops.append(d[node])
+
+
+                for source, target in self.var_graph.out_edges(node):
+                    heapq.heappush(self.pq, (target[1], target))
+
+
+
+
+        return lst_local_ops, secret_to_dependents, lst_private
+
+
+    def insert_local_compute(self, lst_clear_private, secret_to_dependents, party):
+
+        # Sort secret nodes by k
+        #print "List local: ", lst_clear_private
+        sorted_secret_keys = sorted(secret_to_dependents.keys(), key=lambda item: item[1])
+
+        lst_to_insert = []
+        lst_secret_nodes = []
+        for i in range(len(sorted_secret_keys)):
+            secret_node = sorted_secret_keys[i]
+            secret_name = secret_node[0]
+            secret_lineno = secret_node[1]
+
+            lst_secret_nodes.append(secret_node)
+            lst_secret_dependents = secret_to_dependents[secret_node]
+            # Assume each secret node has only 1 private dependent.
+            private_dependent, source_party = lst_secret_dependents[0]
+
+            if source_party == party:
+                # Extracts the variable name of the secret node's dependents.
+                lst_secret_dependents = [e[0][0] for e in lst_secret_dependents]
+                # Get the line number of the latest reference to any of the dependents to this secret node
+                # lst = [item[0][1] if (item[0][1] < secret_lineno and item[0][0] in lst_secret_dependents and item[1]['mc2_type'][1] == party) else -float('inf') for item in lst_clear_private]
+                clear_node = max(lst_clear_private, key=lambda item: item[0][1] if (item[0][1] < secret_lineno and item[0][0] in lst_secret_dependents and item[1]['mc2_type'][1] == party) else -float('inf'))
+                clear_index = lst_clear_private.index(clear_node)
+                lst_to_insert.append((clear_node, secret_node))
+
+
+        
+        for node, secret_node in lst_to_insert:
+            #print "NODE: ", node
+            index = lst_clear_private.index(node)
+            secret_node_dependent = secret_to_dependents[secret_node]
+            secret_name = secret_node_dependent[0][0][0]
+            ast_node = ast.Call(starargs=None, kwargs=None, keywords=[], func=ast.Attribute(attr="append", value=ast.Name(id="data")), args=[ast.Name(id=secret_name)])
+
+            #ast.Assign(targets=[ast.Name(id='data')], value=ast.BinOp(left=ast.Name(id='data'), right=ast.Name(id=secret_node_dependent[0][0][0]), op=ast.Add()))
+            d = {'op':ast_node, 'mc2_type': (MC2_Types.PRIVATE, party)}
+            lst_clear_private.insert(index + 1, (None, d))
+
+
+
+
+        local_program = self.write_local_program(lst_clear_private, party)
+    
+
+        #lst_secret_nodes.extend([e[1] for e in lst_to_insert])
+        return lst_clear_private, lst_secret_nodes, local_program
+
+
+
+    def write_local_program(self, lst_clear_private, party):
+        #temp_mpc_type = mpc_type
+        #mpc_type = LOCAL
+        s = ""
+        s += "pmat = p_mat()\n"
+        s += "pmat.preprocess()\n"
+        s += "data = []\n"
+        for node in lst_clear_private:
+            mc2_type = node[1]['mc2_type']
+            check_private = (mc2_type[0] == MC2_Types.PRIVATE and mc2_type[1] == party)
+            if check_private or mc2_type[0] == MC2_Types.CLEAR:
+                ast_node = node[1]['op']
+                if mc2_type[0] == MC2_Types.PRIVATE:
+                    copy_ast_node = copy.deepcopy(ast_node)
+                    if isinstance(copy_ast_node, ast.Assign):
+                        res = self.rename_private(copy_ast_node.value)
+                    else:
+                        res = self.rename_private(copy_ast_node)
+                    if res != None:
+                        copy_ast_node.value = res
+
+                    ast_node = copy_ast_node
+
+
+                s += astunparse.unparse(ast_node)
+
+
+
+        s += "write_private_data(data)\n"
+
+        print "LOCAL PROGRAM"
+        print s
+        return s
+
+    # For precomputation, rename s_fix_mat.read_input ----> pmat.read_input
+    def rename_private(self, call_node):
+        if not isinstance(call_node, ast.Call):
+            return 
+
+        if not isinstance(call_node.func, ast.Attribute):
+            print "NO ATTRIBUTE?", call_node.func.__dict__
+        else:
+            print "CALL NODE", call_node.func.value.id
+            copy_node = copy.deepcopy(call_node)
+            copy_node.func.value.id = "pmat"
+            return copy_node
+
+
+    
+
+
+    # Only add secret nodes that has a direct dependence on 
+    def check_if_source_private(self, secret_target):
+        for node in self.var_graph.nodes(data=True):
+            mc2_type = node[1]['mc2_type']
+            if mc2_type[0] == MC2_Types.PRIVATE:
+                if nx.has_path(self.var_graph, node[0], secret_target):
+                    return True
+        return False
+
+
+
+
+
+class ProgramSplitter(ast.NodeTransformer):
+    def __init__(self, lst_clear_private, lst_secret, secret_to_dependents, mat_to_dim, name_to_node, lst_private, party):
+        self.lst_clear_private = lst_clear_private
+        self.lst_secret = lst_secret
+        self.secret_to_dependents = secret_to_dependents
+        self.mat_to_dim = mat_to_dim
+        self.name_to_node = name_to_node
+        self.lst_private = lst_private 
+        self.party = party
+
+    def visit_FunctionDef(self, node):
+        return  
+
+
+    def visit_Assign(self, node):
+        if hasattr(node, 'lineno'):
+            secret_node = self.is_secret(node)
+            if secret_node != None:
+                # Insert assign
+                private_dependent, private_party = self.secret_to_dependents[secret_node][0]
+                rows, cols = self.mat_to_dim[private_dependent]
+                private_name = "private_input" + str(node.lineno)
+                call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
+                temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
+                return [temp_assign, node]
+
+
+
+            if self.is_private(node):
+                return None
+        return node
+
+
+    def visit_Call(self, node):
+        if hasattr(node, 'lineno'):
+            secret_node = self.is_secret(node)
+            if secret_node != None:
+                # Insert assign
+                private_dependent, private_party = self.secret_to_dependents[secret_node][0]
+                rows, cols = self.mat_to_dim[private_dependent]
+                private_name = "private_input" + str(node.lineno)
+                call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
+
+                temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
+                node.args[0].id = private_name
+                new_assign = ast.Assign(targets=[ast.Name(id="throwaway")], value=node)
+
+
+                source = astor.to_source(temp_assign)
+                source = astor.to_source(new_assign)
+                return [temp_assign, new_assign]
+
+            if self.is_private(node):
+                print "HELP: ", astunparse.unparse(node)
+                return None
+
+        return node
+        
+
+    def is_secret(self, node):
+        for secret_node in self.lst_secret:
+            if secret_node[1] == node.lineno:
+                return secret_node
+        
+        return None
+
+
+
+    def is_private(self, node):
+        lineno = node.lineno
+        for priv_node in self.lst_private:
+            if priv_node[0][1] == lineno:
+                return True
+
+        return False
+
+
+class CountMatmulHelper(ast.NodeVisitor):
+
+    def __init__(self, mat_to_dim):
+        self.mat_to_dim = mat_to_dim
+
+        self.vectorized_calls = {}
+
+
+    def visit_Assign(self, node):
+        if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
+
+            if node.value.func.id == "matmul":
+                left_rows = node.value.args[2].n
+                left_cols = node.value.args[3].n
+                right_rows = node.value.args[4].n
+                right_cols = node.value.args[5].n
+                mat_type = node.value.args[6].id
+                if (left_rows, left_cols, right_rows, right_cols, mat_type) not in self.vectorized_calls.keys():
+                    self.vectorized_calls[(left_rows, left_cols, right_rows, right_cols, mat_type)] = 0
+                self.vectorized_calls[(left_rows, left_cols, right_rows, right_cols, mat_type)] += 1
+
+
+
 import loop_unroll
 import inline
-class CodeFlattener(ast.NodeTransformer):
-    def __init__(self):
-        pass 
-
-
-
 
 class ASTParser(object):
     
-    def __init__(self, fname, debug=False):
+    def __init__(self, fname, party, debug=False):
         f = open(fname, 'r')
         s = f.read()
         f.close()
         if mpc_type == SPDZ:
-            s = "open_channel(0)\n" + s + "\nclose_channel(0)\n"
+
+            header = "open_channel(0)\n"
+            #header += "pmat = p_mat()\n"
+            #header += "pmat.preprocess()\n"
+            s = header + s + "\nclose_channel(0)\n"
+            
         self.tree = ast.parse(s)
         self.filename = fname 
         self.source = s
         self.debug = debug
+        self.party = int(party)
 
     def parse(self):
         # Run through a bunch of parsers
         # hardcoded to count the # of matmul calls. Returns the # of matmul calls.
         target = "matmul"
         # Try inlining
-<<<<<<< HEAD
-        
-=======
         self.tree = ASTChecks().visit(self.tree)
-        
-        self.tree = ConstantPropagation().visit(self.tree)
->>>>>>> f1956ba932c5886e8ac9d0d9f2ec6899264da60c
+        #
         dep = ProcessDependencies()
         dep.visit(self.tree)
 
@@ -1255,72 +1861,69 @@ class ASTParser(object):
         self.tree = rename.visit(self.tree)
         inliner = inline.InlineSubstitution(rename.fn_to_node, rename.fns_to_params, dep.G)
         self.tree = inliner.visit(self.tree)
-        #self.tree = ConstantPropagation().visit(self.tree)
-        #self.tree = loop_unroll.UnrollStep().visit(self.tree)
-        #self.tree = inliner.visit(self.tree)
-        #print 'WHOAH'
-        #count_calls = CountFnCall(dep.G, dep.functions, target)
-        #count_calls.visit(self.tree)
-        #count_calls.postprocess()
+        self.tree = ConstantPropagation().visit(self.tree)
+        self.tree = loop_unroll.UnrollStep().visit(self.tree)
+        # After for-loops unroll, propagate the for-loop constants
+        
+        self.tree = ConstantPropagation().visit(self.tree)
+        # Another pass to fix all the subscripts. Ex: a[i] => a[0] for example
+        self.tree = ConstantPropagation().visit(self.tree)
 
-
-
-
-        #s = PrivateTypeInference(dep.functions, dep.fns_to_params, dep.G)
+        #s = PrivateTypeInference(rename.fn_to_node, rename.fns_to_params, dep.G)
         #s.visit(self.tree)
+        #source = astor.to_source(self.tree)
 
+        #print "After unrolling: ", source
 
-        """
-        for k in s.var_tracker.keys():
-            if s.var_tracker[k][0] != MC2_Types.PRIVATE:
-                s.var_tracker.pop(k)
+        s = ProgramSplitterHelper()
+        s.visit(self.tree)
+        # Map matrices to their dimensions as well. SHIET
+        # print "MATRIX DIMENSIONS: ", s.mat_to_dim
+        # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet. 
 
-        print "Var tracker: ", s.var_tracker
-        """
+        lst_local_ops, secret_to_dependents, lst_private = s.trace_private_computation(self.party)
+        lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party)
 
-        #print "Edges:", s.var_graph.edges()
-        """
-        print "NODES:"
-        lst_data =  s.var_graph.nodes().data()
-        d = {i[0]:i[1] for i in lst_data}
-        precompute_source = ""
-        for node in list(nx.algorithms.dag.topological_sort(s.var_graph)):
-        #for node in list(nx.topological_sort(nx.line_graph(s.var_graph))):
-            op = d[node]['op']
-            if op != None:
-                precompute_source += astunparse.unparse(op)
-            else:
-                print "No OP", node
+        s.postprocess()
 
-        print precompute_source
-        w = checker.Checker(self.tree, file_tokens=checker.make_tokens(self.source), filename=self.filename)
-        w.messages.sort(key=lambda m: m.lineno)
-        for warning in w.messages:
-            print warning
-
-        """
-        #self.tree = loop_unroll.UnrollStep().visit(self.tree)
-        #
-        #self.tree = s.visit(self.tree)
-        #print "GLOBAL NAMES: ", s.global_names
-        #self.tree = inline.InlineSubstitution(dep.functions, dep.fns_to_params).visit(self.tree)
-        #self.tree = loop_unroll.UnrollStep().visit(self.tree)
-        #self.tree = inline.RenameVisitor(dep.fns_to_params).visit(self.tree)
-        #print "Number of matmul calls: ", count_calls.counter
-        #print "Functions to calls: ", count_calls.fns_to_calls
-        #print "Matmul to dimensions: ", count_calls.matmul_to_dims
-        #print "Matmul to calls: ", count_calls.matmul_to_calls
-        #print "Vectorized Triples requirement: ", count_calls.vectorized_calls
+        splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, self.party)
+        self.tree = splitter.visit(self.tree)
+        
+        count_matmul = CountMatmulHelper(s.mat_to_dim)
+        count_matmul.visit(self.tree)
+        print "Count matmul: ", count_matmul.vectorized_calls
+        
 
         #self.tree = ForLoopParser().visit(self.tree)
-        self.tree = ASTChecks().visit(self.tree)
+        #self.tree = ASTChecks().visit(self.tree)
 
         #return count_calls.vectorized_calls
-        return {}
+        return count_matmul.vectorized_calls, local_program
 
     def execute(self, context):
         source = astor.to_source(self.tree)
         if self.debug:
             print(source)
+
+
+        #print context
         exec(source, context)
+
+
+
+
         #exec(compile(self.tree, filename="<ast>", mode="exec"), context)
+
+
+    def execute_local(self, local_str, context):
+        print "LOCAL COMPUTE"
+        print local_str
+        #temp_mpc_type = interface.mpc_type
+        #interface.mpc_type = LOCAL 
+        local = {}
+        #exec(local_str, context, local)
+        #print "Global: ", context
+        #print "Local: ", local
+        #interface.mpc_type = temp_mpc_type
+
+
