@@ -50,7 +50,11 @@ def main():
 
     # Add argument for constants file
     parser.add_argument("-cf", "--constant_file", dest="constant_file", default="", help="File for the constants")
+    parser.add_argument("-p", "--party", dest="party", help="party number")
+
     args = parser.parse_args()
+
+    print args 
     options = args
     args = [options.mpc_type, options.filename]
     
