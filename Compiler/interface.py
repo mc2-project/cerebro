@@ -1058,6 +1058,7 @@ class MC2_Types(Enum):
     
 
 import heapq
+from ordered_set import OrderedSet
 # Gather information about the program
 
 # Combine dimension inference here
@@ -1065,6 +1066,17 @@ import heapq
 class ProgramSplitterHelper(ast.NodeVisitor):
 
     def __init__(self):
+        # Hardcoded for SCALE-MAMBA
+        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix", "Piecewise"]
+        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat"]
+        self.python_clear = ["True", "False"]
+        self.private_inputs = ["read_input_from", "read_input"]
+        self.aggregation_fns = ["sum", "avg", "min_lib", "max_lib", "sum_lib", "reduce_lib"]
+        self.reduce_fn = ["reduce_lib"]
+        
+
+
+
         self.lst_private_vars = [] 
         self.var_graph = nx.DiGraph()
         # Key is (name, lineno), value is the type of the variable
@@ -1076,20 +1088,18 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
         self.name_to_node = {}
 
-        # Hardcoded for SCALE-MAMBA
-        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix", "Piecewise"]
-        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat"]
-        self.python_clear = ["True", "False"]
-        self.private_inputs = ["read_input_from", "read_input"]
+        
 
-        self.private_node_counter = 0
+        # Maps variable name to its counter.
         self.var_to_count = {}
-
+        # A global counter to keep track of relative ordering of variables.
         self.global_counter = 0
         self.pq = []
 
 
-
+        # Map lists (special types) to the list of types, vars they contain
+        self.lst_to_types = {}
+        self.aggregations = {}
 
     # Skip function definitions. Assume entire program has been unrolled.
     def visit_FunctionDef(self, node):
@@ -1117,15 +1127,21 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 ref_to_name = self.lookup(name)
             except ValueError as e:
                 return 
+            
+            attr = node.func.attr
+            first_arg = node.args[0].id
             if ref_to_name in self.mat_to_dim.keys():
-                attr = node.func.attr
                 if attr in ("append", "placeholder"):
-                    first_arg = node.args[0].id
                     ref_to_first_arg = self.lookup(first_arg)
                     if ref_to_first_arg in self.mat_to_dim.keys():
                         self.mat_to_dim[ref_to_name].append(self.mat_to_dim[ref_to_first_arg])
                     else:
                         self.mat_to_dim[ref_to_name].append(None)
+
+
+                mc2_type = self.var_tracker[ref_to_first_arg]
+                self.lst_to_types[ref_to_name].append((ref_to_first_arg, mc2_type))
+
 
 
     def add_to_graph(self, node, var_name, mc2_type):
@@ -1182,6 +1198,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             # Multiassignment of variables like a,b = c, d, currently barely supported.
             # Probably do not want to support this. The graph gets completely fucked up by this.
             elif isinstance(node.value, ast.Tuple):
+                raise ValueError("No multiassignment allowed for now, until I figure out a way to fix this")
+            """
+            elif isinstance(node.value, ast.Tuple):
                 print "MULTIASSIGNMENT"
                 right_hand_side_var_names = []
                 for name_obj in node.value.elts:
@@ -1205,7 +1224,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
 
                     self.var_graph.add_edge((rhs_var_name, self.var_to_count[rhs_var_name]), (tuple(lst_var_names), self.var_to_count[lhs_var_name]))
-                """
+                
                 for i in range(len(lst_var_names)):
                     lhs_var_name = lst_var_names[i]
                     rhs_var_name = right_hand_side_var_names[i]
@@ -1216,7 +1235,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                     next_lineno = self.var_to_count[lhs_var_name]
                     if most_recent_right_ref in self.mat_to_dim.keys():
                         self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
-                """
+            """
 
                     
 
@@ -1289,17 +1308,76 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                             else:
                                 res_type = self.lookup_type(node.value.args[0].id)
 
+                        # Plan on supporting sum and basic reduce functions. At least add and mul.
+                        if fn_name in self.aggregation_fns:
+                            iter_name = node.value.args[0].id
+                            latest_ref = self.lookup(iter_name)
+                            lst_types = self.lst_to_types[latest_ref]
+                            lst_res_type = self.check_types([ast.Name(id=ele[0][0]) for ele in lst_types])
+                            # Maps each party to the list of inputs that are being aggregated.
+                            private_party_to_inputs = {}
+                            for i in range(len(lst_types)):
+                                ref, mc2_type = lst_types[i]
+                                private_party = mc2_type[1]
+                                if private_party not in private_party_to_inputs.keys():
+                                    private_party_to_inputs[private_party] = []
+                                private_party_to_inputs[private_party].append(ref)
+                        
+                            lst_sublists = []
+                            for private_party in private_party_to_inputs.keys():
+                                lst_private_inputs = private_party_to_inputs[private_party]
+                                name_sublist = "{0}_{1}".format(fn_name, private_party)
+                                sublist_lineno = self.get_next_var_num(name_sublist)
+                                elts = [ast.Name(id=ele[0] + str(ele[1])) for ele in lst_private_inputs]
+                                #Add in a node that is like sub_list = [priv1_a, priv1_b, ... ]
+                                ast_node = ast.Assign(targets=[ast.Name(id=name_sublist)], value=ast.List(elts=elts))
+                                #self.var_graph.add_node((name_sublist, sublist_lineno), op=ast_node, mc2_type=(MC2_Types.PRIVATE, private_party))
 
-                        rows, cols = self.track_dim_library_fn(fn_name, node.targets[0].id, node.value.args)
-                        next_lineno = self.get_next_var_num(node.targets[0].id)
-                        self.mat_to_dim[(node.targets[0].id, next_lineno)] = (rows, cols)
-                        # print "Library fn: {0} outputs this: {1}".format(fn_name, node.targets[0].id), rows, cols
+                                #for ref_to_input in lst_private_inputs:
+                                    #self.var_graph.add_edge(ref_to_input, (name_sublist, sublist_lineno))
 
-                        self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
-                        # print node.targets[0].id, res_type
-                        print "Var: {0} has type: {1}".format(node.targets[0].id, res_type)
-                        # Track dependencies between input and output
-                        self.track_input_output_dependencies(node.value.args, [node.targets[0]], node, res_type)
+
+                                #lst_sublists.append((name_sublist, sublist_lineno))
+                                
+                            self.add_to_graph(node, node.targets[0].id, lst_res_type)
+                            if fn_name not in self.reduce_fn:
+                                self.aggregations[(fn_name, node.targets[0].id, self.var_to_count[node.targets[0].id])] = private_party_to_inputs
+                            else:
+                                lambda_func = node.value.args[1]
+                                self.aggregations[((fn_name, lambda_func), node.targets[0].id, self.var_to_count[node.targets[0].id])] = private_party_to_inputs
+
+
+                            print "Aggregation: ", self.var_to_count[node.targets[0].id]
+
+                            # Hack!!! Treat lists as 1-d column vectors.
+
+                            # Add edges between each private var to their own local list.
+                            """
+                            copy_aggregation_node = copy.deepcopy(node)
+                            copy_aggregation_node.args = [ast.Name(id=sublist_ref[0]) for sublist_ref in lst_sublists]
+                            #self.var_graph.add_node((iter_name, iter_new_lineno), op=copy_aggregation_node, mc2_type=lst_res_type)
+                            for sublist_ref in lst_sublists:
+                                self.var_graph.add_edge(sublist_ref, (iter_name, self.var_to_count[iter_name]))
+
+
+
+                            
+                            self.var_graph.add_edge((iter_name, self.var_to_count[iter_name]), (node.targets[0].id, self.var_to_count[node.targets[0].id]))
+
+                            """
+
+                        else:
+                            # All the matrix-related library functions.
+                            rows, cols = self.track_dim_library_fn(fn_name, node.targets[0].id, node.value.args)
+                            next_lineno = self.get_next_var_num(node.targets[0].id)
+                            self.mat_to_dim[(node.targets[0].id, next_lineno)] = (rows, cols)
+                            # print "Library fn: {0} outputs this: {1}".format(fn_name, node.targets[0].id), rows, cols
+
+                            self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
+                            # print node.targets[0].id, res_type
+                            print "Var: {0} has type: {1}".format(node.targets[0].id, res_type)
+                            # Track dependencies between input and output
+                            self.track_input_output_dependencies(node.value.args, [node.targets[0]], node, res_type)
 
 
 
@@ -1368,19 +1446,33 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 #self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=mc2_type, op=node)
                 #next_lineno = self.get_next_var_num(node.targets[0].id)
                 self.add_to_graph(node, node.targets[0].id, mc2_type)
-                self.mat_to_dim[(node.targets[0].id, self.var_to_count[node.targets[0].id])] = []
+
+                lst_name = node.targets[0].id
+                self.mat_to_dim[(lst_name, self.var_to_count[lst_name])] = []
+
+
+                key_to_lst = (lst_name, self.var_to_count[lst_name])
+                self.lst_to_types[key_to_lst] = []
 
                 for ele in node.value.elts:
                     if isinstance(ele, ast.Name):
                         ele_name = ele.id
-                        self.var_graph.add_edge((ele_name, self.var_to_count[rhs_var_name]), (node.targets[0].id, next_lineno))
+                        self.var_graph.add_edge((ele_name, self.var_to_count[ele_name]), (node.targets[0].id, next_lineno))
 
                         ref_to_element = self.lookup(ele_name)
+                        ele_type = self.lookup_type(ele_name)
+                        self.lst_to_types[key_to_lst].append(((ele_name, self.var_to_count[ele_name]), ele_type))
                         lineno = self.var_to_count[node.targets[0].id]
                         if ref_to_element in self.mat_to_dim.keys():
                             self.mat_to_dim[(node.targets[0].id, lineno)].append(self.mat_to_dim[ref_to_element])
                         else:
                             self.mat_to_dim[(node.targets[0].id, lineno)].append(None)
+
+                    elif isinstance(ele, ast.Num):
+                        raise ValueError("Don't put constants in lists. Just screws everything up.")
+
+
+
 
             elif isinstance(node.value, ast.Subscript):
                 subscript_obj = node.value
@@ -1556,12 +1648,15 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     def trace_private_computation(self, party):
         # List of local
         lst_local_ops = []
+        lst_local_nodes = set()
         # List of operations that you want to "get rid of" in the main program.
+        #lst_private = []
         lst_private = []
         secret_to_dependents = {}
         d = {}
         print "NUMBER OF NODES: ", len(self.var_graph.nodes())
         for node in self.var_graph.nodes(data=True):
+            print node
             d[node[0]] = node
 
 
@@ -1593,10 +1688,14 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 check_private = (node_type[0] == MC2_Types.PRIVATE and node_type[1] == party)
                 #print "CHECK PRIVATE: ", check_private, node_type, node_type[1], party
                 if node_type[0] == MC2_Types.PRIVATE:
+                    
                     lst_private.append(d[node])
+                        
 
                 if check_private or node_type[0] == MC2_Types.CLEAR:
-                    lst_local_ops.append(d[node])
+                    if d[node][1]['op'] not in lst_local_nodes: #and self.var_graph.in_edges(d[node][0]):
+                        lst_local_ops.append(d[node])
+                        lst_local_nodes.add(d[node][1]['op'])
 
 
                 for source, target in self.var_graph.out_edges(node):
@@ -1605,10 +1704,11 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
 
-        return lst_local_ops, secret_to_dependents, lst_private
+
+        return lst_local_ops, secret_to_dependents, lst_private, d
 
 
-    def insert_local_compute(self, lst_clear_private, secret_to_dependents, party):
+    def insert_local_compute(self, lst_clear_private, secret_to_dependents, party, node_dict):
 
         # Sort secret nodes by k
         #print "List local: ", lst_clear_private
@@ -1635,10 +1735,11 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 clear_index = lst_clear_private.index(clear_node)
                 lst_to_insert.append((clear_node, secret_node))
 
+                print "CLEAR NODE: ", clear_node
+
 
         
         for node, secret_node in lst_to_insert:
-            #print "NODE: ", node
             index = lst_clear_private.index(node)
             secret_node_dependent = secret_to_dependents[secret_node]
             secret_name = secret_node_dependent[0][0][0]
@@ -1649,12 +1750,45 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             lst_clear_private.insert(index + 1, (None, d))
 
 
+        # Insert aggregation 
+        # fn_name is the name of the aggregation function, var_name is the variable name assigned to the result.
+        for fn_name, var_name, aggr_lineno in self.aggregations.keys():
+            lst_private = self.aggregations[(fn_name, var_name, aggr_lineno)][party]
+            if isinstance(fn_name, tuple):
+                lst_name = "{0}_{1}".format(fn_name[0], aggr_lineno)
+            else:
+                lst_name = "{0}_{1}".format(fn_name, aggr_lineno)
+            max_index = -1
+            for private_aggr in lst_private:
+                node = node_dict[private_aggr]
+                index = lst_clear_private.index(node)
+                arg_name = node[0][0]
+
+                ast_node = ast.Call(starargs=None, kwargs=None, keywords=[], func=ast.Attribute(attr="append", value=ast.Name(id=lst_name)), args=[ast.Name(id=arg_name)])
+                d = {'op': ast_node, 'mc2_type': (MC2_Types.PRIVATE, party)}
+                lst_clear_private.insert(index + 1, (None, d))
+                max_index = max(max_index, lst_clear_private.index((None, d)) + 1)
+
+            # Insert final aggregation: Ex: res = sum(lst)
+            # The idea is want to insert this at the very end.
+            if isinstance(fn_name, tuple):
+                aggregation_node = ast.Assign(targets=[ast.Name(id=var_name)], value=ast.Call(args=[ast.Name(id=lst_name), fn_name[1]], func=ast.Name(id=fn_name[0]), keywords=[], kwargs=None, starargs=None))
+            else:
+                aggregation_node = ast.Assign(targets=[ast.Name(id=var_name)], value=ast.Call(args=[ast.Name(id=lst_name)], func=ast.Name(id=fn_name), keywords=[], kwargs=None, starargs=None))
+            d = {'op': aggregation_node, 'mc2_type': (MC2_Types.PRIVATE, party)}
+            lst_clear_private.insert(max_index + 1, (None, d))
+
+            # Add the aggregation result to "data". data.append(sum_res)
+            ast_node = ast.Call(starargs=None, kwargs=None, keywords=[], func=ast.Attribute(attr="append", value=ast.Name(id="data")), args=[ast.Name(id=var_name)])
+            d = {'op':ast_node, 'mc2_type': (MC2_Types.PRIVATE, party)}
+            lst_clear_private.insert(max_index + 2, (None, d))
 
 
         local_program = self.write_local_program(lst_clear_private, party)
     
 
         #lst_secret_nodes.extend([e[1] for e in lst_to_insert])
+        print "LIST SECRET: ", lst_secret_nodes
         return lst_clear_private, lst_secret_nodes, local_program
 
 
@@ -1666,6 +1800,11 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         s += "pmat = p_mat()\n"
         s += "pmat.preprocess()\n"
         s += "data = []\n"
+        for fn_name, var_name, lineno in self.aggregations.keys():
+            if isinstance(fn_name, tuple):
+                s+= "{0}_{1} = []\n".format(fn_name[0], lineno)
+            else:
+                s+= "{0}_{1} = []\n".format(fn_name, lineno)
         for node in lst_clear_private:
             mc2_type = node[1]['mc2_type']
             check_private = (mc2_type[0] == MC2_Types.PRIVATE and mc2_type[1] == party)
@@ -1682,8 +1821,8 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
                     ast_node = copy_ast_node
 
-
-                s += astunparse.unparse(ast_node)
+                if ast_node:
+                    s += astunparse.unparse(ast_node)
 
 
 
@@ -1724,7 +1863,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
 class ProgramSplitter(ast.NodeTransformer):
-    def __init__(self, lst_clear_private, lst_secret, secret_to_dependents, mat_to_dim, name_to_node, lst_private, party):
+    def __init__(self, lst_clear_private, lst_secret, secret_to_dependents, mat_to_dim, name_to_node, lst_private, aggregations, party):
         self.lst_clear_private = lst_clear_private
         self.lst_secret = lst_secret
         self.secret_to_dependents = secret_to_dependents
@@ -1732,6 +1871,9 @@ class ProgramSplitter(ast.NodeTransformer):
         self.name_to_node = name_to_node
         self.lst_private = lst_private 
         self.party = party
+        self.aggregations = aggregations
+        # Map the reduce function to the number of arguments it might need.
+        self.reduce_map = {"sum": 1, "sum_lib": 1, "min_lib": 1, "max_lib": 1, "avg": 2, "reduce_lib": 1}
 
     def visit_FunctionDef(self, node):
         return  
@@ -1739,6 +1881,33 @@ class ProgramSplitter(ast.NodeTransformer):
 
     def visit_Assign(self, node):
         if hasattr(node, 'lineno'):
+            aggr = self.is_aggregation(node)
+            if aggr:
+                fn_name, var_name, lineno = aggr
+                lst_assign = []
+                lst_names = []
+                private_party_to_inputs = self.aggregations[aggr]
+                for private_party in private_party_to_inputs.keys():
+                    lst_private_inputs = private_party_to_inputs[private_party]
+                    if isinstance(fn_name, tuple):
+                        call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=self.reduce_map[fn_name[0]]), ast.Num(n=1), ast.Num(n=private_party)])
+                        aggr_private_name = "{0}_{1}_{2}".format(fn_name[0], lineno, private_party)
+                    else:
+                        call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=self.reduce_map[fn_name]), ast.Num(n=1), ast.Num(n=private_party)])
+                        aggr_private_name = "{0}_{1}_{2}".format(fn_name, lineno, private_party)
+
+                    temp_assign = ast.Assign(targets=[ast.Name(id=aggr_private_name)], value=call_node)
+                    lst_assign.append(temp_assign)
+                    lst_names.append(aggr_private_name)
+
+
+                if isinstance(fn_name, tuple):
+                    aggregation_call_node = ast.Call(func=ast.Name(id=fn_name[0]), args=[ast.List(elts=[ast.Name(id=priv_name) for priv_name in lst_names]), fn_name[1]], keywords=[], starargs=None, kwargs=None)
+                else:
+                    aggregation_call_node = ast.Call(func=ast.Name(id=fn_name), args=[ast.List(elts=[ast.Name(id=priv_name) for priv_name in lst_names])], keywords=[], starargs=None, kwargs=None)
+                aggregation_node = ast.Assign(targets=node.targets, value=aggregation_call_node)
+                return lst_assign + [aggregation_node]
+
             secret_node = self.is_secret(node)
             if secret_node != None:
                 # Insert assign
@@ -1748,37 +1917,45 @@ class ProgramSplitter(ast.NodeTransformer):
                 call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
                 temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
                 return [temp_assign, node]
+            
+            if self.is_private(node):   
+                return []
 
-
-
-            if self.is_private(node):
-                return None
         return node
 
 
     def visit_Call(self, node):
+        
         if hasattr(node, 'lineno'):
+            
             secret_node = self.is_secret(node)
+            
             if secret_node != None:
                 # Insert assign
                 private_dependent, private_party = self.secret_to_dependents[secret_node][0]
-                rows, cols = self.mat_to_dim[private_dependent]
+                if private_dependent in self.mat_to_dim.keys():
+                    rows, cols = self.mat_to_dim[private_dependent]
+                else:
+                    # TODO: HACK, I REPEAT THIS IS A HACK
+                    # Assume values are just 1 by 1 matrices.
+                    rows, cols = (1, 1)
                 private_name = "private_input" + str(node.lineno)
-                call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
 
+                call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
                 temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
                 node.args[0].id = private_name
                 new_assign = ast.Assign(targets=[ast.Name(id="throwaway")], value=node)
 
 
                 source = astor.to_source(temp_assign)
+                print "TEMP ASSIGN: ", source
                 source = astor.to_source(new_assign)
+                print "NEW ASSIGN: ", source
                 return [temp_assign, new_assign]
-
+            
             if self.is_private(node):
-                print "HELP: ", astunparse.unparse(node)
-                return None
-
+                return []
+            
         return node
         
 
@@ -1796,6 +1973,13 @@ class ProgramSplitter(ast.NodeTransformer):
         for priv_node in self.lst_private:
             if priv_node[0][1] == lineno:
                 return True
+
+        return False
+
+    def is_aggregation(self, node):
+        for fn_name, var_name, lineno in self.aggregations.keys():
+            if node.lineno == lineno:
+                return (fn_name, var_name, lineno)
 
         return False
 
@@ -1881,12 +2065,12 @@ class ASTParser(object):
         # print "MATRIX DIMENSIONS: ", s.mat_to_dim
         # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet. 
 
-        lst_local_ops, secret_to_dependents, lst_private = s.trace_private_computation(self.party)
-        lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party)
+        lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
+        lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
 
         s.postprocess()
 
-        splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, self.party)
+        splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
         self.tree = splitter.visit(self.tree)
         
         count_matmul = CountMatmulHelper(s.mat_to_dim)

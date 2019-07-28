@@ -50,6 +50,70 @@ def int_add(data_list, nparallel=1):
     
     return res
 
+
+
+def sum_lib(lst):
+    flattened_lst = []
+    for i in range(len(lst)):
+        print "TYPE?", type(lst[i])
+        if type(lst[i]) in (sfixMatrix, cfixMatrix, sfixMatrixGC, cfixMatrixGC):
+            flattened_lst += flatten(lst[i])
+            print flattened_lst
+        else:
+            flattened_lst.append(lst[i])
+
+    
+    return sum(flattened_lst)
+
+def max_lib(lst):
+    flattened_lst = []
+    for i in range(len(lst)):
+        print "TYPE?", type(lst[i])
+        if type(lst[i]) in (sfixMatrix, cfixMatrix, sfixMatrixGC, cfixMatrixGC):
+            flattened_lst += flatten(lst[i])
+            print flattened_lst
+        else:
+            flattened_lst.append(lst[i])
+
+    
+    return max(flattened_lst)
+
+
+def min_lib(lst):
+    flattened_lst = []
+    for i in range(len(lst)):
+        print "TYPE?", type(lst[i])
+        if type(lst[i]) in (sfixMatrix, cfixMatrix, sfixMatrixGC, cfixMatrixGC):
+            flattened_lst += flatten(lst[i])
+            print flattened_lst
+        else:
+            flattened_lst.append(lst[i])
+
+    
+    return min(flattened_lst)
+
+
+
+def flatten(A):
+    lst = []
+    if type(A) in (sfixMatrix, sfixMatrixGC, cfixMatrix, cfixMatrixGC):
+        for i in range(A.rows):
+            for j in range(A.columns):
+                lst.append(A[i][j])
+
+    return lst
+
+import functools
+def reduce_lib(lst, reduce_fn):
+    flattened_lst = []
+    for i in range(len(lst)):
+        if type(lst[i]) in(sfixMatrix, cfixMatrix, sfixMatrixGC, cfixMatrixGC):
+            flattened_lst += flatten(lst[i])
+        else:
+            flattened_lst.append(lst[i])
+
+    return reduce(reduce_fn, flattened_lst)
+
 #  Tree-based multiplication
 def int_multiply(data_list, nparallel=2):
     length = len(data_list)
