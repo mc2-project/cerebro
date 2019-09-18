@@ -22,7 +22,7 @@ class Params(object):
         cls.k = k
         cfix.set_precision(f, k)
         sfix.set_precision(f, k)
-        cfix_gc.set_precision(f, k)        
+        cfix_gc.set_precision(f, k)
         sfix_gc.set_precision(f, k)
 
 class ClearIntegerFactory(object):
@@ -33,14 +33,14 @@ class ClearIntegerFactory(object):
             return int(value)
         else:
             return cint_gc(Params.intp, value)
-        
+
 class SecretIntegerFactory(object):
     def __call__(self, party):
         if mpc_type == SPDZ:
             return sint.get_private_input_from(party)
         else:
             return sint_gc(Params.intp, party)
-    
+
     def read_input(self, party):
         if mpc_type == SPDZ:
             return sint.get_private_input_from(party)
@@ -60,7 +60,38 @@ class SecretIntegerMatrixFactory(object):
                 for j in range(columns):
                     ret[i][j] = cint_gc(0)
             return ret
-        
+
+class ClearIntegerMatrixFactory(object):
+    def __call__(self, rows, columns):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
+        if mpc_type == SPDZ:
+            ret = cintMatrix(rows, columns)
+            return ret
+        else:
+            ret = cintMatrixGC(rows, columns)
+            for i in range(rows):
+                for j in range(columns):
+                    ret[i][j] = cint_gc(0)
+            return ret
+
+	def read_input(self, rows, columns, channel=0):
+		if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
+
+        if mpc_type == LOCAL:
+            raise ValueError("Shouldn't be local.")
+
+        if mpc_type == SPDZ:
+            ret = cintMatrix(rows, columns)
+            @library.for_range(ret.rows)
+            def f(i):
+                @library.for_range(ret.columns)
+                def g(j):
+                    ret[i][j].public_input(channel)
+            return ret
+        else:
+            raise ValueError("Clear matrix read_input not supported for GC")
 
 class ClearFixedPointFactory(object):
     def __call__(self, value):
@@ -125,7 +156,7 @@ class SecretFixedPointMatrixFactory(object):
                 for j in range(columns):
                     ret[i][j] = cfix_gc(0)
             return ret
-        
+
     def read_input(self, rows, columns, party):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
@@ -175,7 +206,7 @@ class SecretFixedPointMatrixFactory(object):
         if mpc_type == SPDZ:
             ret = sfixMatrix(rows, columns)
             party_config = cintMatrix(len(input_config), 2)
-            rows_offset = 0 
+            rows_offset = 0
             for (p, r) in input_config:
                 @library.for_range(r)
                 def a(i):
@@ -208,7 +239,7 @@ class ClearFixedPointMatrixFactory(object):
                 for j in range(ret.columns):
                     ret[i][j] = cfix_gc(0)
             return ret
-             
+
 
 class PrivateFixedPointMatrix(object):
     def preprocess(self, precision=36):
@@ -294,7 +325,7 @@ def write_private_data(lst_data):
         output = struct.pack("Q", abs(int(d)))
         f.write(output)
     f.close()
-    
+
 
 
 
@@ -305,6 +336,7 @@ ClearFixedPointMatrix = ClearFixedPointMatrixFactory()
 SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
+ClearIntegerMatrix = ClearIntegerMatrixFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["s_int"] = SecretInteger
@@ -313,6 +345,7 @@ compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
 compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
+compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
 compilerLib.VARS["p_mat"] = PrivateFixedPointMatrix
 compilerLib.VARS["reveal_all"] = reveal_all
 compilerLib.VARS["write_private_data"] = write_private_data
@@ -334,7 +367,7 @@ operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
 class ForLoopParser(ast.NodeTransformer):
     def __init__(self):
         self.forloop_counter = 0
-    
+
     def parse_for(self, node):
         dec = ast.Call(func=ast.Name(id="for_range", ctx=ast.Load()), args=node.iter.args, keywords=[])
         new_node = ast.FunctionDef(name="for{}".format(self.forloop_counter),
@@ -376,7 +409,7 @@ class ProcessDependencies(ast.NodeVisitor):
         self.G = nx.DiGraph()
         # Function we want to keep track of, currently it's "matmul", but this variable is here in case we want to extend it to count other fns.
         self.target_fn = target_fn
-        # Add a node so that if a function is called, draw an edge from 
+        # Add a node so that if a function is called, draw an edge from
         self.G.add_node(self.global_scope)
 
 
@@ -390,12 +423,12 @@ class ProcessDependencies(ast.NodeVisitor):
             args = []
             for arg in node.args.args:
                 args.append(arg.id)
-        
+
             self.fns_to_params[node.name] = args
         else:
             new_target_fn_name = node.name + str(node.lineno)
             self.G.add_node(new_target_fn_name)
-            self.functions[new_target_fn_name] = node 
+            self.functions[new_target_fn_name] = node
 
         #print "Visiting function: ", node.name
         if len(self.scope_stack):
@@ -412,7 +445,7 @@ class ProcessDependencies(ast.NodeVisitor):
         parent = self.get_parent()
         # Some nodes don't have ids?
         if 'id' in node.func.__dict__.keys():
-            fn_name = node.func.id 
+            fn_name = node.func.id
             # Add in extra identifier.
             new_target_fn_name = fn_name+str(node.lineno)
             #print "Function {0} called by {1}".format(fn_name, parent)
@@ -424,7 +457,7 @@ class ProcessDependencies(ast.NodeVisitor):
             self.process_fn_call(parent, fn_name, new_target_fn_name, node.lineno)
 
 
-            
+
 
             self.scope_stack.pop(0)
 
@@ -470,7 +503,7 @@ class ProcessDependencies(ast.NodeVisitor):
         # Parse the for loop to get the # of iterations. Won't work if variable # of iterations so try to avoid that.
         #print "For loop lineno: ", node.lineno
         self.functions[node.lineno] = node
-        
+
         #print "Parent of for: ", self.get_parent()
 
         if node.lineno not in self.G.nodes:
@@ -615,7 +648,7 @@ class CountFnCall(ast.NodeVisitor):
 
     def propagate_for(self, u):
         multiplicative_factor = 1
-        child = u 
+        child = u
         for parent, _ in self.G.in_edges(u):
             # KEY ASSUMPTION THAT CANNOT HAVE > 1 direct parent that is a for loop. Doesn't make any sense.
             if parent in self.for_to_iters.keys():
@@ -629,11 +662,11 @@ class CountFnCall(ast.NodeVisitor):
                             parent = grandparent
                             found_ancestor = True
                             break
-                    
+
                     if not found_ancestor:
                         break
 
-                break 
+                break
 
         return multiplicative_factor
 
@@ -664,20 +697,20 @@ class CountFnCall(ast.NodeVisitor):
                 # Ex: for i in range(6, 12, 2)
                 num_iter = (self.eval_args_helper(node.iter.args[1]) - self.eval_args_helper(node.iter.args[0])) / self.eval_args_helper(node.iter.args[2])
         except Exception as e:
-            return 
+            return
 
 
         self.for_to_iters[node.lineno] = num_iter
         if node.lineno in self.fns_to_calls.keys():
             self.counter += self.fns_to_calls[node.lineno]
             return
-        
+
         before_visit = self.counter
         #print "In for loop: ", node.lineno
         for item in node.body:
             if isinstance(item, ast.For) and item.lineno in self.fns_to_calls.keys():
                 self.counter += self.fns_to_calls[item.lineno]
-            else: 
+            else:
                 self.scope_stack.insert(0, node.lineno)
                 self.visit(item)
                 self.scope_stack.pop(0)
@@ -709,7 +742,7 @@ class CountFnCall(ast.NodeVisitor):
                 self.scope_stack.insert(0, fn_name)
                 self.generic_visit(node)
                 self.scope_stack.pop(0)
-                after_visit = self.counter 
+                after_visit = self.counter
                 diff = after_visit - before_visit
                 self.fns_to_calls[fn_name] = diff
 
@@ -723,7 +756,7 @@ class CountFnCall(ast.NodeVisitor):
                     val = self.eval_args_helper(node.args[i])
                     lst_dims.append(val)
 
-                # Matmul dimension argument #7 is the type of the matrices. 
+                # Matmul dimension argument #7 is the type of the matrices.
                 lst_dims.append(node.args[6].id)
 
                 self.matmul_to_dims[new_target_fn_name] = tuple(lst_dims)
@@ -740,7 +773,7 @@ class CountFnCall(ast.NodeVisitor):
                     # lst_info will contain batch_size, sgd_iters, dimension of data.
                     for i in range(2, 5):
                         # Means it's a constant value
-                        # Evaluate the 
+                        # Evaluate the
                         val = self.eval_args_helper(node.args[i])
                         lst_info.append(val)
 
@@ -813,9 +846,9 @@ class CountFnCall(ast.NodeVisitor):
 import copy
 # TODO: Incorporate scope possibly.
 class ConstantPropagation(ast.NodeTransformer):
-    """NodeTransformer that will inline any Number and String 
+    """NodeTransformer that will inline any Number and String
     constants defined on the module level wherever they are used
-    throughout the module. Any Number or String variable matching [A-Z_]+ 
+    throughout the module. Any Number or String variable matching [A-Z_]+
     on the module level will be used as a constant"""
 
     def __init__(self):
@@ -869,13 +902,13 @@ class ConstantPropagation(ast.NodeTransformer):
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
             print e
-        
+
 
         # Visit the left hand side of the assignment
-    
+
         if isinstance(copy_assign.targets[0], ast.Subscript):
             copy_assign.targets[0] = self.visit(copy_assign.targets[0])
-        
+
         return copy_assign
 
 
@@ -898,7 +931,7 @@ class ConstantPropagation(ast.NodeTransformer):
             val = self.eval_args_helper(node)
             return ast.Num(n=val)
         except Exception as e:
-            print e 
+            print e
             print "ConstantPropagation Exception"
             return self.generic_visit(node)
 
@@ -919,7 +952,7 @@ class ASTChecks(ast.NodeTransformer):
     def merge_test_single(self, test):
         if test[1]:
             return ast.Name(id=test[0], ctx=ast.Load())
-        else: 
+        else:
             return self.negate_condition(ast.Name(id=test[0], ctx=ast.Load()))
 
     # Given a list of (condition_name, True/False), merge these conditions into a single condition
@@ -962,7 +995,7 @@ class ASTChecks(ast.NodeTransformer):
         current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=final_prod)
 
         return ast.Assign(targets=[target], value=current_sum)
-    
+
     def visit_If(self, node):
         if not isinstance(node.test, ast.Compare):
             raise ValueError("Currently, the if conditional has to be a single Compare expression")
@@ -1024,7 +1057,7 @@ class ASTChecks(ast.NodeTransformer):
             for (name, l) in self.sub_assignments.iteritems():
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_index", ctx=ast.Load)], value=ast.Num(-1)))
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_value", ctx=ast.Load)], value=ast.Num(-1)))
-                
+
                 index_test_list = l[0]
                 index_statement = self.assign_transform_multi(ast.Name(id=name+"_index", ctx=ast.Store), index_test_list)
                 value_test_list = l[1]
@@ -1055,7 +1088,7 @@ class MC2_Types(Enum):
     SECRET = "SECRET"
     CLEAR = "CLEAR"
     PRIVATE = "PRIVATE"
-    
+
 
 import heapq
 from ordered_set import OrderedSet
@@ -1073,11 +1106,11 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         self.private_inputs = ["read_input_from", "read_input"]
         self.aggregation_fns = ["sum", "avg", "min_lib", "max_lib", "sum_lib", "reduce_lib"]
         self.reduce_fn = ["reduce_lib"]
-        
 
 
 
-        self.lst_private_vars = [] 
+
+        self.lst_private_vars = []
         self.var_graph = nx.DiGraph()
         # Key is (name, lineno), value is the type of the variable
         self.var_tracker = {}
@@ -1088,7 +1121,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
         self.name_to_node = {}
 
-        
+
 
         # Maps variable name to its counter.
         self.var_to_count = {}
@@ -1126,8 +1159,8 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             try:
                 ref_to_name = self.lookup(name)
             except ValueError as e:
-                return 
-            
+                return
+
             attr = node.func.attr
             first_arg = node.args[0].id
             if ref_to_name in self.mat_to_dim.keys():
@@ -1152,8 +1185,8 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
     def process_mat_declare(self, name, lineno, args):
-        rows = args[0].n 
-        cols = args[1].n 
+        rows = args[0].n
+        cols = args[1].n
         self.mat_to_dim[(name, lineno)] = (rows, cols)
 
 
@@ -1166,7 +1199,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             for name_obj in node.targets[0].elts:
                 lst_var_names.append(name_obj.id)
 
-            # Assume right now don't have library functions that return multiple values.            
+            # Assume right now don't have library functions that return multiple values.
             if isinstance(node.value, ast.Call):
                 fn_name = self.get_fn_name(node)
                 if fn_name in self.secret_types:
@@ -1194,7 +1227,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
                     # Track dependencies between input and output
                     self.track_input_output_dependencies(node.value.args, lst_var_names, node, res_type)
-            
+
             # Multiassignment of variables like a,b = c, d, currently barely supported.
             # Probably do not want to support this. The graph gets completely fucked up by this.
             elif isinstance(node.value, ast.Tuple):
@@ -1224,7 +1257,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
 
                     self.var_graph.add_edge((rhs_var_name, self.var_to_count[rhs_var_name]), (tuple(lst_var_names), self.var_to_count[lhs_var_name]))
-                
+
                 for i in range(len(lst_var_names)):
                     lhs_var_name = lst_var_names[i]
                     rhs_var_name = right_hand_side_var_names[i]
@@ -1237,7 +1270,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         self.mat_to_dim[(lhs_var_name, next_lineno)] = self.mat_to_dim[most_recent_right_ref]
             """
 
-                    
+
 
         else:
             # Encounter subscript object like A[i] = b
@@ -1258,7 +1291,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 if not isinstance(node.value.args[len(node.value.args) - 1], ast.Num):
                     raise ValueError("Last argument of read_input is a party which must be a number!")
 
-                party_num = node.value.args[len(node.value.args) - 1].n 
+                party_num = node.value.args[len(node.value.args) - 1].n
                 self.add_to_graph(node, node.targets[0].id, (MC2_Types.PRIVATE, party_num))
                 self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
 
@@ -1269,7 +1302,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 fn_name = self.get_fn_name(node.value)
                 if fn_name in self.secret_types:
                     self.add_to_graph(node, node.targets[0].id, (MC2_Types.SECRET, ""))
-                    # Add dimension 
+                    # Add dimension
                     if fn_name in ("s_fix_mat", "sfixMatrix"):
                         self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
 
@@ -1302,7 +1335,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                             if len(node.value.args) == 0:
                                 print "0 PARAMETER FUNCTION CALL. Skip for now!"
                                 res_type = (MC2_Types.SECRET, "")
-                                return 
+                                return
                             elif isinstance(node.value.args[0], ast.Num):
                                 res_type = (MC2_Types.CLEAR, "")
                             else:
@@ -1322,7 +1355,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                                 if private_party not in private_party_to_inputs.keys():
                                     private_party_to_inputs[private_party] = []
                                 private_party_to_inputs[private_party].append(ref)
-                        
+
                             lst_sublists = []
                             for private_party in private_party_to_inputs.keys():
                                 lst_private_inputs = private_party_to_inputs[private_party]
@@ -1338,7 +1371,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
                                 #lst_sublists.append((name_sublist, sublist_lineno))
-                                
+
                             self.add_to_graph(node, node.targets[0].id, lst_res_type)
                             if fn_name not in self.reduce_fn:
                                 self.aggregations[(fn_name, node.targets[0].id, self.var_to_count[node.targets[0].id])] = private_party_to_inputs
@@ -1361,7 +1394,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
 
-                            
+
                             self.var_graph.add_edge((iter_name, self.var_to_count[iter_name]), (node.targets[0].id, self.var_to_count[node.targets[0].id]))
 
                             """
@@ -1411,7 +1444,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
 
-                
+
 
 
             # a = b + c
@@ -1439,7 +1472,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                     print "Probably encountered an ast.Num object"
 
 
-            
+
             elif isinstance(node.value, ast.List):
                 mc2_type = (MC2_Types.SECRET, "")
                 #self.var_tracker[(node.targets[0].id, next_lineno)] = mc2_type
@@ -1496,7 +1529,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     # Track dimensions of amtrix from library calls
     def track_dim_library_fn(self, fn_name, name, args):
         if fn_name in ("matinv", "matadd", "matsub", "placeholder"):
-            first_arg = args[0].id 
+            first_arg = args[0].id
             latest_ref = self.lookup(first_arg)
             #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
             return self.mat_to_dim[latest_ref]
@@ -1507,13 +1540,13 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             rows, cols = self.mat_to_dim[latest_ref]
             return (cols, rows)
         elif fn_name in ("mat_const_mul", "placeholder"):
-            second_arg = args[1].id 
+            second_arg = args[1].id
             latest_ref = self.lookup(second_arg)
             #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
             return self.mat_to_dim[latest_ref]
         elif fn_name in ("matmul", "placeholder"):
             # DO SHIT HERE???????
-            first_arg = args[0].id 
+            first_arg = args[0].id
             second_arg = args[1].id
             latest_ref_first = self.lookup(first_arg)
             latest_ref_second = self.lookup(second_arg)
@@ -1523,7 +1556,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             key = (left_rows, left_cols, right_rows, right_cols, 'sfix')
             if key not in self.vectorized_calls.keys():
                 self.vectorized_calls[key] = 0
-            
+
 
             self.vectorized_calls[key] += 1
 
@@ -1562,12 +1595,12 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     # Check if a call node is a private input. Basically checks if the expression is of the form "*.read_input" or something of the sort.
     def check_private_input(self, node):
         return isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr in self.private_inputs
-    
+
 
 
     def get_fn_name(self, node):
         if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
-            return node.func.id 
+            return node.func.id
 
     # Returns the "most recent" reference to name. Returns the name along with line number of this variable.
     def lookup(self, name):
@@ -1587,7 +1620,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         lst_matching_names = []
         for k in self.var_tracker.keys():
             if k[0] == name:
-                return True 
+                return True
 
         return False
 
@@ -1625,7 +1658,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                             party = lookup_type[1]
                         elif lookup_type[1] != party:
                             return (MC2_Types.SECRET, "")
-            
+
         if party is not None:
             return (MC2_Types.PRIVATE, party)
         else:
@@ -1641,7 +1674,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         #print "Postprocessing graph, adding line-numbers"
         #for name, lineno in sorted(self.name_to_node.keys(), key=lambda item: item[1]):
             #print name, lineno, self.name_to_node[(name, lineno)].lineno
-        
+
 
 
 
@@ -1688,9 +1721,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 check_private = (node_type[0] == MC2_Types.PRIVATE and node_type[1] == party)
                 #print "CHECK PRIVATE: ", check_private, node_type, node_type[1], party
                 if node_type[0] == MC2_Types.PRIVATE:
-                    
+
                     lst_private.append(d[node])
-                        
+
 
                 if check_private or node_type[0] == MC2_Types.CLEAR:
                     if d[node][1]['op'] not in lst_local_nodes: #and self.var_graph.in_edges(d[node][0]):
@@ -1738,7 +1771,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 print "CLEAR NODE: ", clear_node
 
 
-        
+
         for node, secret_node in lst_to_insert:
             index = lst_clear_private.index(node)
             secret_node_dependent = secret_to_dependents[secret_node]
@@ -1750,7 +1783,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             lst_clear_private.insert(index + 1, (None, d))
 
 
-        # Insert aggregation 
+        # Insert aggregation
         # fn_name is the name of the aggregation function, var_name is the variable name assigned to the result.
         for fn_name, var_name, aggr_lineno in self.aggregations.keys():
             lst_private = self.aggregations[(fn_name, var_name, aggr_lineno)][party]
@@ -1785,7 +1818,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
         local_program = self.write_local_program(lst_clear_private, party)
-    
+
 
         #lst_secret_nodes.extend([e[1] for e in lst_to_insert])
         print "LIST SECRET: ", lst_secret_nodes
@@ -1835,7 +1868,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     # For precomputation, rename s_fix_mat.read_input ----> pmat.read_input
     def rename_private(self, call_node):
         if not isinstance(call_node, ast.Call):
-            return 
+            return
 
         if not isinstance(call_node.func, ast.Attribute):
             print "NO ATTRIBUTE?", call_node.func.__dict__
@@ -1846,10 +1879,10 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             return copy_node
 
 
-    
 
 
-    # Only add secret nodes that has a direct dependence on 
+
+    # Only add secret nodes that has a direct dependence on
     def check_if_source_private(self, secret_target):
         for node in self.var_graph.nodes(data=True):
             mc2_type = node[1]['mc2_type']
@@ -1869,14 +1902,14 @@ class ProgramSplitter(ast.NodeTransformer):
         self.secret_to_dependents = secret_to_dependents
         self.mat_to_dim = mat_to_dim
         self.name_to_node = name_to_node
-        self.lst_private = lst_private 
+        self.lst_private = lst_private
         self.party = party
         self.aggregations = aggregations
         # Map the reduce function to the number of arguments it might need.
         self.reduce_map = {"sum": 1, "sum_lib": 1, "min_lib": 1, "max_lib": 1, "avg": 2, "reduce_lib": 1}
 
     def visit_FunctionDef(self, node):
-        return  
+        return
 
 
     def visit_Assign(self, node):
@@ -1917,19 +1950,19 @@ class ProgramSplitter(ast.NodeTransformer):
                 call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
                 temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
                 return [temp_assign, node]
-            
-            if self.is_private(node):   
+
+            if self.is_private(node):
                 return []
 
         return node
 
 
     def visit_Call(self, node):
-        
+
         if hasattr(node, 'lineno'):
-            
+
             secret_node = self.is_secret(node)
-            
+
             if secret_node != None:
                 # Insert assign
                 private_dependent, private_party = self.secret_to_dependents[secret_node][0]
@@ -1952,18 +1985,18 @@ class ProgramSplitter(ast.NodeTransformer):
                 source = astor.to_source(new_assign)
                 print "NEW ASSIGN: ", source
                 return [temp_assign, new_assign]
-            
+
             if self.is_private(node):
                 return []
-            
+
         return node
-        
+
 
     def is_secret(self, node):
         for secret_node in self.lst_secret:
             if secret_node[1] == node.lineno:
                 return secret_node
-        
+
         return None
 
 
@@ -2011,7 +2044,7 @@ import loop_unroll
 import inline
 
 class ASTParser(object):
-    
+
     def __init__(self, fname, party, debug=False):
         f = open(fname, 'r')
         s = f.read()
@@ -2022,9 +2055,9 @@ class ASTParser(object):
             #header += "pmat = p_mat()\n"
             #header += "pmat.preprocess()\n"
             s = header + s + "\nclose_channel(0)\n"
-            
+
         self.tree = ast.parse(s)
-        self.filename = fname 
+        self.filename = fname
         self.source = s
         self.debug = debug
         self.party = int(party)
@@ -2048,7 +2081,7 @@ class ASTParser(object):
         self.tree = ConstantPropagation().visit(self.tree)
         self.tree = loop_unroll.UnrollStep().visit(self.tree)
         # After for-loops unroll, propagate the for-loop constants
-        
+
         self.tree = ConstantPropagation().visit(self.tree)
         # Another pass to fix all the subscripts. Ex: a[i] => a[0] for example
         self.tree = ConstantPropagation().visit(self.tree)
@@ -2063,7 +2096,7 @@ class ASTParser(object):
         s.visit(self.tree)
         # Map matrices to their dimensions as well. SHIET
         # print "MATRIX DIMENSIONS: ", s.mat_to_dim
-        # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet. 
+        # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet.
 
         lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
         lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
@@ -2072,11 +2105,11 @@ class ASTParser(object):
 
         splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
         self.tree = splitter.visit(self.tree)
-        
+
         count_matmul = CountMatmulHelper(s.mat_to_dim)
         count_matmul.visit(self.tree)
         print "Count matmul: ", count_matmul.vectorized_calls
-        
+
 
         #self.tree = ForLoopParser().visit(self.tree)
         #self.tree = ASTChecks().visit(self.tree)
@@ -2103,11 +2136,9 @@ class ASTParser(object):
         print "LOCAL COMPUTE"
         print local_str
         #temp_mpc_type = interface.mpc_type
-        #interface.mpc_type = LOCAL 
+        #interface.mpc_type = LOCAL
         local = {}
         #exec(local_str, context, local)
         #print "Global: ", context
         #print "Local: ", local
         #interface.mpc_type = temp_mpc_type
-
-
