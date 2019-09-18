@@ -54,10 +54,17 @@ void File_Input_Output::private_output_gfp(const gfp &output, unsigned int chann
 gfp File_Input_Output::public_input_gfp(unsigned int channel)
 {
   cout << "Enter value on channel " << channel << " : ";
-  word x;
-  cin >> x;
+
+  fstream *myfile = open_channels[channel];
+  bool sign = false;
+  uint64_t x = 0;
+  myfile->read((char *) &sign, 1);
+  myfile->read((char *) &x, sizeof(x));
   gfp y;
   y.assign(x);
+  if (sign) {
+    y.negate();
+  }
 
   // Important to have this call in each version of public_input_gfp
   Update_Checker(y, channel);

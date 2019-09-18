@@ -1059,7 +1059,7 @@ class pint(_register, _int):
             stmpinti(self, regint.conv(address), self.pid)
         else:
             stmpint(self, address, self.pid)
-        
+
     @classmethod
     def get_private_input_from(cls, player, channel=0):
         r"""
@@ -1070,7 +1070,7 @@ class pint(_register, _int):
         res = cls(player)
         private_input_pint(res, player, channel)
         return res
-    
+
     def secret_op(self, other, s_inst):
         if isinstance(other, sint) or isinstance(other, pint):
             self_s = sint()
@@ -1105,7 +1105,7 @@ class pint(_register, _int):
 
     def __add__(self, other):
         self.test_instance(other)
-        
+
         if isinstance(other, pint) and other.pid == self.pid:
             res = pint(self.pid)
             addp(res, other, self, self.pid)
@@ -1119,7 +1119,7 @@ class pint(_register, _int):
 
     def __mul__(self, other):
         self.test_instance(other)
-        
+
         if isinstance(other, pint) and other.pid == self.pid:
             res = pint(self.pid)
             mulp(res, self, other, self.pid)
@@ -1535,7 +1535,7 @@ class sfix(_number):
         return -(self) + other
 
     @vectorize
-    def __eq__(self, other):        
+    def __eq__(self, other):
         if isinstance(other,sfloat):
             return other == self
         else:
@@ -1678,7 +1678,7 @@ class sfloat(_number):
 
     ##
     # Constructor that receives the basic 5 slots.
-    # If it only receives v, it casts v to the float representation in use, 
+    # If it only receives v, it casts v to the float representation in use,
     # otherwise it uses the parametrization to instanciate a cfloat register.
     # @param v basic input or significand of IEEE floating point representation
     # @param p exponent. Optional parameter
@@ -1698,7 +1698,7 @@ class sfloat(_number):
             elif isinstance(v, sint):
                 v, p, z, s = floatingpoint.Int2FL(v, program.bit_length,
                                                   self.vlen, self.kappa)
-                
+
                 err = self.__flow_detect__(p)
 
             elif isinstance(v, sfix):
@@ -1737,10 +1737,10 @@ class sfloat(_number):
             self.s = sint()
             ldsi(self.s, s)
         else:
-            self.s = s     
+            self.s = s
         if isinstance(err, int):
             if not (err >=0):
-                raise CompilerError('Floating point number malformed: err')                       
+                raise CompilerError('Floating point number malformed: err')
             self.err = library.load_int_to_secret(err)
         else:
             self.err = err
@@ -1848,7 +1848,7 @@ class sfloat(_number):
             s = (1 - b) * (a * other.s + aneg * self.s) + b * (c * other.s + cneg * self.s)
             s = zprod * s + (other.z - zz) * self.s + (self.z - zz) * other.s
             err = sint(0)
-            if (isinstance(other,sfloat)):    
+            if (isinstance(other,sfloat)):
                 err = err + other.err
             err = err + self.err
             err = err + self.__flow_detect__(p)
@@ -2025,8 +2025,8 @@ class sfloat(_number):
     ##
     # reveals instance as a floating point number, by creating an instance of cfloat.
     # in case there was an error during the circuit execution, it returns 0 in all
-    # state elements of the instance. 
-    # @return a cfloat value with the corresponding state elements in plain text. 
+    # state elements of the instance.
+    # @return a cfloat value with the corresponding state elements in plain text.
     def reveal(self):
         """ Reveals instance as a floating point number, by creating an instance of cfloat.
         in case there was an error during the circuit execution, it returns 0 in all
@@ -2079,7 +2079,7 @@ class cfloat(object):
 
     ##
     # Constructor that receives the basic 4 slots.
-    # If it only receives v, it casts v to the float representation in use, 
+    # If it only receives v, it casts v to the float representation in use,
     # otherwise it uses the parametrization to instanciate a cfloat register.
     # @param v basic input or significand of IEEE floating point representation
     # @param p exponent. Optional parameter
@@ -2281,13 +2281,13 @@ def array_index_secret_load_a(l, index, nparallel=1):
         @library.for_range(res.length)
         def f(i):
             res[i] = l.value_type(0)
-        
+
         @library.for_range(l.rows)
         def f(i):
             @library.for_range(l.columns)
             def g(j):
                 res[j] += res_list[i][j]
-        return res        
+        return res
     else:
         raise NotImplementedError
 
@@ -2776,7 +2776,7 @@ class cintArray(Array):
 
 class cintMatrix(Matrix):
     def __init__(self, n, m, address=None):
-        Matrix.__init__(self, n, m, cint, address)
+        Matrix.__init__(self, sn, m, cint, address)
 
 class cfixArray(Matrix):
     def __init__(self, n, address=None):
@@ -2813,7 +2813,7 @@ class EncodingLookup(object):
         pint: 1,
         sint: 2,
     }
-    
+
     e2v = {
         0: cint,
         1: pint,
@@ -2826,7 +2826,7 @@ class EncodingLookup(object):
             return EncodingLookup.e2v[v]
         else:
             return EncodingLookup.v2e[v]
-        
+
 # This matrix class is composed of values of different types
 class MixMatrix(object):
     def __init__(self, rows, columns, values=None):
@@ -2836,7 +2836,7 @@ class MixMatrix(object):
         self.address_list = Array(rows * columns, regint)
         self.value_types = Array(rows * columns, regint)
         # 2 ** 32 - 1 if it's shared, otherwise stores the party ID
-        self.pid = Array(rows * columns, regint) 
+        self.pid = Array(rows * columns, regint)
 
         # choose the lowest-security level, because the security levels will be updated automatically
         addr_header = program.malloc(rows * columns, cint)
@@ -2847,10 +2847,10 @@ class MixMatrix(object):
             self.address_list[i] = addr_header + i
             self.value_types[i] = EncodingLookup.lookup(cint)
             self.pid[i] = 2 ** 32 - 1
-            
+
     def _store(self, value, address):
         value.store_in_mem(address)
-        
+
     def get(self, index):
         t = self.value_types[index]
         v = cint(0)
@@ -2861,17 +2861,17 @@ class MixMatrix(object):
         library.if_then(x)
         v = library.load_clear_mem(address)
         library.end_if()
-        
+
         y = t.__eq__(EncodingLookup.lookup(pint))
         library.if_then(y)
         v = library.load_private_mem(address, pid)
         library.end_if()
-        
+
         z = t.__eq__(EncodingLookup.lookup(sint))
         library.if_then(z)
         v = library.load_secret_mem(address)
         library.end_if()
-        
+
         return v
 
     def set(self, index, value):
@@ -2881,7 +2881,7 @@ class MixMatrix(object):
             self.value_types[index] = EncodingLookup.lookup(cint)
             self._store(value, addr)
             self.pid[index] = 2 ** 32 - 1
-            
+
         elif isinstance(value, pint):
             addr = program.malloc(1, pint)
             self.address_list[index] = addr
@@ -2897,7 +2897,7 @@ class MixMatrix(object):
             self.pid[index] = 2 ** 32 - 1
         else:
             raise ValueError("MixMatrix does not support type {}".format(type(value)))
-        
+
 
 cint.MemValue = MemValue
 cint.Array = cintArray
@@ -2931,4 +2931,3 @@ def get_generic_array(value_type):
 # generate MultiArray for every type
 for value_type in [cint, cfix, sint, sfloat, sfix]:
     value_type.MultiArray = get_generic_array(value_type)
-

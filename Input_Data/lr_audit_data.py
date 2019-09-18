@@ -9,7 +9,7 @@ import math
 fp = 40
 
 # Use 1000 for the sample size. Our actually data size is 27000. So remember to multiply the results by 27x.
-samples = 1000
+samples = 100
 df = pd.read_excel('credit_card.xls')
 df.drop(df.columns[0],axis=1,inplace=True)
 # Get rid of first row which is header, list of columns
