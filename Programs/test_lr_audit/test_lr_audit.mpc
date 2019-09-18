@@ -28,32 +28,32 @@ for i in range(data_size):
     #Rand_dec = []
 
     # X_dec = []
-    X_dec = sintMatrix(dim, 64)
+    #X_dec = sintMatrix(dim, 64)
 
-    for j in range(dim):
-        bit_decompose = X[i][j].conv().bit_decompose(64)
-        for k in range(64):
-            X_dec[j][k] = bit_decompose[k]
+    #for j in range(dim):
+    #    bit_decompose = X[i][j].conv().bit_decompose(64)
+    #    for k in range(64):
+    #        X_dec[j][k] = bit_decompose[k]
 
 
 
-    y_dec = y[i][1].conv().bit_decompose2(64)
+    #y_dec = y[i][1].conv().bit_decompose2(64)
 
     # copy the 64 bits of Rand_dec[0]
-    for j in range(64):
-        RXy_bits[i][j] = ran_dec_1[j] #Rand_dec[0][j]
+    #for j in range(64):
+    #    RXy_bits[i][j] = ran_dec_1[j] #Rand_dec[0][j]
     # copy the first 16 bits of Rand_dec[1]
-    for j in range(16):
-        RXy_bits[i][j + 64] = ran_dec_2[j] #Rand_dec[1][j];
+    #for j in range(16):
+    #    RXy_bits[i][j + 64] = ran_dec_2[j] #Rand_dec[1][j];
     # copy the bits of X_dec
-    for j in range(dim):
-        X_dec = X[i][j].conv().bit_decompose(64)
-        for k in range(64):
-            RXy_bits[i][j * 64 + 64 + k] = X_dec[k]
+    #for j in range(dim):
+    #    X_dec = X[i][j].conv().bit_decompose(64)
+    #    for k in range(64):
+    #        RXy_bits[i][j * 64 + 64 + k] = X_dec[k]
     # copy the bits of y_dec
-    y_dec = y[i][0].conv().bit_decompose(64)
-    for j in range(64):
-        Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
+    #y_dec = y[i][0].conv().bit_decompose(64)
+    #for j in range(64):
+    #    Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
 
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
