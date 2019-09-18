@@ -25,19 +25,14 @@ for i in range(data_size):
 
     print type(rand_dec_1)
     print type(rand_dec_2)
-    #Rand_dec = []
 
-    # X_dec = []
-    #X_dec = sintMatrix(dim, 64)
+    X_dec = sintMatrix(dim, 64)
+    for j in range(dim):
+        bit_decompose = X[i][j].conv().bit_decompose2(64)
+        for k in range(64):
+            X_dec[j][k] = bit_decompose[k]
 
-    #for j in range(dim):
-    #    bit_decompose = X[i][j].conv().bit_decompose(64)
-    #    for k in range(64):
-    #        X_dec[j][k] = bit_decompose[k]
-
-
-
-    #y_dec = y[i][1].conv().bit_decompose2(64)
+    y_dec = y[i][0].conv().bit_decompose2(64)
 
     # copy the 64 bits of Rand_dec[0]
     #for j in range(64):
