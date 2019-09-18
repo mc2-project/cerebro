@@ -17,8 +17,6 @@ df.drop(df.columns[0],axis=1,inplace=True)
 # Get rid of first row which is header, list of columns
 df = df[1:]
 
-print(df.columns.values)
-
 train, test = train_test_split(df, test_size=0.1, random_state=42)
 print(len(train), len(test))
 train = train[:samples]
@@ -44,3 +42,22 @@ data_y = [v for v in y_.flatten()]
 
 data = data_x + data_y
 data = [i * pow(2, fp) for i in data]
+
+# Now we already add X and y
+
+# The next input is the randomness provided by the parties
+# Input samples * 2 random numbers
+# for benchmark purpose (todo: generate real random numbers), we use 1 here.
+rand_ = np.full((samples, 2), 1)
+rand = [v for v in rand_.flatten()]
+data = data + rand
+
+# The next input (clear input) is the hash map. This is supposed to be hardcoded in the SCALE-MAMBA
+HASH_DIMENSION = 11
+
+# for benchmark purpose, samely, we use 1 here for the hashmap.
+# The correct hash map has been generated in Input_Data/gen_hashmap.py. But we don't plan to use that for this submission.
+dim = 23 # hardcoded
+hashmap_ = np.full((HASH_DIMENSION, 80 + (dim + 1) * 64), 1)
+hashmap = [v for v in hashmap_.flatten()]
+data = data + hashmap
