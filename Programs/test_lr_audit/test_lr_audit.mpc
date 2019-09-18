@@ -16,13 +16,12 @@ y = s_fix_mat.read_input(data_size, 1, 0)
 
 # input the randomness
 # each party needs to provide two random numbers for commitment; we will get 80 bits out of these two numbers
-Rand = s_fix_mat.read_input(data_size, 2, 0)
+# Rand = s_fix_mat.read_input(data_size, 2, 0)
 
 # initialize the space for decomposed sfix of Rand, X, and y
 RXy_bits = s_fix_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 
 """
-
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
 for i in range(data_size):
@@ -34,6 +33,9 @@ for i in range(data_size):
     rand_dec_2 = sintArray(Rand[i][1].conv().bit_decompose(16))
 
 
+    Rand_dec = []
+    Rand_dec[1] = Rand[i][1].conv().bit_compose(64)
+    Rand_dec[2] = Rand[i][2].conv().bit_compose(16)
     X_dec = []
     for j in range(dim):
         X_dec[j] = X[i][j].conv().bit_decompose(64)
@@ -46,6 +48,12 @@ for i in range(data_size):
     # copy the first 16 bits of Rand_dec[1]
     for j in range(16):
         RXy_bits[i][j + 64] = ran_dec_2[j] #Rand_dec[1][j];
+    # copy the 64 bits of Rand_dec[1]
+    for j in range(64):
+        RXy_bits[i][j] = Rand_dec[1][j]
+    # copy the first 16 bits of Rand_dec[2]
+    for j in range(16):
+        RXy_bits[i][j + 64] = Rand_dec[2][j];
     # copy the bits of X_dec
     for j in range(dim):
         for k in range(64):
