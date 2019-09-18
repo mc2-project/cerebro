@@ -1001,6 +1001,22 @@ class sint(_secret, _int):
         return floatingpoint.BitDec(self, bit_length, bit_length, security)
 
 
+    def bit_decompose2(self, bit_length=None, security=None):
+        if bit_length == 0:
+            return []
+
+        bit_length = bit_length or program.bit_length
+        security = security or program.security
+        lst_bits = floatingpoint.BitDec(self, bit_length, bit_length, security)
+        if len(lst_bits) > 0:
+            res = sintArray(len(lst_bits))
+            for i in range(len(lst_bits)):
+                res[i] = sint(lst_bits[i])
+
+            return res 
+        else:
+            raise ValueError("Length of bits is 0")
+
 sint.bit_type = sint
 sint.basic_type = sint
 
@@ -1470,7 +1486,6 @@ class sfix(_number):
     # the function returns the vector size.
     # @return number of registers  engaged in memory.
     def sizeof(self):
-
         return self.size * 1
 
 

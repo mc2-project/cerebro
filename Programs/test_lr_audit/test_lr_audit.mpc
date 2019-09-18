@@ -22,24 +22,32 @@ Rand = s_fix_mat.read_input(data_size, 2, 0)
 RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 
 
-"""
+
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
 for i in range(data_size):
     #Rand_dec = []
-    #Rand_dec.append(Rand[i][0].conv().bit_decompose(64))
+    #Rand_dec.append(Rand[i][0].conv().bit_decompose2(64))
     #Rand_dec.append(Rand[i][1].conv().bit_decompose(16))
 
-    rand_dec_1 = sintArray(Rand[i][0].conv().bit_decompose(64))
-    rand_dec_2 = sintArray(Rand[i][1].conv().bit_decompose(16))
+    rand_dec_1 = Rand[i][0].conv().bit_decompose2(64)
+    rand_dec_2 = Rand[i][1].conv().bit_decompose2(16)
+
+    print type(rand_dec_1)
+    print type(rand_dec_2)
+    #Rand_dec = []
 
 
-    Rand_dec = []
-    Rand_dec[1] = Rand[i][1].conv().bit_compose(64)
-    Rand_dec[2] = Rand[i][2].conv().bit_compose(16)
-    X_dec = []
+    # X_dec = []
+    X_dec = sintMatrix(dim, 64)
+
     for j in range(dim):
-        X_dec[j] = X[i][j].conv().bit_decompose(64)
+        bit_decompose = X[i][j].conv().bit_decompose(64)
+        for k in range(64):
+            X_dec[j][k] = bit_decompose[k]
+
+
+        
     y_dec = y[i][1].conv().bit_decompose(64)
     # copy the 64 bits of Rand_dec[0]
     for j in range(64):
@@ -62,7 +70,7 @@ for i in range(data_size):
     # copy the bits of y_dec
     for j in range(64):
         Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
-"""
+
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
 # Suppose that we can multiply that with (80 + (dim + 1) * 64) * 11, we can get the desired commitment data_size * 11.
