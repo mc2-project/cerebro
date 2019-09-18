@@ -949,12 +949,10 @@ class ConstantPropagation(ast.NodeTransformer):
                 #print "Multiassignment not supported: ", node.value.__dict__
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
-            # print e
-        
+            print e
         # Visit the left hand side of the assignment
         if isinstance(copy_assign.targets[0], ast.Subscript):
             copy_assign.targets[0] = self.visit(copy_assign.targets[0])
-
         return copy_assign
 
 
