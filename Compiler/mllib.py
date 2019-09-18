@@ -114,6 +114,12 @@ def reduce_lib(lst, reduce_fn):
 
     return reduce(reduce_fn, flattened_lst)
 
+# Copy a portion of the large matrix to the small matrix. 
+def copy_matrix(dest, src, rows, cols, index):
+    for i in range(rows):
+        for j in range(cols):
+            dest[i][j] = src[index * rows + j][j]
+
 #  Tree-based multiplication
 def int_multiply(data_list, nparallel=2):
     length = len(data_list)
@@ -165,7 +171,7 @@ def transpose(A):
     if not isinstance(A, (Matrix, MatrixGC)):
         raise ValueError("Only matrix can be transposed")
 
-    if isinstance(A, (sintMatrix, sfixMatrix)):
+    if isinstance(A, (sintMatrix, sfixMatrix, cintMatrix, cfixMatrix)):
         B = A.__class__(A.columns, A.rows)
         _transpose(A, B)
         return B
@@ -252,6 +258,11 @@ def matmul(A, B, left_rows, left_cols, right_rows, right_cols, mat_type, nparall
         return C
     elif isinstance(A, MixMatrix) and isinstance(B, MixMatrix):
         return _matmul_mix(A, B, nparallel)
+
+    elif isinstance(A, (sintMatrix, cintMatrix, cfixMatrix, sfixMatrix)) and isinstance(B, (sintMatrix, cintMatrix, cfixMatrix, sfixMatrix)):
+        C = sintMatrix(A.rows, B.columns)
+        D = sintArray(A.rows * B.columns * A.columns)
+        return _matmul(A, B, C, D, sint, nparallel)
     else:
         raise NotImplementedError
 

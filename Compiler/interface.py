@@ -3,7 +3,6 @@ from types_gc import *
 import compilerLib, library
 import symtable
 import re
-import checker
 import numpy as np
 
 SPDZ = 0
@@ -227,6 +226,45 @@ class SecretFixedPointMatrixFactory(object):
             return ret
 
 
+class SecretIntegerMatrixFactory(object):
+    def __call__(self, rows, columns):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
+        if mpc_type == LOCAL:
+            raise ValueError("Shouldn't be local.")
+        if mpc_type == SPDZ:
+            ret = sintMatrix(rows, columns)
+            return ret
+        else:
+            ret = sintMatrixGC(rows, columns)
+            for i in range(rows):
+                for j in range(columns):
+                    ret[i][j] = cint_gc(0) #sint_gc(Params.intp, party)
+            return ret
+
+    def read_input(self, rows, columns, party):
+        if not isinstance(rows, int) or not isinstance(columns, int):
+            raise ValueError("Matrix sizes must be publicly known integers")
+
+        if mpc_type == LOCAL:
+            raise ValueError("Shouldn't be local.")
+
+        if mpc_type == SPDZ:
+            ret = sintMatrix(rows, columns)
+            @library.for_range(ret.rows)
+            def f(i):
+                @library.for_range(ret.columns)
+                def g(j):
+                    v = sint.get_private_input_from(party)
+                    ret[i][j] = v
+            return ret
+        else:
+            ret = sintMatrixGC(rows, columns)
+            for i in range(ret.rows):
+                for j in range(ret.columns):
+                    ret[i][j] = sint_gc(Params.intp, input_party=party)
+            return ret
+
 class ClearFixedPointMatrixFactory(object):
     def __call__(self, rows, columns):
         if mpc_type == SPDZ:
@@ -337,6 +375,7 @@ SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
 ClearIntegerMatrix = ClearIntegerMatrixFactory()
+SecretIntegerMatrix = SecretIntegerMatrixFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["s_int"] = SecretInteger
@@ -346,6 +385,7 @@ compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
 compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
 compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
+compilerLib.VARS["s_int_mat"] = SecretIntegerMatrix
 compilerLib.VARS["p_mat"] = PrivateFixedPointMatrix
 compilerLib.VARS["reveal_all"] = reveal_all
 compilerLib.VARS["write_private_data"] = write_private_data
@@ -362,7 +402,7 @@ import astunparse
 # Used to convert expressions with binary operators like 5 * 6 into values.
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-             ast.USub: op.neg}
+             ast.USub: op.neg, ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.GtE: op.ge, ast.LtE: op.le}
 
 class ForLoopParser(ast.NodeTransformer):
     def __init__(self):
@@ -869,7 +909,7 @@ class ConstantPropagation(ast.NodeTransformer):
         loading of the node with the actual value"""
         for k in self._constants.keys():
             if node.id == k:
-                print "Name: {0}, value: {1}".format(node.id, self._constants[k].n)
+                #print "Name: {0}, value: {1}".format(node.id, self._constants[k].n)
                 #print node.__dict__
                 return ast.Num(self._constants[k].n) #self._constants[k]
 
@@ -878,15 +918,22 @@ class ConstantPropagation(ast.NodeTransformer):
     def visit_Assign(self, node):
         copy_assign = copy.deepcopy(node) #ast.Assign(value=node.value, targets=node.targets)
         #node.value = self.visit(node.value)
-        copy_assign.value = self.visit(copy_assign.value)
+        new_assign_val = self.visit(copy_assign.value)
+        if new_assign_val:
+            copy_assign.value = new_assign_val
         try:
             # No multiassignment such as a,b = c,d
             if not isinstance(copy_assign.value, ast.Tuple):
                 if type(copy_assign.value) not in (ast.Call, ast.Name):
-                    val = self.eval_args_helper(copy_assign.value)
-                    copy_assign.value = ast.Num(n=val)
+                    try:
+                        val = self.eval_args_helper(copy_assign.value)
+                        copy_assign.value = ast.Num(n=val)
+                        self._constants[copy_assign.targets[0].id] = copy_assign.value
+                    except:
+                        self._constants.pop(copy_assign.targets[0].id)
+
                 # So far don't allow multi-assignment, not sure how to go about this.
-                    self._constants[copy_assign.targets[0].id] = copy_assign.value
+
             else:
                 for i in range(len(copy_assign.value.elts)):
                     try:
@@ -897,11 +944,12 @@ class ConstantPropagation(ast.NodeTransformer):
                             obj.value = val
                     except Exception as e:
                         print "Exception in assign multiassignment: ", e
+                        self._constants.pop(copy_assign.targets[0].elts[i].id)
 
                 #print "Multiassignment not supported: ", node.value.__dict__
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
-            print e
+            # print e
 
 
         # Visit the left hand side of the assignment
@@ -931,9 +979,43 @@ class ConstantPropagation(ast.NodeTransformer):
             val = self.eval_args_helper(node)
             return ast.Num(n=val)
         except Exception as e:
-            print e
-            print "ConstantPropagation Exception"
+            #print e
+            #print "ConstantPropagation Exception"
             return self.generic_visit(node)
+
+
+    def visit_Compare(self, node):
+        rename_left = self.visit(node.left)
+        if rename_left:
+            node.left = rename_left
+        for i in range(len(node.comparators)):
+            rename_comparator = self.visit(node.comparators[i])
+            if rename_comparator:
+                node.comparators[i] = rename_comparator
+
+        if len(node.ops) > 1:
+            print "Doesn't support more than 1 comparison operator at a time."
+            return node
+
+        try:
+            val = self.eval_compare_helper(node)
+            return val
+
+        except Exception as e:
+            #print e
+            return node
+
+
+    def eval_compare_helper(self, node):
+        left = node.left
+        comapre_op = node.ops[0]
+        compare = node.comparators[0]
+        # Evaluate the compare operator against the two arguments. Currently only support single comparison statements.
+        if isinstance(left, ast.Num) and isinstance(compare, ast.Num):
+            compare_res = operators[type(node.ops[0])](left.n, compare.n)
+            return ast.Num(n=compare_res)
+        else:
+            return None
 
 
 class ASTChecks(ast.NodeTransformer):
@@ -1106,10 +1188,6 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         self.private_inputs = ["read_input_from", "read_input"]
         self.aggregation_fns = ["sum", "avg", "min_lib", "max_lib", "sum_lib", "reduce_lib"]
         self.reduce_fn = ["reduce_lib"]
-
-
-
-
         self.lst_private_vars = []
         self.var_graph = nx.DiGraph()
         # Key is (name, lineno), value is the type of the variable
@@ -1142,8 +1220,13 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     # Function calls like .append(), needs to be marked secret
     def visit_Call(self, node):
         if isinstance(node.func, ast.Attribute):
+            try:
             #print "ATTRIBUTE HELP:", node.__dict__, node.func.__dict__
-            name = node.func.value.id
+                name = node.func.value.id
+            except Exception as e:
+                #print astunparse.unparse(node)
+                #print "The above line is causing error. Pls Fix!"
+                return
             if self.name_exists(name):
                 next_lineno = self.get_next_var_num(name)
                 self.var_graph.add_node((name,next_lineno), mc2_type=self.lookup_type(name), op=node)
@@ -1286,6 +1369,12 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 self.add_to_graph(node, node.targets[0].id, (MC2_Types.CLEAR, ""))
 
 
+            elif isinstance(node.value, ast.Compare):
+                # Assume single comparators
+                mc2_type = self.check_types(node.value.comparators + [node.value.left])
+
+
+                self.add_to_graph(node, node.targets[0].id, mc2_type)
             # Calling .read_input essentially
             elif self.check_private_input(node):
                 if not isinstance(node.value.args[len(node.value.args) - 1], ast.Num):
@@ -1449,14 +1538,35 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
             # a = b + c
             elif isinstance(node.value, ast.BinOp):
-                left_name = self.get_subscript_name(node.value.left)
-                right_name = self.get_subscript_name(node.value.right)
-                res_type = self.check_types([ast.Name(id=left_name), ast.Name(id=right_name)])
+                names = set()
+                #left_name = self.get_subscript_name(node.value.left, names)
+                #right_name = self.get_subscript_name(node.value.right)
+                self.get_binop_name(node.value, names)
+                print "NAMES: ", names
+                #res_type = self.check_types([ast.Name(id=left_name), ast.Name(id=right_name)])
+                res_type = self.check_types([ast.Name(id=name) for name in list(names)])
                 #print "Subscript left name: {0}, left_type: {1}, right name: {2}, right type: {3}, res_type:{4}".format(left_name, self.lookup_type(left_name), right_name, self.lookup_type(right_name), res_type)
                 next_lineno = self.get_next_var_num(node.targets[0].id)
                 self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
 
+
+                for name in names:
+                    try:
+                        if self.name_exists(name):
+                            ref_to_rhs = self.lookup(name)
+                            self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
+                            self.var_graph.add_edge(ref_to_rhs, (node.targets[0].id, next_lineno))
+
+
+                    except ValueError as e:
+                        pass
+                        #print e
+                        #print "Probably encountered an ast.Num object"
+
+                self.name_to_node[(node.targets[0].id, next_lineno)] = node
+                """
                 try:
+
                     if self.name_exists(left_name):
                         ref_to_rhs = self.lookup(left_name)
                         self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
@@ -1470,7 +1580,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 except ValueError as e:
                     print e
                     print "Probably encountered an ast.Num object"
-
+                """
 
 
             elif isinstance(node.value, ast.List):
@@ -1561,6 +1671,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             self.vectorized_calls[key] += 1
 
             return (left_rows, right_cols)
+        else:
+            print "Matrix library function name", fn_name, name
+            raise ValueError
 
     def get_subscript_name(self, node):
         if isinstance(node, ast.Name):
@@ -1570,6 +1683,27 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             subscript_obj = subscript_obj.value
 
         return subscript_obj.id
+
+
+    # Get the set of names in a binary operation.
+    def get_binop_name(self, node, s):
+        if isinstance(node, ast.Name):
+            s.add(node.id)
+            return
+        elif isinstance(node, ast.Num):
+            return
+        elif isinstance(node, ast.Subscript):
+            s.add(self.get_subscript_name(node))
+            return
+        left_name = self.get_binop_name(node.left, s)
+        right_name = self.get_binop_name(node.right, s)
+        if left_name:
+            s.add(left_name)
+        if right_name:
+            s.add(right_name)
+        return
+
+
 
 
 
@@ -1587,9 +1721,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         self.name_to_node[(retval.id, next_lineno)] = node
 
                 except AttributeError as e:
-                    print e
-                    print "Exception: Mapping input types to output types. ast Num Object"
-
+                    #print e
+                    #print "Exception: Mapping input types to output types. ast Num Object"
+                    pass
 
 
     # Check if a call node is a private input. Basically checks if the expression is of the form "*.read_input" or something of the sort.
@@ -1839,6 +1973,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             else:
                 s+= "{0}_{1} = []\n".format(fn_name, lineno)
         for node in lst_clear_private:
+            print "Private node: ", astunparse.unparse(node[1]['op'])
             mc2_type = node[1]['mc2_type']
             check_private = (mc2_type[0] == MC2_Types.PRIVATE and mc2_type[1] == party)
             if check_private or mc2_type[0] == MC2_Types.CLEAR:
@@ -2050,7 +2185,6 @@ class ASTParser(object):
         s = f.read()
         f.close()
         if mpc_type == SPDZ:
-
             header = "open_channel(0)\n"
             #header += "pmat = p_mat()\n"
             #header += "pmat.preprocess()\n"
@@ -2067,24 +2201,29 @@ class ASTParser(object):
         # hardcoded to count the # of matmul calls. Returns the # of matmul calls.
         target = "matmul"
         # Try inlining
-        self.tree = ASTChecks().visit(self.tree)
+        #self.tree = ASTChecks().visit(self.tree)
         #
+        #source = astor.to_source(self.tree)
+        #print "AFTER IF CHECKS: "
+        #print source
+
+
         dep = ProcessDependencies()
         dep.visit(self.tree)
 
-        helper = inline.RenameVisitorHelper(dep.fns_to_params)
-        helper.visit(self.tree)
-        rename = inline.RenameVisitor(dep.fns_to_params, helper.fns_to_vars)
-        self.tree = rename.visit(self.tree)
-        inliner = inline.InlineSubstitution(rename.fn_to_node, rename.fns_to_params, dep.G)
-        self.tree = inliner.visit(self.tree)
-        self.tree = ConstantPropagation().visit(self.tree)
-        self.tree = loop_unroll.UnrollStep().visit(self.tree)
+        #helper = inline.RenameVisitorHelper(dep.fns_to_params)
+        #helper.visit(self.tree)
+        #rename = inline.RenameVisitor(dep.fns_to_params, helper.fns_to_vars)
+        #self.tree = rename.visit(self.tree)
+        #inliner = inline.InlineSubstitution(rename.fn_to_node, rename.fns_to_params, dep.G)
+        #self.tree = inliner.visit(self.tree)
+        #self.tree = ConstantPropagation().visit(self.tree)
+        #self.tree = loop_unroll.UnrollStep().visit(self.tree)
         # After for-loops unroll, propagate the for-loop constants
 
-        self.tree = ConstantPropagation().visit(self.tree)
+        #self.tree = ConstantPropagation().visit(self.tree)
         # Another pass to fix all the subscripts. Ex: a[i] => a[0] for example
-        self.tree = ConstantPropagation().visit(self.tree)
+        #self.tree = ConstantPropagation().visit(self.tree)
 
         #s = PrivateTypeInference(rename.fn_to_node, rename.fns_to_params, dep.G)
         #s.visit(self.tree)
@@ -2092,30 +2231,30 @@ class ASTParser(object):
 
         #print "After unrolling: ", source
 
-        s = ProgramSplitterHelper()
-        s.visit(self.tree)
+        #s = ProgramSplitterHelper()
+        #s.visit(self.tree)
         # Map matrices to their dimensions as well. SHIET
         # print "MATRIX DIMENSIONS: ", s.mat_to_dim
         # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet.
 
-        lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
-        lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
+        #lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
+        #lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
 
-        s.postprocess()
+        #s.postprocess()
 
-        splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
-        self.tree = splitter.visit(self.tree)
+        #splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
+        #self.tree = splitter.visit(self.tree)
 
-        count_matmul = CountMatmulHelper(s.mat_to_dim)
-        count_matmul.visit(self.tree)
-        print "Count matmul: ", count_matmul.vectorized_calls
+        #count_matmul = CountMatmulHelper(s.mat_to_dim)
+        #count_matmul.visit(self.tree)
+        #print "Count matmul: ", count_matmul.vectorized_calls
 
 
         #self.tree = ForLoopParser().visit(self.tree)
         #self.tree = ASTChecks().visit(self.tree)
 
-        #return count_calls.vectorized_calls
-        return count_matmul.vectorized_calls, local_program
+        #return count_matmul.vectorized_calls, local_program
+        return {}, ""
 
     def execute(self, context):
         source = astor.to_source(self.tree)
