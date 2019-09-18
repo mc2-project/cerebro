@@ -16,10 +16,10 @@ y = s_fix_mat.read_input(data_size, 1, 0)
 
 # input the randomness
 # each party needs to provide two random numbers for commitment; we will get 80 bits out of these two numbers
-# Rand = s_fix_mat.read_input(data_size, 2, 0)
+Rand = s_fix_mat.read_input(data_size, 2, 0)
 
 # initialize the space for decomposed sfix of Rand, X, and y
-RXy_bits = s_fix_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
+RXy_bits = s_int_mat(data_size, 80 + (dim + 1) * 64)
 
 """
 # Decompose X and y, must make them run in the same round
@@ -44,7 +44,7 @@ for i in range(data_size):
     for j in range(64):
         RXy_bits[i][j] = ran_dec_1[j] #Rand_dec[0][j]
 
-    
+
     # copy the first 16 bits of Rand_dec[1]
     for j in range(16):
         RXy_bits[i][j + 64] = ran_dec_2[j] #Rand_dec[1][j];
@@ -71,13 +71,7 @@ for i in range(data_size):
 # Read the subset sum hash map
 Map = cintMatrix(HASH_DIMENSION, 80 + (dim + 1) * 64)
 # Remark: We can actually batch 32 numbers in d = 11. For this implementation, we skip this for now.
-"""
-for MapId in range(HASH_DIMENSION):
-    with open("/home/ubuntu/mc2/Input_Data/hashmap_" + str(MapId), 'wb') as f:
-        arr = pickle.load(f)
 
-    Map[regint(MapId)].load_int(arr)
-"""
 # Transpose this map matrix
 MapT = transpose(Map)
 # multiply the Rxy_bits with MapT
