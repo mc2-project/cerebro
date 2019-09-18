@@ -3,7 +3,6 @@ from types_gc import *
 import compilerLib, library
 import symtable
 import re
-import checker
 import numpy as np
 
 SPDZ = 0
