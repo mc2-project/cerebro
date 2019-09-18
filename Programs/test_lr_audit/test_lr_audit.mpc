@@ -1,7 +1,7 @@
 Params.set_params(int_precision=64, f=40, k=64)
 NUM_PARTIES = 6
 
-data_size = 1
+data_size = 10
 dim = 23
 # Our hash map is constructed specially for dim = 23, don't change this value here
 HASH_DIMENSION = 11
