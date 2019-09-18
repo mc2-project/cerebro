@@ -76,7 +76,7 @@ class ClearIntegerMatrixFactory(object):
 
 	def read_input(self, rows, columns, channel=0):
 		if not isinstance(rows, int) or not isinstance(columns, int):
-            raise ValueError("Matrix sizes must be publicly known integers")
+			raise ValueError("Matrix sizes must be publicly known integers")
 
         if mpc_type == LOCAL:
             raise ValueError("Shouldn't be local.")
