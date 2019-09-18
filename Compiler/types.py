@@ -1013,7 +1013,7 @@ class sint(_secret, _int):
             for i in range(len(lst_bits)):
                 res[i] = sint(lst_bits[i])
 
-            return res 
+            return res
         else:
             raise ValueError("Length of bits is 0")
 
@@ -2776,7 +2776,7 @@ class cintArray(Array):
 
 class cintMatrix(Matrix):
     def __init__(self, n, m, address=None):
-        Matrix.__init__(self, sn, m, cint, address)
+        Matrix.__init__(self, n, m, cint, address)
 
 class cfixArray(Matrix):
     def __init__(self, n, address=None):
