@@ -1,0 +1,67 @@
+import pickle
+
+Params.set_params(int_precision=64, f=40, k=64)
+NUM_PARTIES = 6
+
+SGD_ITERS = 1
+data_size = 1000
+dim = 23
+# Our hash map is constructed specially for dim = 23, don't change this value here
+BATCH_SIZE = 128
+HASH_DIMENSION = 11
+
+# input the data
+X = s_fix_mat.read_input(data_size, dim, 0)
+y = s_fix_mat.read_input(data_size, 1, 0)
+
+# input the randomness
+# each party needs to provide two random numbers for commitment; we will get 80 bits out of these two numbers
+Rand = s_fix_mat.read_input(data_size, 2, 0)
+
+# initialize the space for decomposed sfix of Rand, X, and y
+RXy_bits = s_fix_mat(data_size, 80 + (dim + 1) * 64)
+
+# Decompose X and y, must make them run in the same round
+# Should we use @library.for_range_multithread(nparallel, ???, ???)
+for i in range(data_size):
+    Rand_dec = []
+    Rand_dec[1] = Rand[i][1].conv().bit_compose(64)
+    Rand_dec[2] = Rand[i][2].conv().bit_compose(16)
+    X_dec = []
+    for j in range(dim):
+        X_dec[j] = X[i][j].conv().bit_decompose(64)
+    y_dec = y[i][1].conv().bit_decompose(64)
+    # copy the 64 bits of Rand_dec[1]
+    for j in range(64):
+        RXy_bits[i][j] = Rand_dec[1][j]
+    # copy the first 16 bits of Rand_dec[2]
+    for j in range(16):
+        RXy_bits[i][j + 64] = Rand_dec[2][j];
+    # copy the bits of X_dec
+    for j in range(dim):
+        for k in range(64):
+            RXy_bits[i][j * 64 + 64 + k] = X_dec[j][k]
+    # copy the bits of y_dec
+    for j in range(64):
+        Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
+
+# Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
+# Suppose that we can multiply that with (80 + (dim + 1) * 64) * 11, we can get the desired commitment data_size * 11.
+# Let us now load the second matrix, the hash map
+
+# Use d = 11 for a prime 2^64 is secure.
+# Read the subset sum hash map
+Map = cintMatrix(HASH_DIMENSION, 80 + (dim + 1) * 64)
+# Remark: We can actually batch 32 numbers in d = 11. For this implementation, we skip this for now.
+
+for MapId in range(HASH_DIMENSION):
+    with open("/home/ubuntu/mc2/Input_Data/hashmap_" + str(MapId), 'wb') as f:
+        arr = pickle.load(f)
+    Map[MapId].load_int(arr)
+
+# Transpose this map matrix
+MapT = transpose(Map)
+
+# multiply the Rxy_bits with MapT
+Commitments = malmul(Rxy_bits, MapT)
+reveal_all(Commitments, "Commitments for all the data")
