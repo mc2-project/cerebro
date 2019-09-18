@@ -10,16 +10,18 @@ HASH_DIMENSION = 11
 X = s_fix_mat.read_input(data_size, dim, 0)
 y = s_fix_mat.read_input(data_size, 1, 0)
 
+
 # input the randomness
 # each party needs to provide two random numbers for commitment; we will get 80 bits out of these two numbers
-Rand = s_fix_mat.read_input(data_size, 2, 0)
+#Rand = s_fix_mat.read_input(data_size, 2, 0)
 
 # initialize the space for decomposed sfix of Rand, X, and y
-RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
+#RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 
 
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
+'''
 for i in range(data_size):
     rand_dec_1 = sintArray(Rand[i][0].conv().bit_decompose(64))
     rand_dec_2 = sintArray(Rand[i][1].conv().bit_decompose(16))
@@ -39,6 +41,7 @@ for i in range(data_size):
     y_dec = y[i][0].conv().bit_decompose(64)
     for j in range(64):
         Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
+'''
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
 # Suppose that we can multiply that with (80 + (dim + 1) * 64) * 11, we can get the desired commitment data_size * 11.
@@ -46,11 +49,11 @@ for i in range(data_size):
 
 # Use d = 11 for a prime 2^64 is secure.
 # Read the subset sum hash map
-Map = c_int_mat.read_input(HASH_DIMENSION, 80 + (dim + 1) * 64, 1)
+# Map = c_int_mat.read_input(HASH_DIMENSION, 80 + (dim + 1) * 64, 1)
 # Remark: We can actually batch 32 numbers in d = 11. For this implementation, we skip this for now.
 
 # Transpose this map matrix
-MapT = transpose(Map)
+# MapT = transpose(Map)
 # multiply the Rxy_bits with MapT
-Commitments = matmul(RXy_bits, MapT, data_size, 80 + (dim + 1) * 64, 80 + (dim + 1) * 64, HASH_DIMENSION, sint)
-reveal_all(Commitments, "Commitments for all the data")
+# Commitments = matmul(RXy_bits, MapT, data_size, 80 + (dim + 1) * 64, 80 + (dim + 1) * 64, HASH_DIMENSION, sint)
+# reveal_all(Commitments, "Commitments for all the data")
