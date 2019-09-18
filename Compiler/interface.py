@@ -950,10 +950,8 @@ class ConstantPropagation(ast.NodeTransformer):
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
             # print e
-
-
+        
         # Visit the left hand side of the assignment
-
         if isinstance(copy_assign.targets[0], ast.Subscript):
             copy_assign.targets[0] = self.visit(copy_assign.targets[0])
 
