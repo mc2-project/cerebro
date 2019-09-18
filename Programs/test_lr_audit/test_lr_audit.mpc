@@ -19,7 +19,7 @@ y = s_fix_mat.read_input(data_size, 1, 0)
 # Rand = s_fix_mat.read_input(data_size, 2, 0)
 
 # initialize the space for decomposed sfix of Rand, X, and y
-RXy_bits = s_fix_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
+RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 
 """
 # Decompose X and y, must make them run in the same round
