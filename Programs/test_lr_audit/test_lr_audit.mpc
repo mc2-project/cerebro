@@ -48,7 +48,7 @@ for i in range(data_size):
     # copy the bits of y_dec
     y_dec = y[i][0].conv().bit_decompose(64)
     for j in range(64):
-        Rxy_bits[i][dim * 64 + 64 + j] = y_dec[k]
+        RXy_bits[i][dim * 64 + 64 + j] = y_dec[k]
 
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
