@@ -8,45 +8,18 @@ import math
 
 fp = 40
 
-# Use 1000 for the sample size. Our actually data size is 27000. So remember to multiply the results by 27x.
-samples = 10
-df = pd.read_excel('credit_card.xls')
-df.drop(df.columns[0],axis=1,inplace=True)
-# Get rid of first row which is header, list of columns
-df = df[1:]
+# Use 100 for the sample size. Our actually data size is 27000. So remember to multiply the results by 27x.
+data_size = 100
 
-train, test = train_test_split(df, test_size=0.1, random_state=42)
-train = train[:samples]
-values = list(train.columns.values)
-test_y = np.array(test[values[-1:]], dtype='float32')
-test_X = np.array(test[values[0:-1]], dtype='float32')
-train_X = np.array(train[values[0:-1]], dtype='float32')
-train_y = np.array(train[values[-1:]], dtype='float32')
+X_ = np.full((data_size, dim * 64), 1)
+y_ = np.full((data_size, 64), 1)
+R_ = np.full((data_size, 80), 1)
 
-# Scale X and y
-scaler_x = StandardScaler()
-scaler_y = StandardScaler()
-X_ = scaler_x.fit_transform(train_X)
-y_ = scaler_y.fit_transform(train_y)
-
-dim = np.shape(X_)[1]
-# Plaintext version of the secure training algorithm using SGD
-print(np.shape(X_))
-# Write out the training data
-data_x = [v for v in X_.flatten()]
+data_X = [v for v in X_.flatten()]
 data_y = [v for v in y_.flatten()]
+data_R = [v for v in R_.flatten()]
 
-data_priv = data_x + data_y
-data_priv = [i * pow(2, fp) for i in data_priv]
-
-# Now we already add X and y
-
-# The next input is the randomness provided by the parties
-# Input samples * 2 random numbers
-# for benchmark purpose (todo: generate real random numbers), we use 1 here.
-rand_ = np.full((samples, 2), 1)
-rand = [v for v in rand_.flatten()]
-data_priv = data_priv + rand
+data_priv = data_X + data_y + data_R
 
 # The next input (clear input) is the hash map. This is supposed to be hardcoded in the SCALE-MAMBA
 HASH_DIMENSION = 11
