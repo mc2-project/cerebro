@@ -1,7 +1,7 @@
 Params.set_params(int_precision=64, f=40, k=64)
 NUM_PARTIES = 6
 
-data_size = 10
+data_size = 1
 dim = 23
 # Our hash map is constructed specially for dim = 23, don't change this value here
 HASH_DIMENSION = 11
@@ -26,7 +26,7 @@ for j in range(data_size):
     for j in range(80):
         L[i][dim * 64 + 1 * 64 + j] = R[i][j] * (1 - R[i][j])
 
-r = sint.get_random_triples()[0]
+r = sint.get_random_triple()[0]
 
 for i in range(data_size):
     for j in range(dim * 64 + 1 * 64 + 80):
@@ -40,6 +40,7 @@ for i in range(data_size):
 
 is_res_zero = (res[0][0] == 0)
 reveal_all(is_res_zero, "The check result of the bitness")
+
 
 # initialize the space for decomposed sfix of Rand, X, and y
 RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
