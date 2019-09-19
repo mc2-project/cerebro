@@ -19,10 +19,10 @@ L = s_int_mat(data_size, dim * 64 + 1 * 64 + 80)
 for i in range(data_size):
     for j in range(dim * 64):
         L[i][j] = X[i][j] * (1 - X[i][j])
-for j in range(data_size):
+for i in range(data_size):
     for j in range(64):
         L[i][dim * 64 + j] = y[i][j] * (1 - y[i][j])
-for j in range(data_size):
+for i in range(data_size):
     for j in range(80):
         L[i][dim * 64 + 1 * 64 + j] = R[i][j] * (1 - R[i][j])
 
@@ -50,8 +50,10 @@ RXy_bits = s_int_mat(data_size, 80 + (dim + 1) * 64)
 for i in range(data_size):
     for j in range(dim * 64):
         RXy_bits[i][j] = X[i][j]
+for i in range(data_size):
     for j in range(64):
         RXy_bits[i][dim * 64 + j] = y[i][j]
+for i in range(data_size):
     for j in range(80):
         RXy_bits[i][dim * 64 + 1 * 64 + j] = R[i][j]
 
