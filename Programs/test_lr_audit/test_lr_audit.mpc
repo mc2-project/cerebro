@@ -30,7 +30,7 @@ for i in range(data_size):
     for j in range(dim):
         bit_decompose = X[i][j].conv().bit_decompose2(64)
         for k in range(64):
-            X_dec[j][k] = bit_decompose[k]
+            RXy_bits[i][j * 64 + 64 + k] = bit_decompose[k]
 
     y_dec = y[i][0].conv().bit_decompose2(64)
 
@@ -40,13 +40,7 @@ for i in range(data_size):
     # copy the first 16 bits of Rand_dec[1]
     for j in range(16):
         RXy_bits[i][j + 64] = rand_dec_2[j] #Rand_dec[1][j];
-    # copy the bits of X_dec
-    for j in range(dim):
-        X_dec = X[i][j].conv().bit_decompose(64)
-        for k in range(64):
-            RXy_bits[i][j * 64 + 64 + k] = X_dec[k]
     # copy the bits of y_dec
-    y_dec = y[i][0].conv().bit_decompose(64)
     for j in range(64):
         RXy_bits[i][dim * 64 + 64 + j] = y_dec[k]
 
