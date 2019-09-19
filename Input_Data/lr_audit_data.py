@@ -10,7 +10,7 @@ fp = 40
 
 # Use 100 for the sample size. Our actually data size is 27000. So remember to multiply the results by 27x.
 data_size = 100
-
+dim = 23
 X_ = np.full((data_size, dim * 64), 1)
 y_ = np.full((data_size, 64), 1)
 R_ = np.full((data_size, 80), 1)
