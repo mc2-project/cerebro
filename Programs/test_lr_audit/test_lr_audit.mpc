@@ -6,13 +6,40 @@ dim = 23
 # Our hash map is constructed specially for dim = 23, don't change this value here
 HASH_DIMENSION = 11
 
-# input the data
-X = s_fix_mat.read_input(data_size, dim, 0)
-y = s_fix_mat.read_input(data_size, 1, 0)
+# input the bit-decomposed data
+X = s_int_mat.read_input(data_size, dim * 64, 0)
+y = s_int_mat.read_input(data_size, 1 * 64, 0)
 
 # input the randomness
 # each party needs to provide two random numbers for commitment; we will get 80 bits out of these two numbers
-Rand = s_int_mat.read_input(data_size, 2, 0)
+R = s_int_mat.read_input(data_size, 80, 0)
+
+L = s_int_mat(data_size, dim * 64 + 1 * 64 + 80)
+
+for i in range(data_size):
+    for j in range(dim * 64):
+        L[i][j] = X[i][j] * (1 - X[i][j])
+for j in range(data_size):
+    for j in range(64):
+        L[i][dim * 64 + j] = y[i][j] * (1 - y[i][j])
+for j in range(data_size):
+    for j in range(80):
+        L[i][dim * 64 + 1 * 64 + j] = R[i][j] * (1 - R[i][j])
+
+r = sint.get_random_triples()[0]
+
+for i in range(data_size):
+    for j in range(dim * 64 + 1 * 64 + 80):
+        L[i][j] = L[i][j] * r
+
+res = sintMatrix(1, 1)
+res[0][0] = sint(0)
+for i in range(data_size):
+    for j in range(dim * 64 + 1 * 64 + 80):
+        res[0][0] = res[0][0] + L[i][j]
+
+is_res_zero = (res[0][0] == 0)
+reveal_all(is_res_zero, "The check result of the bitness")
 
 # initialize the space for decomposed sfix of Rand, X, and y
 RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
@@ -20,30 +47,12 @@ RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
 for i in range(data_size):
-    rand_dec_1 = Rand[i][0].bit_decompose2(64)
-    rand_dec_2 = Rand[i][1].bit_decompose2(16)
-
-    print type(rand_dec_1)
-    print type(rand_dec_2)
-
-    X_dec = sintMatrix(dim, 64)
-    for j in range(dim):
-        bit_decompose = X[i][j].conv().bit_decompose2(64)
-        for k in range(64):
-            RXy_bits[i][j * 64 + 64 + k] = bit_decompose[k]
-
-    y_dec = y[i][0].conv().bit_decompose2(64)
-
-    # copy the 64 bits of Rand_dec[0]
+    for j in range(dim * 64):
+        RXy_bits[i][j] = X[i][j]
     for j in range(64):
-        RXy_bits[i][j] = rand_dec_1[j] #Rand_dec[0][j]
-    # copy the first 16 bits of Rand_dec[1]
-    for j in range(16):
-        RXy_bits[i][j + 64] = rand_dec_2[j] #Rand_dec[1][j];
-    # copy the bits of y_dec
-    for j in range(64):
-        RXy_bits[i][dim * 64 + 64 + j] = y_dec[k]
-
+        RXy_bits[i][dim * 64 + j] = y[i][j]
+    for j in range(80):
+        RXy_bits[i][dim * 64 + 1 * 64 + j] = R[i][j]
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
 # Suppose that we can multiply that with (80 + (dim + 1) * 64) * 11, we can get the desired commitment data_size * 11.
@@ -58,4 +67,17 @@ Map = c_int_mat.read_input(HASH_DIMENSION, 80 + (dim + 1) * 64, 1)
 MapT = transpose(Map)
 # multiply the Rxy_bits with MapT
 Commitments = matmul(RXy_bits, MapT, data_size, 80 + (dim + 1) * 64, 80 + (dim + 1) * 64, HASH_DIMENSION, sint)
+
+X_values = s_int_mat.read_input(data_size, dim, 0)
+y_values = s_int_mat.read_input(data_size, 1, 0)
+
+for i in range(data_size):
+    for j in range(dim):
+        X_values_bit = s_int_array(64)
+        for k in range(64):
+            X_values_bit[k] = X[i][j * 64 + k]
+        X_values[i][j] = _number.bit_compose(X_values_bit)
+for i in range(data_size):
+    y_values[i] = _number.bit_compose(y[i])
+
 reveal_all(Commitments, "Commitments for all the data")
