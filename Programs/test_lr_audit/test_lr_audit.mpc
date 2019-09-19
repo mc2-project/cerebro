@@ -73,10 +73,10 @@ y_values = s_int_mat.read_input(data_size, 1, 0)
 
 for i in range(data_size):
     for j in range(dim):
-        X_values_bit = s_int_array(64)
+        X_values_bit = s_int_mat(1, 64)
         for k in range(64):
-            X_values_bit[k] = X[i][j * 64 + k]
-        X_values[i][j] = _number.bit_compose(X_values_bit)
+            X_values_bit[0][k] = X[i][j * 64 + k]
+        X_values[i][j] = _number.bit_compose(X_values_bit[0])
 for i in range(data_size):
     y_values[i] = _number.bit_compose(y[i])
 
