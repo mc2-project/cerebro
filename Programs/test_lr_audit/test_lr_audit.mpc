@@ -43,7 +43,7 @@ reveal_all(is_res_zero, "The check result of the bitness")
 
 
 # initialize the space for decomposed sfix of Rand, X, and y
-RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
+RXy_bits = s_int_mat(data_size, 80 + (dim + 1) * 64)
 
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
