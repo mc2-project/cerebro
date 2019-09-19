@@ -9,7 +9,7 @@ import math
 fp = 40
 
 # Use 1000 for the sample size. Our actually data size is 27000. So remember to multiply the results by 27x.
-samples = 100
+samples = 10
 df = pd.read_excel('credit_card.xls')
 df.drop(df.columns[0],axis=1,inplace=True)
 # Get rid of first row which is header, list of columns
@@ -36,8 +36,8 @@ print(np.shape(X_))
 data_x = [v for v in X_.flatten()]
 data_y = [v for v in y_.flatten()]
 
-data = data_x + data_y
-data = [i * pow(2, fp) for i in data]
+data_priv = data_x + data_y
+data_priv = [i * pow(2, fp) for i in data_priv]
 
 # Now we already add X and y
 
@@ -46,7 +46,7 @@ data = [i * pow(2, fp) for i in data]
 # for benchmark purpose (todo: generate real random numbers), we use 1 here.
 rand_ = np.full((samples, 2), 1)
 rand = [v for v in rand_.flatten()]
-data = data + rand
+data_priv = data_priv + rand
 
 # The next input (clear input) is the hash map. This is supposed to be hardcoded in the SCALE-MAMBA
 HASH_DIMENSION = 11
@@ -56,4 +56,6 @@ HASH_DIMENSION = 11
 dim = 23 # hardcoded
 hashmap_ = np.full((HASH_DIMENSION, 80 + (dim + 1) * 64), 1)
 hashmap = [v for v in hashmap_.flatten()]
-data = data + hashmap
+data_pub = hashmap
+
+data = [data_priv, data_pub]
