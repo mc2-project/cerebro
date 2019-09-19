@@ -1,7 +1,7 @@
 Params.set_params(int_precision=64, f=40, k=64)
 NUM_PARTIES = 6
 
-data_size = 10
+data_size = 1
 dim = 23
 # Our hash map is constructed specially for dim = 23, don't change this value here
 HASH_DIMENSION = 11
@@ -19,6 +19,7 @@ RXy_bits = s_int_mat.read_input(data_size, 80 + (dim + 1) * 64, 0)
 
 # Decompose X and y, must make them run in the same round
 # Should we use @library.for_range_multithread(nparallel, ???, ???)
+
 for i in range(data_size):
     rand_dec_1 = Rand[i][0].bit_decompose2(64)
     rand_dec_2 = Rand[i][1].bit_decompose2(16)
@@ -49,7 +50,6 @@ for i in range(data_size):
     y_dec = y[i][0].conv().bit_decompose(64)
     for j in range(64):
         RXy_bits[i][dim * 64 + 64 + j] = y_dec[k]
-
 
 # Now Rxy_bits is a matrix of data_size * (80 + (dim + 1) * 64)
 # Suppose that we can multiply that with (80 + (dim + 1) * 64) * 11, we can get the desired commitment data_size * 11.
