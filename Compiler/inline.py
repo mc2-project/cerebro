@@ -1,5 +1,5 @@
 import ast
-
+import astunparse
 from .fat_tools import (OptimizerStep, NodeTransformer, NodeVisitor,
                     pretty_dump, get_starargs, get_keywords, get_varkeywords, copy_node)
 
@@ -25,32 +25,6 @@ def locate_kwarg(funcdef, name):
         if arg.arg == name:
             return idx
     raise ValueError('argument %r not found' % name)
-
-
-
-"""
-class RenameVisitor(ast.NodeTransformer):
-    # FIXME: Reuse tools.ReplaceVariable
-
-    def __init__(self, callsite, inlinable, actual_pos_args):
-        #assert get_starargs(callsite) is None
-        #assert not get_varkeywords(callsite) is not None
-        #assert inlinable.args.vararg is None
-        #assert inlinable.args.kwonlyargs == []
-        #assert inlinable.args.kw_defaults == []
-        #assert inlinable.args.kwarg is None
-        #assert inlinable.args.defaults == []
-
-        # Mapping from name in callee to node in caller
-        self.remapping = {}
-        for formal, actual in zip(inlinable.args.args, actual_pos_args):
-            self.remapping[formal.id] = actual
-
-    def visit_Name(self, node):
-        if node.id in self.remapping:
-            return self.remapping[node.id]
-        return node
-"""
 
 
 
@@ -113,20 +87,23 @@ class RenameVisitor(ast.NodeTransformer):
         self.fns_to_vars = fns_to_vars
         self.fn_to_node = {}
 
-
+        self.global_counter = 0
 
     def remap(self, parent, name, for_loop=False):
-        if name not in self.hardcoded_names:
-            if name.startswith(parent):
-                return name 
-            else:
-                if name not in self.fns_to_vars[parent] and not for_loop:
-                    # Not a variable exclusive to that scope
-                    print "Parent: {0}, name: {1}".format(parent, name)
-                    print self.fns_to_vars[parent]
-                    return name
+        if parent:
+            if name not in self.hardcoded_names:
+                if name.startswith(parent):
+                    return name 
                 else:
-                    return parent + "_" + name
+                    if name not in self.fns_to_vars[parent] and not for_loop:
+                        # Not a variable exclusive to that scope
+                        print "Parent: {0}, name: {1}".format(parent, name)
+                        print self.fns_to_vars[parent]
+                        return name
+                    else:
+                        return parent + "_" + name
+            else:
+                return name
         else:
             return name
 
@@ -159,6 +136,7 @@ class RenameVisitor(ast.NodeTransformer):
         parent = self.get_parent()
         if isinstance(call_node.func, ast.Attribute):
             if parent:
+                print(astunparse.unparse(node))
                 call_node.func.value.id = self.remap(parent, call_node.func.value.id)
             self.visit(call_node.func)
         else:
@@ -249,6 +227,7 @@ class RenameVisitor(ast.NodeTransformer):
                 #if name_obj.id not in self.global_names:
                 name_obj.id = self.remap(parent, name_obj.id)
 
+        print "Inline return_node.__dict__", return_node.__dict__
         return return_node
 
     def resolve_binop_names(self, parent, binop):
@@ -302,32 +281,7 @@ class RenameVisitor(ast.NodeTransformer):
         # Rename the variable in 'range', for i in range(x), rename the variable x as well
         for_node.iter = self.visit(for_node.iter)
         for_node = self.generic_visit(for_node)
-        """
-        for item in for_node.body:
-            self.visit(item)
-        """
         return for_node
-
-    """
-    def copy_node(self, node):
-        if isinstance(node, ast.Name):
-            return ast.Name(id=node.id)
-        elif isinstance(node, ast.Num):
-            return ast.Num(n=node.n)
-        elif isinstance(node, ast.For):
-            return ast.For(target=node.target, iter=node.iter, body=node.body, orelse=node.orelse)
-        elif isinstance(node, ast.Assign):
-            return ast.Assign(targets=node.targets, value=node.value)
-        elif isinstance(node, ast.Index):
-            return ast.Index(value=node.value)
-        elif isinstance(node, ast.Call):
-            return ast.Call(func=node.func, args=node.args, keywords=node.keywords)
-        elif isinstance(node, ast.Subscript):
-            return ast.Subscript(slice=node.slice, value=node.value)
-        else:
-            print "ERROR: Copy type not found: ", type(node), node.__dict__
-            return node
-    """
     
 
 

@@ -56,15 +56,14 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
 
 
     a = ASTParser(prog.infile, party, debug=True)
-    vectorized_calls, local_program = a.parse()
+    vectorized_calls, local_program = a.parse(options.split)
 
-    local_file = open(os.path.join(options.filename, "local.py"), "w")
-    local_file.write(local_program)
-    local_file.close()
-    interface.mpc_type = interface.LOCAL 
-    a.execute_local(local_program, VARS)
+    
+    if local_program:
+        local_file = open(os.path.join(options.filename, "local.py"), "w")
+        local_file.write(local_program)
+        local_file.close()
 
-    interface.mpc_type = interface.SPDZ
     a.execute(VARS)
 
     # optimize the tapes
@@ -85,13 +84,11 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
 
     num_vectorized_triples, num_vectorized_bits = sub_vectorized_triples(vectorized_calls, prog.req_num)
     print "Due to vectorized triples, Reduced triple count by: {0}. Reduced bit count by: {1}.".format(num_vectorized_triples, num_vectorized_bits)
-
-
-    prog.req_num[('modp', 'triple')] -= num_vectorized_triples
-    prog.req_num[('modp', 'bit')] -= num_vectorized_bits
+    #prog.req_num[('modp', 'triple')] -= num_vectorized_triples
+    #prog.req_num[('modp', 'bit')] -= num_vectorized_bits
     # Don't want negative triples/bits
-    assert(prog.req_num[('modp', 'triple')] >= 0)
-    assert(prog.req_num[('modp', 'bit')] >= 0)
+    assert(prog.req_num[('modp', 'triple')] >= num_vectorized_triples)
+    assert(prog.req_num[('modp', 'bit')] >= num_vectorized_bits)
 
 
 
@@ -134,7 +131,7 @@ def sub_vectorized_triples(vectorized_calls, req_num):
 
 
 # Similar 
-def run_gc(args, options, party, param=-1, merge_opens=True, \
+def run_gc(args, options, param=-1, merge_opens=True, \
            reallocate=True, debug=False):
 
     from Compiler.program_gc import ProgramGC
@@ -156,56 +153,55 @@ def run_gc(args, options, party, param=-1, merge_opens=True, \
     VARS['program_gc'] = prog
 
     print 'Compiling file', prog.infile
-    a = ASTParser(prog.infile, debug=True)
+    party = options.party
+    a = ASTParser(prog.infile, party, debug=True)
     a.parse()
     a.execute(VARS)
 
     # Write output
-    prog.write_bytes(prog.outfile)
+    # prog.write_bytes(prog.outfile)
 
     return prog
 
 
 def run(args, options, param=-1, merge_opens=True, \
         reallocate=True, debug=False):
-
-    #if args[0] == 'a':
-    a = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
-    #return a
-    #elif args[0] == 'b':
-    # b = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
-    #return b
-
+    
+    # Do planning
     if options.constant_file:
+        arithmetic_prog = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+        boolean_prog = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+        run_planner(arithmetic_prog, boolean_prog, options.constant_file)
 
-        """
-        d_b = planning.agmpc_cost(b, options.constant_file)
-        print "AG-MPC cost: ", d_b['total_cost']
-        d_a = planning.spdz_cost(a, options.constant_file)
-        print "SPDZ cost: ", d_a['total_cost']
-        if d_b['total_cost'] < d_a['total_cost']:
-            print "BOOLEAN"
-            print "---------------------------------------------"
-            print "Decision: ", d_b['decision']
-            print "Cost: ", d_b['total_cost']
-            print "---------------------------------------------"
+    else:
+        if args[0] == 'a':
+            return run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
 
+        elif args[0] == 'b':
+            return run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
         else:
+            raise ValueError("Must choose either arithmetic (a) or GC (b)")
             print "---------------------------------------------"
-            print "ARITHMETIC"
-            print "Decision: ", d_a['decision']
-            print "Cost: ", d_a['total_cost']
-            print "---------------------------------------------"
-        """
-        pass
+            print "NO CONSTANTS FILE"
+            print "---------------------------------------------" 
+
+
+def run_planner(arithmetic_prog, boolean_prog, constant_file):
+    d_b = planning.agmpc_cost(boolean_prog, constant_file)
+    print "AG-MPC cost: ", d_b['total_cost']
+    d_a = planning.spdz_cost(arithmetic_prog, constant_file)
+    print "SPDZ cost: ", d_a['total_cost']
+    if d_b['total_cost'] < d_a['total_cost']:
+        print "BOOLEAN"
+        print "---------------------------------------------"
+        print "Decision: ", d_b['decision']
+        print "Cost: ", d_b['total_cost']
+        print "---------------------------------------------"
 
     else:
-       print "---------------------------------------------"
-       print "NO CONSTANTS FILE"
-       print "---------------------------------------------" 
-    if args[0] == 'a':
-        return a
-    #elif args[0] == 'b':
-        #return b
-    else:
-        raise ValueError("Must choose either arithmetic (a) or GC (b)")
+        print "---------------------------------------------"
+        print "ARITHMETIC"
+        print "Decision: ", d_a['decision']
+        print "Cost: ", d_a['total_cost']
+        print "---------------------------------------------"
+               

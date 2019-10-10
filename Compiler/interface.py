@@ -46,20 +46,6 @@ class SecretIntegerFactory(object):
         else:
             return sint_gc(Params.intp, input_party=party)
 
-class SecretIntegerMatrixFactory(object):
-    def __call__(self, rows, columns):
-        if not isinstance(rows, int) or not isinstance(columns, int):
-            raise ValueError("Matrix sizes must be publicly known integers")
-        if mpc_type == SPDZ:
-            ret = sintMatrix(rows, columns)
-            return ret
-        else:
-            ret = sintMatrixGC(rows, columns)
-            for i in range(rows):
-                for j in range(columns):
-                    ret[i][j] = cint_gc(0)
-            return ret
-
 class ClearIntegerMatrixFactory(object):
     def __call__(self, rows, columns):
         if not isinstance(rows, int) or not isinstance(columns, int):
@@ -251,12 +237,14 @@ class SecretIntegerMatrixFactory(object):
 
         if mpc_type == SPDZ:
             ret = sintMatrix(rows, columns)
+            
             @library.for_range(ret.rows)
             def f(i):
                 @library.for_range(ret.columns)
                 def g(j):
                     v = sint.get_private_input_from(party)
                     ret[i][j] = v
+            
             return ret
         else:
             ret = sintMatrixGC(rows, columns)
@@ -301,7 +289,6 @@ class PrivateFixedPointMatrix(object):
 
         self.data = lst_data
 
-        #print "READ DATA", self.data
 
     def read_input(self, rows, columns, party):
         assert(len(self.data) >= rows * columns)
@@ -351,9 +338,6 @@ def write_private_data(lst_data):
     for matrix in lst_data:
         lst_private_data += matrix.flatten().tolist()
 
-
-    print "PRIVATE DATA OUTPUT: ", lst_private_data
-    print "Length: ", len(lst_private_data)
     lst_private_data = [e * pow(2, 36) for e in lst_private_data]
     f = open("../Input_Data" + "/f0", 'w')
     for d in lst_private_data:
@@ -459,7 +443,6 @@ class ProcessDependencies(ast.NodeVisitor):
         # Not considering differing scopes and same name.
         if node.name != self.target_fn and node.name not in self.mllib_fn:
             self.functions[node.name] = node
-            #print "Private type inference, visit function def: ", node.name
             args = []
             for arg in node.args.args:
                 args.append(arg.id)
@@ -470,7 +453,6 @@ class ProcessDependencies(ast.NodeVisitor):
             self.G.add_node(new_target_fn_name)
             self.functions[new_target_fn_name] = node
 
-        #print "Visiting function: ", node.name
         if len(self.scope_stack):
             "Function ", node.name, " was called by ", self.scope_stack[0]
 
@@ -488,9 +470,7 @@ class ProcessDependencies(ast.NodeVisitor):
             fn_name = node.func.id
             # Add in extra identifier.
             new_target_fn_name = fn_name+str(node.lineno)
-            #print "Function {0} called by {1}".format(fn_name, parent)
             self.scope_stack.insert(0, fn_name)
-            #print "First time visiting: ", fn_name
             self.generic_visit(node)
 
 
@@ -817,7 +797,6 @@ class CountFnCall(ast.NodeVisitor):
                         val = self.eval_args_helper(node.args[i])
                         lst_info.append(val)
 
-                    print "LR info: "
                     batch_size = lst_info[0]
                     sgd_iters = lst_info[1]
                     dim = lst_info[2]
@@ -970,6 +949,11 @@ class ConstantPropagation(ast.NodeTransformer):
             res = operators[type(node.op)](left_val, right_val)
             return res
 
+    def visit_FunctionDef(self, node):
+        return node
+
+    """
+
     def visit_BinOp(self, node):
         try:
             val = self.eval_args_helper(node)
@@ -1001,7 +985,7 @@ class ConstantPropagation(ast.NodeTransformer):
             #print e
             return node
 
-
+    """
     def eval_compare_helper(self, node):
         left = node.left
         comapre_op = node.ops[0]
@@ -1538,7 +1522,6 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 #left_name = self.get_subscript_name(node.value.left, names)
                 #right_name = self.get_subscript_name(node.value.right)
                 self.get_binop_name(node.value, names)
-                print "NAMES: ", names
                 #res_type = self.check_types([ast.Name(id=left_name), ast.Name(id=right_name)])
                 res_type = self.check_types([ast.Name(id=name) for name in list(names)])
                 #print "Subscript left name: {0}, left_type: {1}, right name: {2}, right type: {3}, res_type:{4}".format(left_name, self.lookup_type(left_name), right_name, self.lookup_type(right_name), res_type)
@@ -1817,7 +1800,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         lst_private = []
         secret_to_dependents = {}
         d = {}
-        print "NUMBER OF NODES: ", len(self.var_graph.nodes())
+        #print "NUMBER OF NODES: ", len(self.var_graph.nodes())
         for node in self.var_graph.nodes(data=True):
             print node
             d[node[0]] = node
@@ -1832,7 +1815,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         while self.pq:
             priority, node = heapq.heappop(self.pq)
             node_type = d[node][1]['mc2_type']
-            print "Node type: ", node_type
+            #print "Node type: ", node_type
 
             if node_type[0] == MC2_Types.SECRET and self.check_if_source_private(node):
                 lst_local_ops.append(d[node])
@@ -1898,7 +1881,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 clear_index = lst_clear_private.index(clear_node)
                 lst_to_insert.append((clear_node, secret_node))
 
-                print "CLEAR NODE: ", clear_node
+                #print "CLEAR NODE: ", clear_node
 
 
 
@@ -1951,7 +1934,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
         #lst_secret_nodes.extend([e[1] for e in lst_to_insert])
-        print "LIST SECRET: ", lst_secret_nodes
+        #print "LIST SECRET: ", lst_secret_nodes
         return lst_clear_private, lst_secret_nodes, local_program
 
 
@@ -1969,7 +1952,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             else:
                 s+= "{0}_{1} = []\n".format(fn_name, lineno)
         for node in lst_clear_private:
-            print "Private node: ", astunparse.unparse(node[1]['op'])
+            #print "Private node: ", astunparse.unparse(node[1]['op'])
             mc2_type = node[1]['mc2_type']
             check_private = (mc2_type[0] == MC2_Types.PRIVATE and mc2_type[1] == party)
             if check_private or mc2_type[0] == MC2_Types.CLEAR:
@@ -2192,64 +2175,16 @@ class ASTParser(object):
         self.debug = debug
         self.party = int(party)
 
-    def parse(self):
+    def parse(self, split_program=False):
         # Run through a bunch of parsers
-        # hardcoded to count the # of matmul calls. Returns the # of matmul calls.
-        target = "matmul"
-        # Try inlining
-        #self.tree = ASTChecks().visit(self.tree)
-        #
-        #source = astor.to_source(self.tree)
-        #print "AFTER IF CHECKS: "
-        #print source
+        if split_program:
+            local_program = self.split_program()
+            return {}, local_program
+        else:
+            self.tree = ForLoopParser().visit(self.tree)
+            self.tree = ASTChecks().visit(self.tree)
+            return {}, ""
 
-
-        dep = ProcessDependencies()
-        dep.visit(self.tree)
-
-        #helper = inline.RenameVisitorHelper(dep.fns_to_params)
-        #helper.visit(self.tree)
-        #rename = inline.RenameVisitor(dep.fns_to_params, helper.fns_to_vars)
-        #self.tree = rename.visit(self.tree)
-        #inliner = inline.InlineSubstitution(rename.fn_to_node, rename.fns_to_params, dep.G)
-        #self.tree = inliner.visit(self.tree)
-        #self.tree = ConstantPropagation().visit(self.tree)
-        #self.tree = loop_unroll.UnrollStep().visit(self.tree)
-        # After for-loops unroll, propagate the for-loop constants
-
-        #self.tree = ConstantPropagation().visit(self.tree)
-        # Another pass to fix all the subscripts. Ex: a[i] => a[0] for example
-        #self.tree = ConstantPropagation().visit(self.tree)
-
-        #s = PrivateTypeInference(rename.fn_to_node, rename.fns_to_params, dep.G)
-        #s.visit(self.tree)
-        #source = astor.to_source(self.tree)
-
-        #print "After unrolling: ", source
-
-        #s = ProgramSplitterHelper()
-        #s.visit(self.tree)
-        # Map matrices to their dimensions as well. SHIET
-        # print "MATRIX DIMENSIONS: ", s.mat_to_dim
-        # print "Count matmul in program splitter: ", s.vectorized_calls, haven't separated out local computation yet.
-
-        #lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
-        #lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
-
-        #s.postprocess()
-
-        #splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
-        #self.tree = splitter.visit(self.tree)
-
-        #count_matmul = CountMatmulHelper(s.mat_to_dim)
-        #count_matmul.visit(self.tree)
-        #print "Count matmul: ", count_matmul.vectorized_calls
-
-
-        #self.tree = ForLoopParser().visit(self.tree)
-        #self.tree = ASTChecks().visit(self.tree)
-
-        #return count_matmul.vectorized_calls, local_program
         return {}, ""
 
     def execute(self, context):
@@ -2257,23 +2192,60 @@ class ASTParser(object):
         if self.debug:
             print(source)
 
-
-        #print context
         exec(source, context)
 
 
 
+    def split_program(self):
+        rename = self.inline()
+        self.loop_unroll()
+        s = ProgramSplitterHelper()
+        s.visit(self.tree)
+        # Map matrices to their dimensions as well.
+        lst_local_ops, secret_to_dependents, lst_private, d = s.trace_private_computation(self.party)
+        lst_clear_private, lst_secret_nodes, local_program = s.insert_local_compute(lst_local_ops, secret_to_dependents, self.party, d)
 
-        #exec(compile(self.tree, filename="<ast>", mode="exec"), context)
+        s.postprocess()
+
+        splitter = ProgramSplitter(lst_local_ops, lst_secret_nodes, secret_to_dependents, s.mat_to_dim, s.name_to_node, lst_private, s.aggregations, self.party)
+        self.tree = splitter.visit(self.tree)
+
+        return local_program
 
 
-    def execute_local(self, local_str, context):
-        print "LOCAL COMPUTE"
-        print local_str
-        #temp_mpc_type = interface.mpc_type
-        #interface.mpc_type = LOCAL
-        local = {}
-        #exec(local_str, context, local)
-        #print "Global: ", context
-        #print "Local: ", local
-        #interface.mpc_type = temp_mpc_type
+
+    def inline(self):
+        dep = ProcessDependencies()
+        dep.visit(self.tree)
+        helper = inline.RenameVisitorHelper(dep.fns_to_params)
+        helper.visit(self.tree)
+        rename = inline.RenameVisitor(dep.fns_to_params, helper.fns_to_vars)
+        self.tree = rename.visit(self.tree)
+        inliner = inline.InlineSubstitution(rename.fn_to_node, rename.fns_to_params, dep.G)
+        self.tree = inliner.visit(self.tree)
+
+
+        return rename
+        
+
+
+
+
+    def loop_unroll(self):
+        self.tree = ConstantPropagation().visit(self.tree)
+        self.tree = loop_unroll.UnrollStep().visit(self.tree)
+        # After for-loops unroll, propagate the for-loop constants
+        self.tree = ConstantPropagation().visit(self.tree)
+        # Another pass to fix all the subscripts. Ex: a[i] => a[0] for example
+        self.tree = ConstantPropagation().visit(self.tree)
+
+
+    def count_matmul(self):
+        target = "matmul"
+        count_matmul = CountMatmulHelper(s.mat_to_dim)
+        count_matmul.visit(self.tree)
+        print "Count matmul: ", count_matmul.vectorized_calls
+
+
+
+

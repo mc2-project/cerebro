@@ -48,6 +48,9 @@ def main():
                       dest="fdflag", default=True,
                       help="de-activates under-over flow check for sfloats")
 
+
+    parser.add_argument("-sp", "--split", action="store_true", dest="split", help="Whether or not to split the program")
+
     # Add argument for constants file
     parser.add_argument("-cf", "--constant_file", dest="constant_file", default="", help="File for the constants")
     parser.add_argument("-p", "--party", dest="party", help="party number")
