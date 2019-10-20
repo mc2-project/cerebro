@@ -1,3 +1,5 @@
+.. _control_flow:
+
 **************************************************
 Cerebro's supported control flow
 **************************************************
@@ -21,7 +23,9 @@ Then, Cerebro transforms it into:
 ::
 	x = cond * 5 + (1-cond) * 10
 
-Currently, cond can only have a single conditional operator.
+Limitations: 
+	* Condition can only have a single conditional operator.
+	* Currently, only assignment operators are supported in the body of the conditional.
 
 
 
@@ -37,9 +41,9 @@ No extra work needs to be done on the developer's end, one can just write::
 	for i in range(n)
 and have that code be transformed into a representation the underlying framework understands.
 
-There are a few limitations on the for-loop construct (which can be resolved by unrolling the loop)
+Limitations: (which can be resolved by unrolling the loop)
 	* Assignments to variables outside the for-loop scope cannot be made.
-	* 
+
 
 
 
@@ -66,3 +70,34 @@ would be transformed into:
 	x += i
 
 It allows more flexibility in what to code in for-loops for the developer.
+
+
+Function Inlining
+**********************
+Function inlining is also a work in progress. It replaces function calls with the entire inlined version of the function call.
+For example, if we have the following code:
+::
+	def f(y):
+		x = 5
+		print("Hello")
+		return x + y
+
+	def g(x):
+		return f(x)
+
+	g(3)
+
+After function inlining, it would be transformed into:
+::
+	g_x = 3
+	f_y = 3
+	f_x = 5
+	print("Hello")
+	f_ret = f_x + f_y
+	g_ret = f_ret
+
+
+Limitations:
+	* Currently function inlining is a bit wonky dealing with OOP.
+
+

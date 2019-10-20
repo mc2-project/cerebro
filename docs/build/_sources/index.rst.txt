@@ -10,9 +10,10 @@ Welcome to Cerebro's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   usage/types.rst
-   usage/mllib.rst
-   usage/control_flow.rst
+   setup/setup.rst
+   setup/tutorial.rst
+   usage/references.rst
+   
 
 
 
@@ -20,5 +21,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
+.. * :ref:`modindex`

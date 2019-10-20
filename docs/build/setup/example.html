@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Cerebro’s ML Library &mdash; Cerebro 1.0 documentation</title>
+  <title>Millionaire’s Problem Example &mdash; Cerebro 1.0 documentation</title>
   
 
   
@@ -94,10 +94,9 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Cerebro Setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup/tutorial.html">Cerebro Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup/tutorial.html#millionaire-s-problem-example">Millionaire’s Problem Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="references.html">Cerebro References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Cerebro Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Cerebro Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/references.html">Cerebro References</a></li>
 </ul>
 
             
@@ -143,13 +142,13 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Cerebro’s ML Library</li>
+      <li>Millionaire’s Problem Example</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/usage/mllib.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/setup/example.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -162,42 +161,30 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="cerebro-s-ml-library">
-<span id="mllib"></span><h1>Cerebro’s ML Library<a class="headerlink" href="#cerebro-s-ml-library" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="matrix-operations">
-<h2>Matrix Operations<a class="headerlink" href="#matrix-operations" title="Permalink to this headline">¶</a></h2>
-<p>Currently, Cerebro supports a number of operations involving matrices.</p>
-<p><strong>matadd(A, B)</strong>: Element-wise addition of two matrices A and B.</p>
-<p><strong>matsub(A, B)</strong>: Element-wise subtraction of two matrices A and B.</p>
-<p><strong>matmul(A, B)</strong>: Matrix multiplication of matrices A and B.</p>
-<p><strong>transpose(A)</strong>: Transpose of matrix A.</p>
-<p><strong>matinv(A)</strong>: Inverse of matrix A.</p>
+  <div class="section" id="millionaire-s-problem-example">
+<span id="example"></span><h1>Millionaire’s Problem Example<a class="headerlink" href="#millionaire-s-problem-example" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mpc-program">
+<h2>MPC Program<a class="headerlink" href="#mpc-program" title="Permalink to this headline">¶</a></h2>
+<p>We can walk through a simple  example of MPC which is called the Millionaire’s problem. The premise is that there are 2 millionaries Alice and Bob, each with a certain net worth. The Millionare’s problem is to determine who is the richest without evealing any information about any individual millionaire’s net worth.</p>
+<p>At the top of the program, we can declare our constants:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ALICE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">BOB</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
 </div>
-<div class="section" id="other-useful-functions-or-classes-used-in-ml">
-<h2>Other useful functions or classes used in ML<a class="headerlink" href="#other-useful-functions-or-classes-used-in-ml" title="Permalink to this headline">¶</a></h2>
-<p><strong>sigmoid(v)</strong>: Performs the sigmoid function on value v.</p>
-<p><strong>mat_const_mul(c, A)</strong>: Multiplies each entry in matrix A by a constant value c.</p>
-<p><strong>mat_assign(dest, src)</strong>: Assigns dest matrix to src matrix.</p>
-<p><strong>get_identity_matrix(n)</strong>: Returns an identity matrix of dimension n.</p>
-<p><strong>class Piecewise</strong>: Defines a piecewise function based on a sequence of boundaries.</p>
-<blockquote>
-<div><ul class="simple">
-<li><dl class="first docutils">
-<dt>add_boundary(self, lower, upper, a, b)</dt>
-<dd><ul class="first last">
-<li>Adds a linear function y = ax + b within the boundary [lower, upper]</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</div></blockquote>
-<p>Example of a ReLU function:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># init a piecewise function with 2 boundaries (-infty, 0), (0, infty)</span>
-<span class="n">relu</span> <span class="o">=</span> <span class="n">Piecewise</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="c1"># Add a linear function for each boundary: y = ax + b</span>
-<span class="n">relu</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="n">relu</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<p>We then read in our input data:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">alice_networth</span> <span class="o">=</span> <span class="n">sint</span><span class="o">.</span><span class="n">read_input</span><span class="p">(</span><span class="n">ALICE</span><span class="p">)</span>
+<span class="n">bob_networth</span> <span class="o">=</span> <span class="n">sint</span><span class="o">.</span><span class="n">read_input</span><span class="p">(</span><span class="n">BOB</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We then compare the two player’s net worth:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">alice_networth</span> <span class="o">&lt;</span> <span class="n">bob_networth</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">BOB</span>
+<span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">ALICE</span>
+</pre></div>
+</div>
+<p>We can then reveal the final result:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">reveal_all</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;The player who is richest&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

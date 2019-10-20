@@ -44,8 +44,7 @@
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Cerebro’s ML Library" href="mllib.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -94,17 +93,11 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types used in Cerebro</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mllib.html">Cerebro’s ML Library</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Cerebro’s supported control flow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#conditionals">Conditionals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#for-loops">For-Loops</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#loop-unrolling">Loop-Unrolling</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup/setup.html">Cerebro Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup/tutorial.html">Cerebro Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup/tutorial.html#millionaire-s-problem-example">Millionaire’s Problem Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">Cerebro References</a></li>
 </ul>
 
             
@@ -170,7 +163,7 @@
            <div itemprop="articleBody">
             
   <div class="section" id="cerebro-s-supported-control-flow">
-<h1>Cerebro’s supported control flow<a class="headerlink" href="#cerebro-s-supported-control-flow" title="Permalink to this headline">¶</a></h1>
+<span id="control-flow"></span><h1>Cerebro’s supported control flow<a class="headerlink" href="#cerebro-s-supported-control-flow" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="conditionals">
 <h2>Conditionals<a class="headerlink" href="#conditionals" title="Permalink to this headline">¶</a></h2>
 <p>Cerebro currently supports basic conditionals and assignment operators under those conditionals.
@@ -186,7 +179,14 @@ It transforms such assignment operators into a compound statement that erases th
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">cond</span> <span class="o">*</span> <span class="mi">5</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cond</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
 </pre></div>
 </div>
-<p>Currently, cond can only have a single conditional operator.</p>
+<dl class="docutils">
+<dt>Limitations:</dt>
+<dd><ul class="first last simple">
+<li>Condition can only have a single conditional operator.</li>
+<li>Currently, only assignment operators are supported in the body of the conditional.</li>
+</ul>
+</dd>
+</dl>
 </div>
 <div class="section" id="for-loops">
 <h2>For-Loops<a class="headerlink" href="#for-loops" title="Permalink to this headline">¶</a></h2>
@@ -197,10 +197,9 @@ No extra work needs to be done on the developer’s end, one can just write:</p>
 </div>
 <p>and have that code be transformed into a representation the underlying framework understands.</p>
 <dl class="docutils">
-<dt>There are a few limitations on the for-loop construct (which can be resolved by unrolling the loop)</dt>
+<dt>Limitations: (which can be resolved by unrolling the loop)</dt>
 <dd><ul class="first last simple">
 <li>Assignments to variables outside the for-loop scope cannot be made.</li>
-<li></li>
 </ul>
 </dd>
 </dl>
@@ -223,6 +222,38 @@ No extra work needs to be done on the developer’s end, one can just write:</p>
 </div>
 <p>It allows more flexibility in what to code in for-loops for the developer.</p>
 </div>
+<div class="section" id="function-inlining">
+<h3>Function Inlining<a class="headerlink" href="#function-inlining" title="Permalink to this headline">¶</a></h3>
+<p>Function inlining is also a work in progress. It replaces function calls with the entire inlined version of the function call.
+For example, if we have the following code:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+
+<span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">g</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After function inlining, it would be transformed into:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">g_x</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">f_y</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">f_x</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+<span class="n">f_ret</span> <span class="o">=</span> <span class="n">f_x</span> <span class="o">+</span> <span class="n">f_y</span>
+<span class="n">g_ret</span> <span class="o">=</span> <span class="n">f_ret</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Limitations:</dt>
+<dd><ul class="first last simple">
+<li>Currently function inlining is a bit wonky dealing with OOP.</li>
+</ul>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 
@@ -231,13 +262,6 @@ No extra work needs to be done on the developer’s end, one can just write:</p>
            
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-      
-        <a href="mllib.html" class="btn btn-neutral float-left" title="Cerebro’s ML Library" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

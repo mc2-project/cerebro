@@ -1,0 +1,287 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Cerebro Tutorial &mdash; Cerebro 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'../',
+              VERSION:'1.0',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Cerebro References" href="../usage/references.html" />
+    <link rel="prev" title="Cerebro Setup" href="setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Cerebro
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Cerebro Setup</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cerebro Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#arithmetic-scale-mamba">Arithmetic: SCALE-MAMBA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#boolean-emp-agmpc">Boolean: EMP_AGMPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#side-note-input-data">Side Note: Input Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/references.html">Cerebro References</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cerebro</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Cerebro Tutorial</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/setup/tutorial.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="cerebro-tutorial">
+<h1>Cerebro Tutorial<a class="headerlink" href="#cerebro-tutorial" title="Permalink to this headline">¶</a></h1>
+<p>While Cerebro can choose between arithmetic and boolean protocols, the process of automating it is currently not supported. The documentation below will detail how to run .mpc programs for both frameworks.</p>
+<p>First step is writing an .mpc program.</p>
+<dl class="docutils">
+<dt>Example on how to write .mpc programs can be found below:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference internal" href="example.html#example"><span class="std std-ref">Cerebro examples</span></a></li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="arithmetic-scale-mamba">
+<h2>Arithmetic: SCALE-MAMBA<a class="headerlink" href="#arithmetic-scale-mamba" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li>First, write a .mpc program. There are examples in the mc2/Programs directory.</li>
+<li>Compile the .mpc program by calling “./compile.py a [Program_Name]”</li>
+<li><dl class="first docutils">
+<dt>If the compilation is complete, then on each server run: “./Player [player_number] [Programs/program_name]”</dt>
+<dd><ul class="first last">
+<li>player_number is 0-indexed and must match with the NetworkData.txt file in SCALE-MAMBA.</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="boolean-emp-agmpc">
+<h2>Boolean: EMP_AGMPC<a class="headerlink" href="#boolean-emp-agmpc" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li>Write a .mpc program. There are examples in the mc2/Programs directory.</li>
+<li>Compile the .mpc program by calling “./compile.py b [Program_Name]”</li>
+<li>After compiling, in “Programs/[Program_Name]” there should be a circuit file called “agmpc.txt” and an input format file. Make sure to keep track of what directory they are in.</li>
+<li><dl class="first docutils">
+<dt>For boolean circuits, on each server run: ./bin/run_circuit [party_number] [port_number] [circuit_file_folder] [input_file_folder] [output_file_folder]</dt>
+<dd><ul class="first last">
+<li>party_number here is 1-indexed and must match with the IP addresses in cmpc_config.h</li>
+<li>output_file_folder is the directory in which Cerebro puts the output file which contains all output of the secure computation.</li>
+<li>input_file_folder is the directory that contains the user input, more specifically the file “agmpc.input”. This is typically generated using Cerebro’s provided script shown below.</li>
+<li>circuit_file_folder is the directory that contains the circuit file: “agmpc.txt” and the input format file “agmpc.txt.input”.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>After the computation is run, the output file “agmpc.output” will be stored in the specified output_file_folder.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="side-note-input-data">
+<h2>Side Note: Input Data<a class="headerlink" href="#side-note-input-data" title="Permalink to this headline">¶</a></h2>
+<p>Arithmetic and Boolean circuits are able to read in user data. Currently, Cerebro has it set up such that the input data comes from a directory called Input_Data. In there, there is a script called <code class="docutils literal"><span class="pre">gen_data.py</span></code> which will convert data generated from another python file to input_data recognizable by Cerebro.</p>
+<dl class="docutils">
+<dt>To have a user provide input data do the following:</dt>
+<dd><ul class="first last simple">
+<li>In another file (for example hello.py), run the program that generates the user data.</li>
+<li>At the very end of the program, set the variable <code class="docutils literal"><span class="pre">data</span></code> equal to the array of the user’s input data. For example, if my input data is 1,2,3, then at the very end of the program we have the line: <code class="docutils literal"><span class="pre">data</span> <span class="pre">=</span> <span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">3]</span></code></li>
+<li>Call <code class="docutils literal"><span class="pre">python</span> <span class="pre">gen_data.py</span> <span class="pre">[file_name]</span></code> where file_name is the python file containing the data.</li>
+<li>The script generates a file f0/f1 or input.txt. The former is used for arithmetic circuits and can be left alone while the latter text file can be moved depending on your needs. (More is explained above in the EMP_AGMPC section).</li>
+</ul>
+</dd>
+</dl>
+<p>Limitations: Currently the way the script is written, the input size is at most 64 bits in length.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../usage/references.html" class="btn btn-neutral float-right" title="Cerebro References" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="setup.html" class="btn btn-neutral float-left" title="Cerebro Setup" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Weikeng Chen, Ryan Deng, Wenting Zheng
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
