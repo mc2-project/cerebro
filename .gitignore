@@ -15,3 +15,8 @@ f0
 Input_Data/gen_data_dt.py
 Programs/test_dt/test_dt.mpc
 emp-agmpc/emp-agmpc/cmpc_config.h
+Input_Data/hash_map_*
+Input_Data/winequality-*
+Input_Data/data*
+Input_Data/credit_card.xls
+Input_Data/gen_data_*.py
