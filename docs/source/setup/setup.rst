@@ -56,4 +56,9 @@ Setup Steps for EMP-AGMPC
 	* Run ``cmake . && make``
 
 
+Alternatives
+***************************
+	* Alternatively, you can pull the docker image from here: ``docker pull rdeng2614/cerebro:initial_image`` which has all the dependencies installed. Then, you can clone the cerebro repository and directly start setting up from there.
+
+
 
