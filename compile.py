@@ -53,7 +53,7 @@ def main():
 
     # Add argument for constants file
     parser.add_argument("-cf", "--constant_file", dest="constant_file", default="", help="File for the constants")
-    parser.add_argument("-p", "--party", dest="party", help="party number")
+    parser.add_argument("-p", "--party", default=0, dest="party", help="party number")
 
     args = parser.parse_args()
 
