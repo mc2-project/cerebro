@@ -149,20 +149,6 @@ opcodes = dict(
     RAND = 0xE0,
     START_TIMER = 0xE1,
     STOP_TIMER = 0xE2,
-
-    # Local operations
-    LDPINT = 0xF0,
-    LDMPINT = 0xF1,
-    LDMPINTI = 0xF2,
-    LDMPINTII = 0xF3,
-    STMPINT = 0xF4,
-    STMPINTI = 0xF5,
-    PRIVATE_INPUT_PINT= 0xF6,
-    PRIVATE_OUTPUT_PINT= 0xF7,
-    ADDP = 0xF8, # this adds a private integer to another private integer
-    MULP = 0xF9, # this multiplies a private integer to another private integer
-    ADDPS = 0xFA, # this adds a private integer to a secret integer
-    ADDPC = 0xFB, # private + clear    
 )
 
 
@@ -256,9 +242,8 @@ class RegType(object):
     ClearModp = 'c'
     SecretModp = 's'
     ClearInt = 'r'
-    PrivateInt = 'pi'
 
-    Types = [ClearModp, SecretModp, ClearInt, PrivateInt]
+    Types = [ClearModp, SecretModp, ClearInt]
 
     @staticmethod
     def create_dict(init_value_fn):
@@ -345,8 +330,6 @@ class String(ArgFormat):
     def encode(cls, arg):
         return arg + '\0' * (cls.length - len(arg))
 
-class PintAF(RegisterArgFormat):
-    reg_type = RegType.PrivateInt
 
 ArgFormats = {
     'c': ClearModpAF,
@@ -358,8 +341,6 @@ ArgFormats = {
     'i': ImmediateModpAF,
     'int': IntArgFormat,
     'p': PlayerNoAF,
-    'pi': PintAF,
-    'piw': PintAF,
     'str': String,
 }
 
