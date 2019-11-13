@@ -54,9 +54,9 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     print 'Compiling file', prog.infile
     party = options.party
 
-
-    a = ASTParser(prog.infile, party, debug=True)
-    vectorized_calls, local_program = a.parse(options.split)
+    debug = True
+    a = ASTParser(prog.infile, party, debug, options)
+    vectorized_calls, local_program = a.parse(options.split, options.unroll)
 
     
     if local_program:

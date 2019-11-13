@@ -50,7 +50,7 @@ def main():
 
 
     parser.add_argument("-sp", "--split", action="store_true", dest="split", help="Whether or not to split the program")
-
+    parser.add_argument("-ur", "--unroll", action="store_true", default=True, dest="unroll", help="Whether or not to unroll a loop")
     # Add argument for constants file
     parser.add_argument("-cf", "--constant_file", dest="constant_file", default="", help="File for the constants")
     parser.add_argument("-p", "--party", default=0, dest="party", help="party number")

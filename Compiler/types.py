@@ -2257,7 +2257,7 @@ def array_index_secret_load_a(l, index, nparallel=1):
             res_list[i] = test * l[i]
 
         res = Array(1, l.value_type)
-        res[0] = sfix(0)
+        res[0] = l.value_type(0)
         @library.for_range(l.length)
         def f(i):
             res[0] += res_list[i]

@@ -2159,7 +2159,7 @@ import inline
 
 class ASTParser(object):
 
-    def __init__(self, fname, party, debug=False):
+    def __init__(self, fname, party, debug=False, options=None):
         f = open(fname, 'r')
         s = f.read()
         f.close()
@@ -2169,6 +2169,8 @@ class ASTParser(object):
             #header += "pmat.preprocess()\n"
             s = header + s + "\nclose_channel(0)\n"
             #pass
+
+        
         self.tree = ast.parse(s)
         self.filename = fname
         self.source = s
@@ -2176,11 +2178,14 @@ class ASTParser(object):
         self.party = int(party)
         self.fname = fname
 
-    def parse(self, split_program=False):
+    def parse(self, split_program=False, loop_unroll=False):
         # Run through a bunch of parsers
         if split_program:
             local_program = self.split_program()
             return {}, local_program
+        elif loop_unroll:
+            self.loop_unroll()
+            return {}, ""
         else:
             self.tree = ForLoopParser().visit(self.tree)
             self.tree = ASTChecks().visit(self.tree)

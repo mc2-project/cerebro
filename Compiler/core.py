@@ -404,6 +404,7 @@ def for_range_multithread(n_threads, n_parallel, n_loops, thread_mem_req={}):
                 loop_body(i)
     return decorator
 
+"""
 class Array(list):
     def __init__(self, length, reg_type, address=None):
         self[:] = range(length or 1000)
@@ -414,6 +415,36 @@ class Array(list):
     def assign_all(self, other):
         self[:] = [other] * len(self)
 Matrix = lambda *args: defaultdict(lambda: Array(None, None))
+"""
+
+class Array(list):
+    def __init__(self, length, reg_type, address=0):
+        try:
+            reg_type(0)
+        except:
+            reg_type = lambda x: x
+        self.value_type = reg_type
+        self[:] = (reg_type(i) for i in range(length or 1000))
+        self.address = address
+        self.length = length
+    def assign(self, other):
+        self[:] = (self.value_type(x) for x in other)
+    def assign_all(self, other):
+        self[:] = [self.value_type(other)] * len(self)
+    def __setitem__(self, index, value):
+        if isinstance(index, slice):
+            list.__setitem__(self, index, (self.value_type(x) for x in value))
+        else:
+            list.__setitem__(self, index, self.value_type(value))
+
+class Matrix(list):
+    def __init__(self,n,m,t,*args):
+        self[:] = [Array(m, t) for i in range(n)]
+        self.rows = n
+        self.columns = m
+
+
+
 mergesort = lambda x: x.sort()
 and_ = lambda *args: lambda: reduce(lambda x,y: x and y(), args, True)
 or_ = lambda *args: lambda: reduce(lambda x,y: x or y(), args, False)
@@ -460,8 +491,26 @@ def get_specific_array(value_type):
             Array.__init__(self, n, value_type, address)
     return A
 
+"""
 for value_type in [sint, cint, sfix, cfix, sfloat]:
     value_type.Array = get_specific_array(value_type)
+"""
+sint.MemValue = lambda value: MemValue(sint(value))
+sint.Array = lambda size, addr=None: Array(size, sint, addr)
+sint.Matrix = lambda n, m, addr=None: Matrix(n, m, sint, addr)
+
+sfix.MemValue = lambda value: MemValue(sfix(value))
+sfix.Array = lambda size, addr=None: Array(size, sfix, addr)
+sfix.Matrix = lambda n, m, addr=None: Matrix(n, m, sfix, addr)
+
+cfix.MemValue = lambda value: MemValue(cfix(value))
+cfix.Array = lambda size, addr=None: Array(size, cfix, addr)
+cfix.Matrix = lambda n, m, addr=None: Matrix(n, m, cfix, addr)
+
+sfloat.MemValue = lambda value: MemValue(sfloat(value))
+sfloat.Array = lambda size: Array(size, sfloat)
+sfloat.Matrix = lambda n, m: Matrix(n, m, sfloat)
+
 
 gprint_reg = lambda x,y=None: None
 time = lambda: None
@@ -476,3 +525,68 @@ print_ln = lambda *args: None
 public_input = lambda *args: regint()
 
 no_result_testing = lambda: sys.exit()
+
+
+
+# Newly added stuff
+def array_index_secret_load_if(condition, l, index_1, index_2, nparallel=1):
+    supported_types_a = (_sint, _sfix)
+    if isinstance(index_1, supported_types_a) and isinstance(index_2, supported_types_a): 
+        index = ((1 - condition) * index_1) + (condition * index_2)
+        return array_index_secret_load_a(l, index, nparallel=nparallel)
+    else:
+        raise NotImplementedError
+
+
+def array_index_secret_load_a(l, index, nparallel=1):
+    if isinstance(l, Array) and isinstance(index, (_sint, _sfix)):
+        res_list = Array(l.length, l.value_type)
+        for i in range(l.length):
+            v = l.value_type(i)
+            test = v.__eq__(index)
+            res_list[i] = test * l[i]
+
+        res = l.value_type.Array(1)
+        res[0] = l.value_type(0)
+        for i in range(res.length):
+            res[0] += res_list[i]
+        return res[0]
+
+    elif isinstance(l, Matrix) and isinstance(index, (_sint, _sfix)):
+        res_list = l.value_type.Matrix(l.rows, l.columns)
+        for i in range(l.rows):
+            v = None
+            if isinstance(index, sfix):
+                v = sfix(i)
+            else:
+                v = sint(i)
+            test = v.__eq__(index)
+            for j in range(l.columns):
+                res_list[i][j] = test * l[i][j]
+
+        res = Array(l.columns, l.value_type)
+        for i in range(l.length):
+            res[i] = l.value_type(0)
+
+        for i in range(l.rows):
+            for j in range(l.columns):
+                res[j] += res_list[i][j]
+        
+        return res
+    else:
+        raise NotImplementedError
+
+def array_index_secret_store_a(l, index, value, nparallel=1):
+    if isinstance(l, Array) and isinstance(index, (_sint, _sfix)):
+        for i in range(l.length):
+            v = None
+            if isinstance(index, sfix):
+                v = cfix(i)
+            else:
+                v = sint(i)
+            test = v.__eq__(index)
+            l[i] = (test * value) + ((sint(1) - test) * l[i])
+    else:
+        raise NotImplementedError
+
+

@@ -1,0 +1,13 @@
+# Test the fused operator of array_index_secret_load_if
+array = sint.Array(2)
+array[0] = sint(0)
+array[1] = sint(1)
+index0 = sint(0)
+index1 = sint(1)
+cond = sint(0) < sint(1)
+res = array_index_secret_load_if(cond, array, index0, index1)
+test(res, sint(1))
+
+cond = sint(0) > sint(1)
+res = array_index_secret_load_if(cond, array, index0, index1)
+test(res, sint(0))

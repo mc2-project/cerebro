@@ -1,0 +1,1869 @@
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 3
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 0
+I am player 1 in thread 20001
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 3 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.3855 seconds
+Produced a total of 1140000 triples
+Produced a total of 2400000 squares
+Produced a total of 2520000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 0
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 1 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.2633 seconds
+Produced a total of 1140000 triples
+Produced a total of 2580000 squares
+Produced a total of 2280000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 0
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 20000
+I am player 1 in thread 3
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 14.6399 seconds
+Produced a total of 1080000 triples
+Produced a total of 1740000 squares
+Produced a total of 1800000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 0
+I am player 1 in thread 20001
+I am player 1 in thread 1
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 2
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 16.1738 seconds
+Produced a total of 1380000 triples
+Produced a total of 1500000 squares
+Produced a total of 2100000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 0 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 1 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20000 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.5734 seconds
+Produced a total of 1140000 triples
+Produced a total of 2640000 squares
+Produced a total of 2520000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 2
+I am player 1 in thread 1
+I am player 1 in thread 0
+Waiting for thread 0 to be ready
+I am player 1 in thread 20000
+I am player 1 in thread 3
+I am player 1 in thread 20001
+I am player 1 in thread 4
+Set up player 1 in thread 1 
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 3 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 16.6576 seconds
+Produced a total of 1140000 triples
+Produced a total of 1920000 squares
+Produced a total of 2280000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 3
+I am player 1 in thread 2
+I am player 1 in thread 0
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 3 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 16.2625 seconds
+Produced a total of 1080000 triples
+Produced a total of 1800000 squares
+Produced a total of 2160000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 2
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+I am player 1 in thread 0
+I am player 1 in thread 20000
+Set up player 1 in thread 20001 
+Set up player 1 in thread 0 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 1 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting inputs phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Total Time (with thread locking) = 17.7665 seconds
+Produced a total of 1200000 triples
+Produced a total of 1980000 squares
+Produced a total of 2520000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+I am player 1 in thread 4
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 3
+I am player 1 in thread 2
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 1 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 16.2964 seconds
+Produced a total of 1140000 triples
+Produced a total of 2280000 squares
+Produced a total of 2100000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 20000
+I am player 1 in thread 3
+I am player 1 in thread 0
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 20001 
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 15.4866 seconds
+Produced a total of 1080000 triples
+Produced a total of 2100000 squares
+Produced a total of 2160000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 3
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 1 
+Set up player 1 in thread 3 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 14.5458 seconds
+Produced a total of 960000 triples
+Produced a total of 1920000 squares
+Produced a total of 1920000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 3
+I am player 1 in thread 20000
+I am player 1 in thread 0
+Waiting for thread 0 to be ready
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 3 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 14.6762 seconds
+Produced a total of 960000 triples
+Produced a total of 1680000 squares
+Produced a total of 1680000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+Waiting for thread 0 to be ready
+I am player 1 in thread 3
+I am player 1 in thread 0
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 20000
+I am player 1 in thread 20001
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 2 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 18.1731 seconds
+Produced a total of 1140000 triples
+Produced a total of 2760000 squares
+Produced a total of 2520000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_branch/test_branch.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_branch/test_branch-0.bc
+test_branch-0 needs more gfp memory, resizing to 8192
+test_branch-0 needs more Share memory, resizing to 8192
+test_branch-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 2
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 2 
+Set up player 1 in thread 3 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Signal online thread ready 0
+terminate called after throwing an instance of 'mac_fail'
+  what():  Mac Fail
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_branch/test_branch.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_branch/test_branch-0.bc
+test_branch-0 needs more gfp memory, resizing to 8192
+test_branch-0 needs more Share memory, resizing to 8192
+test_branch-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+I am player 1 in thread 4
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 3
+I am player 1 in thread 2
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_branch
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 7 elements in 5 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 13.4861 seconds
+Produced a total of 1080000 triples
+Produced a total of 1380000 squares
+Produced a total of 1560000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_branch/test_branch.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_branch/test_branch-0.bc
+test_branch-0 needs more gfp memory, resizing to 8192
+test_branch-0 needs more Share memory, resizing to 8192
+test_branch-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 0
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 2
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 1 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_branch
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 7 elements in 5 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting inputs phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Total Time (with thread locking) = 16.4849 seconds
+Produced a total of 1320000 triples
+Produced a total of 1680000 squares
+Produced a total of 2280000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_branch/test_branch.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_branch/test_branch-0.bc
+test_branch-0 needs more gfp memory, resizing to 8192
+test_branch-0 needs more Share memory, resizing to 8192
+test_branch-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_branch
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 7 elements in 5 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.3101 seconds
+Produced a total of 1260000 triples
+Produced a total of 2040000 squares
+Produced a total of 2520000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 0
+I am player 1 in thread 3
+I am player 1 in thread 1
+I am player 1 in thread 20001
+I am player 1 in thread 2
+I am player 1 in thread 4
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 16.9509 seconds
+Produced a total of 1200000 triples
+Produced a total of 1740000 squares
+Produced a total of 2160000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 1
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Set up player 1 in thread 20001 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+terminate called after throwing an instance of 'mac_fail'
+  what():  Mac Fail
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 4
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 2 
+Set up player 1 in thread 1 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 0 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting inputs phase : thread = 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Total Time (with thread locking) = 16.0833 seconds
+Produced a total of 960000 triples
+Produced a total of 2880000 squares
+Produced a total of 2100000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 4
+Waiting for thread 0 to be ready
+I am player 1 in thread 0
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 20000
+I am player 1 in thread 1
+I am player 1 in thread 20001
+Set up player 1 in thread 3 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20000 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+terminate called after throwing an instance of 'mac_fail'
+  what():  Mac Fail
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 2
+I am player 1 in thread 4
+I am player 1 in thread 0
+I am player 1 in thread 3
+I am player 1 in thread 20000
+I am player 1 in thread 1
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 20000 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 1 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting inputs phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Total Time (with thread locking) = 17.2813 seconds
+Produced a total of 1200000 triples
+Produced a total of 2100000 squares
+Produced a total of 2280000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 1 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1027 elements in 17 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 16.3652 seconds
+Produced a total of 960000 triples
+Produced a total of 2160000 squares
+Produced a total of 2160000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 0
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 3 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 508 elements in 12 rounds
+Exiting online phase : 0
+Exiting mult phase : thread = 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Exiting inputs phase : thread = 0
+Total Time (with thread locking) = 14.93 seconds
+Produced a total of 1020000 triples
+Produced a total of 1800000 squares
+Produced a total of 2040000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test/test.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test/test-0.bc
+test-0 needs more gfp memory, resizing to 8192
+test-0 needs more Share memory, resizing to 8192
+test-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 1
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 500 elements in 10 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.8332 seconds
+Produced a total of 1200000 triples
+Produced a total of 2400000 squares
+Produced a total of 2400000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_cond/test_cond.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_cond/test_cond-0.bc
+test_cond-0 needs more gfp memory, resizing to 8192
+test_cond-0 needs more Share memory, resizing to 8192
+test_cond-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 2
+Waiting for thread 0 to be ready
+I am player 1 in thread 20000
+I am player 1 in thread 20001
+I am player 1 in thread 4
+I am player 1 in thread 3
+I am player 1 in thread 0
+I am player 1 in thread 1
+Set up player 1 in thread 20001 
+Set up player 1 in thread 3 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_cond
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 500 elements in 10 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 17.1943 seconds
+Produced a total of 1200000 triples
+Produced a total of 1980000 squares
+Produced a total of 2400000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_fused/test_fused.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_fused/test_fused-0.bc
+test_fused-0 needs more gfp memory, resizing to 8192
+test_fused-0 needs more Share memory, resizing to 8200
+test_fused-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 0
+I am player 1 in thread 1
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 0 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_fused
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1008 elements in 33 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting bit phase: thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 14.8524 seconds
+Produced a total of 1080000 triples
+Produced a total of 1740000 squares
+Produced a total of 1980000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_fused/test_fused.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_fused/test_fused-0.bc
+test_fused-0 needs more gfp memory, resizing to 8192
+test_fused-0 needs more Share memory, resizing to 8200
+test_fused-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 4
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+I am player 1 in thread 1
+I am player 1 in thread 20000
+I am player 1 in thread 2
+I am player 1 in thread 0
+I am player 1 in thread 3
+Set up player 1 in thread 0 
+Set up player 1 in thread 2 
+Set up player 1 in thread 20001 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_fused
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 1008 elements in 33 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 14.6811 seconds
+Produced a total of 960000 triples
+Produced a total of 1740000 squares
+Produced a total of 1980000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_fused/test_fused.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_fused/test_fused-0.bc
+test_fused-0 needs more gfp memory, resizing to 8192
+test_fused-0 needs more Share memory, resizing to 8200
+test_fused-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 2
+I am player 1 in thread 3
+I am player 1 in thread 20001
+I am player 1 in thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Set up player 1 in thread 1 
+Set up player 1 in thread 0 
+Set up player 1 in thread 3 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_fused
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1008 elements in 33 rounds
+Exiting online phase : 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting inputs phase : thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting aBit production thread
+Total Time (with thread locking) = 16.0349 seconds
+Produced a total of 1020000 triples
+Produced a total of 2280000 squares
+Produced a total of 2160000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_fused/test_fused.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_fused/test_fused-0.bc
+test_fused-0 needs more gfp memory, resizing to 8192
+test_fused-0 needs more Share memory, resizing to 8200
+test_fused-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 3
+I am player 1 in thread 4
+I am player 1 in thread 20000
+Waiting for thread 0 to be ready
+I am player 1 in thread 20001
+I am player 1 in thread 1
+I am player 1 in thread 0
+I am player 1 in thread 2
+Set up player 1 in thread 2 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 3 
+Set up player 1 in thread 1 
+Set up player 1 in thread 20001 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_fused
+Waiting for all clients to finish
+Waiting for all clients to finish
+	Thread 0 terminating
+Sent 1008 elements in 33 rounds
+Exiting online phase : 0
+Exiting mult phase : thread = 0
+Exiting bit phase: thread = 0
+Exiting square phase: thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 15.0334 seconds
+Produced a total of 960000 triples
+Produced a total of 1740000 squares
+Produced a total of 2040000 bits
+End of prog
+(Min,Max) number of ...
+	(0,infty) multiplication triples
+	(0,infty) square pairs
+	(0,infty) bits
+0
+127.0.0.1
+Player1.crt
+P1
+1
+127.0.0.1
+Player2.crt
+P2
+
+
+p=748288838313422294120286634350736906063837463248897
+Opening file Programs/test_fused/test_fused.sch
+Number of online threads I will run in parallel =  1
+Number of program sequences I need to load =  1
+Loading program 0 from Programs/test_fused/test_fused-0.bc
+test_fused-0 needs more gfp memory, resizing to 8192
+test_fused-0 needs more Share memory, resizing to 8200
+test_fused-0 needs more integer memory, resizing to 8192
+All connections now done
+Setting up threads
+I am player 1 in thread 1
+I am player 1 in thread 2
+Waiting for thread 0 to be ready
+I am player 1 in thread 4
+I am player 1 in thread 3
+I am player 1 in thread 20000
+I am player 1 in thread 20001
+I am player 1 in thread 0
+Set up player 1 in thread 1 
+Set up player 1 in thread 4 
+Doing online for player 1 in online thread 0
+Set up player 1 in thread 20001 
+Set up player 1 in thread 3 
+Set up player 1 in thread 0 
+Set up player 1 in thread 20000 
+Set up player 1 in thread 2 
+Signal online thread ready 0
+Finished Base-OTs
+Starting online phase
+Opening channel 0
+Closing channel 0
+Compiler: /home/ubuntu/mc2/crypto_backend/SCALE-MAMBA/Scripts/../compile.py a --dead-code-elimination Programs/test_fused
+Waiting for all clients to finish
+	Thread 0 terminating
+Waiting for all clients to finish
+Sent 1008 elements in 33 rounds
+Exiting online phase : 0
+Exiting square phase: thread = 0
+Exiting bit phase: thread = 0
+Exiting mult phase : thread = 0
+Exiting aAND production thread
+Exiting inputs phase : thread = 0
+Exiting aBit production thread
+Total Time (with thread locking) = 13.7141 seconds
+Produced a total of 1260000 triples
+Produced a total of 1260000 squares
+Produced a total of 1800000 bits
+End of prog
