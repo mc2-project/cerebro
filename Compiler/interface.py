@@ -2168,12 +2168,13 @@ class ASTParser(object):
             #header += "pmat = p_mat()\n"
             #header += "pmat.preprocess()\n"
             s = header + s + "\nclose_channel(0)\n"
-
+            #pass
         self.tree = ast.parse(s)
         self.filename = fname
         self.source = s
         self.debug = debug
         self.party = int(party)
+        self.fname = fname
 
     def parse(self, split_program=False):
         # Run through a bunch of parsers
@@ -2193,6 +2194,14 @@ class ASTParser(object):
             print(source)
 
         exec(source, context)
+        self.output_source(source)
+
+
+    def output_source(self, source):
+        test_file_name = self.fname[:self.fname.index('.')] + '_test.mpc'
+        with open(test_file_name, 'w') as f:
+            f.write(source)
+
 
 
 

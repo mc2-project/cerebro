@@ -1,0 +1,17 @@
+# Params.set_params(int_precision=32,f=22,k=32)
+x = sint(0)
+if sint(0) < sint(1):
+    x = sint(1)
+else:
+    x = sint(2)
+
+test(x.reveal(), sint(1))
+
+
+y = sint(10)
+if sint(0) >= sint(1):
+    y = sint(20)
+else:
+    y = sint(30)
+
+test(y.reveal(), sint(30))

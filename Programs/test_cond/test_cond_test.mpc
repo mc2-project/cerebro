@@ -1,0 +1,11 @@
+open_channel(0)
+x = sint(0)
+test0 = sint(0) < sint(1)
+x = test0 * sint(1) + (1 - test0) * sint(2) + (1 - test0 * (1 - test0)) * x
+test(x.reveal(), sint(1))
+y = sint(10)
+test1 = sint(0) >= sint(1)
+y = test1 * sint(20) + (1 - test1) * sint(30) + (1 - test1 * (1 - test1)) * y
+x = test0 * sint(1) + (1 - test0) * sint(2) + (1 - test0 * (1 - test0)) * x
+test(y.reveal(), sint(30))
+close_channel(0)
