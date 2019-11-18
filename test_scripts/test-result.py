@@ -7,6 +7,8 @@ import sys
 import operator
 import math
 from optparse import OptionParser
+import os 
+sys.path.insert(0, os.getcwd())
 from Compiler.core import *
 from Compiler.core import _sfix, _cfix
 from Compiler import types, util
@@ -112,6 +114,7 @@ def test_value(value, mem_value, lineno, index, lower=None, upper=None):
             fail = True
             print "Failure in line %d, index %d: read %s, expected in [%s,%s), %s" % \
                 (lineno, index, mem_value, lower, upper, type(value))
+            assert(False)
     else:
         if lower is None:
             lower = value
@@ -124,11 +127,13 @@ def test_value(value, mem_value, lineno, index, lower=None, upper=None):
         if fail:
             print "Failure in line %d, index %d: read %s, expected %s, %s" % \
                 (lineno, index, mem_value, lower, type(value))
+            assert(False)
     if fail and options.stop_on_fail:
         exit(1)
 
     if not fail:
         print "Test in line %d passed. Read %s, expected %s" % (lineno, mem_value, lower)
+        assert(True)
 
 ##
 # tests all outputs. for sfloat it also tests
@@ -228,6 +233,8 @@ def open_channel(channel):
 
 def close_channel(channel):
     pass
+
+
 test1 = test
 sys.path.insert(0, 'Test')
 execfile('Programs/%s/%s.mpc' % (args[0],args[0] + '_test'))

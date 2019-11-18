@@ -1040,7 +1040,7 @@ class ASTChecks(ast.NodeTransformer):
 
     # Given multiple conditions of the form (condition_list, value)
     # where condition_list is a list of conditions, and value is a RHS single value for assignment
-    def assign_transform_multi(self, target, conditions_list):
+    def assign_transform_multi(self, target, conditions_list, has_else=False):
         current_sum = None
         current_condition_list = []
         for (test_list, value) in conditions_list:
@@ -1052,10 +1052,12 @@ class ASTChecks(ast.NodeTransformer):
             else:
                 current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=prod)
 
-        neg_cond = self.neg_merge_test_list(current_condition_list)
-        final_prod = ast.BinOp(left=neg_cond, op=ast.Mult(), right=target)
-        current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=final_prod)
 
+        if not has_else:
+            neg_cond = self.neg_merge_test_list(current_condition_list)
+            final_prod = ast.BinOp(left=neg_cond, op=ast.Mult(), right=target)
+            current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=final_prod)
+        
         return ast.Assign(targets=[target], value=current_sum)
 
     def visit_If(self, node):
@@ -1063,6 +1065,12 @@ class ASTChecks(ast.NodeTransformer):
             raise ValueError("Currently, the if conditional has to be a single Compare expression")
         if len(node.body) > 1:
             raise ValueError("We also don't allow multiple statements inside an if statement")
+
+        # Reset the variables so that future calls won't "drag along" previous assignment variables.
+        if self.depth == 0:
+            self.assignments = {}
+            self.sub_assignments = {}
+            self.if_stack = []
 
         statements = []
         test_name = self.test_name + str(self.test_counter)
@@ -1088,11 +1096,13 @@ class ASTChecks(ast.NodeTransformer):
                         self.sub_assignments[target.value.id][1].append(([x for x in self.if_stack], n.value))
             else:
                 raise ValueError("Does not support non-assignment statements within if statements")
+
         self.depth -= 1
         self.if_stack.pop()
 
         self.if_stack.append((test_name, False))
         self.depth += 1
+
         for n in node.orelse:
             if isinstance(n, ast.If):
                 statements += self.visit(n)
@@ -1112,18 +1122,24 @@ class ASTChecks(ast.NodeTransformer):
         self.depth -= 1
         self.if_stack.pop()
 
+
+        if len(node.orelse) == 0:
+            has_else = False
+        else:
+            has_else = True 
+
+
         if self.depth == 0:
             for (name, test_list) in self.assignments.iteritems():
-                statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list)
+                statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list, has_else=has_else)
                 statements.append(statement)
             for (name, l) in self.sub_assignments.iteritems():
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_index", ctx=ast.Load)], value=ast.Num(-1)))
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_value", ctx=ast.Load)], value=ast.Num(-1)))
-
                 index_test_list = l[0]
-                index_statement = self.assign_transform_multi(ast.Name(id=name+"_index", ctx=ast.Store), index_test_list)
+                index_statement = self.assign_transform_multi(ast.Name(id=name+"_index", ctx=ast.Store), index_test_list, has_else=has_else)
                 value_test_list = l[1]
-                value_statement = self.assign_transform_multi(ast.Name(id=name+"_value", ctx=ast.Store), value_test_list)
+                value_statement = self.assign_transform_multi(ast.Name(id=name+"_value", ctx=ast.Store), value_test_list, has_else=has_else)
                 statements.append(index_statement)
                 statements.append(value_statement)
                 sub = ast.Subscript(value=ast.Name(id=name, ctx=ast.Load), slice=ast.Name(id=name+"_index", ctx=ast.Load), ctx=ast.Store)
@@ -2083,8 +2099,7 @@ class ProgramSplitter(ast.NodeTransformer):
                 if private_dependent in self.mat_to_dim.keys():
                     rows, cols = self.mat_to_dim[private_dependent]
                 else:
-                    # TODO: HACK, I REPEAT THIS IS A HACK
-                    # Assume values are just 1 by 1 matrices.
+                    # HACK: Assume values are just 1 by 1 matrices.
                     rows, cols = (1, 1)
                 private_name = "private_input" + str(node.lineno)
 
@@ -2178,19 +2193,21 @@ class ASTParser(object):
         self.party = int(party)
         self.fname = fname
 
-    def parse(self, split_program=False, loop_unroll=False):
+    def parse(self, split_program=False, loop_unroll=False, inline=False):
         # Run through a bunch of parsers
         if split_program:
             local_program = self.split_program()
             return {}, local_program
-        elif loop_unroll:
+        
+
+        if loop_unroll:
             self.loop_unroll()
-            return {}, ""
+        elif inline:
+            self.inline()
         else:
             self.tree = ForLoopParser().visit(self.tree)
-            self.tree = ASTChecks().visit(self.tree)
-            return {}, ""
 
+        self.tree = ASTChecks().visit(self.tree)
         return {}, ""
 
     def execute(self, context):

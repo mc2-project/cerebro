@@ -1,11 +1,13 @@
 # Params.set_params(int_precision=32,f=22,k=32)
+
+# Test standard if-else
 x = sint(0)
 if sint(0) < sint(1):
     x = sint(1)
 else:
     x = sint(2)
 
-test(x.reveal(), sint(1))
+test(x, sint(1))
 
 
 y = sint(10)
@@ -14,4 +16,56 @@ if sint(0) >= sint(1):
 else:
     y = sint(30)
 
-test(y.reveal(), sint(30))
+test(y, sint(30))
+
+
+z = sint(100)
+if sint(1) < sint(2):
+    z = sint(200)
+
+test(z, sint(200))
+
+
+a = sint(100)
+if sint(1) >= sint(5):
+    a = sint(100)
+
+test(a, sint(100))
+
+
+# Test if-elif-else
+
+b = sint(25)
+
+if sint(0) < sint(1):
+    b = sint(3)
+elif sint(0) < sint(2):
+    b = sint(5)
+else:
+    b = sint(10)
+
+
+test(b, sint(3))
+
+
+
+c = sint(10)
+if sint(0) > sint(1):
+    c = sint(21)
+elif sint(0) < sint(3):
+    c = sint(31)
+else:
+    c = sint(41)
+
+test(c, sint(31))
+
+
+d = sint(1)
+if sint(0) <= sint(1):
+    d = sint(22)
+elif sint(0) > sint(3):
+    d = sint(38)
+else:
+    d = sint(46)
+
+test(d, sint(22))
