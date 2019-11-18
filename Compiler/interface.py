@@ -2195,6 +2195,8 @@ class ASTParser(object):
 
     def parse(self, split_program=False, loop_unroll=False, inline=False):
         # Run through a bunch of parsers
+        self.tree = ASTChecks().visit(self.tree)
+
         if split_program:
             local_program = self.split_program()
             return {}, local_program
@@ -2207,7 +2209,6 @@ class ASTParser(object):
         else:
             self.tree = ForLoopParser().visit(self.tree)
 
-        self.tree = ASTChecks().visit(self.tree)
         return {}, ""
 
     def execute(self, context):
