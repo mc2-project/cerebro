@@ -145,6 +145,9 @@ sint.get_random_square = lambda size=None: (0, 0) if size is None else (Vector(0
 sint.basic_type = _sint
 sint.type = _sint
 reveal = lambda x: x
+# Used for integrating SPDZ and GC
+s_int = sint
+
 
 class _cint(_register):
     print_reg = lambda x,y=None: None
@@ -152,6 +155,9 @@ class _cint(_register):
 cint = lambda x=0,size=None: (x if isinstance(x, Vector) else _cint(x)) if size is None else Vector(_cint(x),size)
 cint.load_mem = cint
 cint.get_random = cint
+
+# Used for integrating SPDZ and GC
+c_int = cint
 
 class A:
     def malloc(self, size, reg_type):
@@ -271,6 +277,8 @@ class _sfix(_fixregister):
 sfix = lambda x=0,size=None: (x if isinstance(x, Vector) else _sfix(x)) if size is None else Vector(_sfix(x),size)
 sfix.load_mem = _sfix.load_mem
 sfix.reveal = lambda x: x
+# Used for integrating SPDZ and GC
+s_fix = sfix
 
 class _cfix(_fixregister):
 
@@ -296,6 +304,8 @@ class _cfix(_fixregister):
 
 cfix = lambda x=0,size=None: (x if isinstance(x, Vector) else _cfix(x)) if size is None else Vector(_cfix(x),size)
 cfix.load_mem = cfix
+# Used for integrating SPDZ and GC
+c_fix = cfix
 
 load_float_to_secret = sfloat
 floatingpoint = A()
@@ -498,14 +508,24 @@ for value_type in [sint, cint, sfix, cfix, sfloat]:
 sint.MemValue = lambda value: MemValue(sint(value))
 sint.Array = lambda size, addr=None: Array(size, sint, addr)
 sint.Matrix = lambda n, m, addr=None: Matrix(n, m, sint, addr)
+# Used for integrating SPDZ and GC
+s_int_array = sint.Array 
+s_int_mat = sint.Matrix
 
 sfix.MemValue = lambda value: MemValue(sfix(value))
 sfix.Array = lambda size, addr=None: Array(size, sfix, addr)
 sfix.Matrix = lambda n, m, addr=None: Matrix(n, m, sfix, addr)
 
+# Used for integrating SPDZ and GC
+s_fix_array = sfix.Array 
+s_fix_mat = sfix.Matrix
+
 cfix.MemValue = lambda value: MemValue(cfix(value))
 cfix.Array = lambda size, addr=None: Array(size, cfix, addr)
 cfix.Matrix = lambda n, m, addr=None: Matrix(n, m, cfix, addr)
+# Used for integrating SPDZ and GC
+c_fix_array = cfix.Array
+c_fix_mat = cfix.Matrix
 
 sfloat.MemValue = lambda value: MemValue(sfloat(value))
 sfloat.Array = lambda size: Array(size, sfloat)

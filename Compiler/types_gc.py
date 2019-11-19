@@ -353,7 +353,7 @@ class int_gc(object):
         else:
             self.test_instance(other)
             sub_full(dest.bits, self.bits, other.bits, self.length)
-        return dest
+        return dest        
 
     def __neg__(self):
         dest = int_gc(self.length)
@@ -534,6 +534,10 @@ class cint_gc(int_gc):
             self_value = self.get_decimal()
             other_value = other.get_decimal()
             return (self_value, other_value)
+        elif isinstance(other, int):
+            self_value = self.get_decimal()
+            other_value = other
+            return (self_value, other_value)
         else:
             return NotImplemented
 
@@ -559,11 +563,20 @@ class cint_gc(int_gc):
         return cint_gc(self.length, v1 + v2)
 
     def __sub__(self, other):
+        print "cint_gc sub"
         ret = self.preprocess(other)
         if ret is NotImplemented:
             return other.__sub__(self, reverse=True)
         (v1, v2) = ret
         return cint_gc(self.length, v1 - v2)
+
+    def __rsub__(self, other):
+        print "cing_gc rsub"
+        ret = self.preprocess(other)
+        if ret is NotImplemented:
+            return other.__sub__(self, reverse=True)
+        (v1, v2) = ret
+        return cint_gc(self.length, v2 - v1)
 
     def absolute(self):
         value = self.get_decimal()
@@ -613,6 +626,14 @@ class cint_gc(int_gc):
             return other.__leq__(self)
         (v1, v2) = ret
         return cint_gc(1, int(v1 > v2))
+
+    def __lt__(self, other):
+        ret = self.preprocess(other)
+        if ret is NotImplemented:
+            return other.__geq__(self)
+        (v1, v2) = ret
+        return cint_gc(1, int(v1 < v2))
+
 
 class sint_gc(int_gc):
     value_type = sbits
