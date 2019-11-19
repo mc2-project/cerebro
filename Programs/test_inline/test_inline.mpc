@@ -1,0 +1,14 @@
+# Test inlining with conflicting global and local variable names
+x = sint(5)
+
+
+def f(x):
+    y = x + 5
+    return y
+
+
+y = f(x)
+
+
+
+test(y, sint(10))

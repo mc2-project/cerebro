@@ -1,0 +1,6 @@
+total = sint(0)
+
+for i in range(10):
+    total += sint(i)
+
+test(total, sint(45))
