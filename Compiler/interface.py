@@ -4,6 +4,7 @@ import compilerLib, library
 import symtable
 import re
 import numpy as np
+import inspect
 
 SPDZ = 0
 GC = 1
@@ -123,6 +124,36 @@ class SecretFixedPointArrayFactory(object):
             ret = sfixArrayGC(length)
             for i in range(ret.length):
                 ret[i] = sfix_gc(v=None, input_party=party)
+            return ret
+
+
+class SecretIntegerArrayFactory(object):
+    def __call__(self, length):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
+        if mpc_type == SPDZ:
+            ret = sintArray(length)
+            return ret
+        else:
+            ret = sintArrayGC(length)
+            for i in range(length):
+                ret[i] = sint_gc(0)
+            return ret
+
+    def read_input(self, length, party):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
+        if mpc_type == SPDZ:
+            ret = sintArray(length)
+            @library.for_range(ret.length)
+            def f(i):
+                v = sint.get_private_input_from(party)
+                ret[i] = v
+            return ret
+        else:
+            ret = sintArrayGC(length)
+            for i in range(ret.length):
+                ret[i] = sint_gc(v=None, input_party=party)
             return ret
 
 import struct
@@ -360,12 +391,14 @@ SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
 ClearIntegerMatrix = ClearIntegerMatrixFactory()
 SecretIntegerMatrix = SecretIntegerMatrixFactory()
+SecretIntegerArray = SecretIntegerArrayFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["s_int"] = SecretInteger
 compilerLib.VARS["c_fix"] = ClearFixedPoint
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
+compilerLib.VARS["s_int_array"] = SecretIntegerArray
 compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
 compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
@@ -373,6 +406,61 @@ compilerLib.VARS["s_int_mat"] = SecretIntegerMatrix
 compilerLib.VARS["p_mat"] = PrivateFixedPointMatrix
 compilerLib.VARS["reveal_all"] = reveal_all
 compilerLib.VARS["write_private_data"] = write_private_data
+
+
+
+
+fx_error = 1e-3
+# TESTING CODE STARTS HERE
+def test(value, lower=None, upper=None, prec=None):
+    if mpc_type == SPDZ:
+        lineno = inspect.currentframe().f_back.f_lineno
+        if isinstance(value, _mem):
+            value = value.read()
+            reg_type = value.reg_type
+        if isinstance(value, sfloat):
+            lineno *= 1000
+            library.store_in_mem(reveal(value.v), lineno + 1000)
+            library.store_in_mem(reveal(value.p), lineno + 1250)
+            library.store_in_mem(reveal(value.z), lineno + 1500)
+            library.store_in_mem(reveal(value.s), lineno + 1750)
+            #store_in_mem(reveal(value.err), lineno + 2000)
+            reg_type = 'c'
+        elif isinstance(value, sfix):
+            lineno *= 1000
+            library.store_in_mem(reveal(value.v), lineno + 1000)
+            reg_type = 'c'
+        elif isinstance(value, cfix):
+            lineno *= 1000
+            library.store_in_mem(value.v, lineno + 1000)
+            reg_type = 'c'
+        
+        # Copied from later version of SCALE-MAMBA
+        elif type(value) is tuple:
+            msw = library.reveal(value[0])
+            lsw = library.reveal(value[1])
+            library.store_in_mem(msw, lineno + 1000)
+            library.store_in_mem(msw, lineno + 2000)
+            reg_type = 'c'
+        else:
+            if not value.is_clear:
+                value = reveal(value)
+            if value.size > 1:
+                lineno *= 1000
+            library.store_in_mem(value, lineno + 1000)
+            reg_type = 'c'
+        print "Test at", lineno
+        if lineno + 2000 > get_program().allocated_mem[reg_type]:
+            library.get_program().allocated_mem[reg_type] = 2 * (lineno + 1000)
+    elif:
+        if isinstance(value, sint_gc):
+            library.reveal(value == lower)
+        elif isinstance(value, sfix_gc):
+            library.reveal(abs(value - lower) < fx_error)
+        else:
+            raise ValueError("Invalid type for GC")
+    else:
+        raise ValueError("Invalid type")
 
 
 import ast

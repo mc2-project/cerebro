@@ -1,5 +1,5 @@
 # Test the fused operator of array_index_secret_load_if
-array = sint.Array(2)
+array = s_int_array(2)
 array[0] = sint(0)
 array[1] = sint(1)
 index0 = sint(0)

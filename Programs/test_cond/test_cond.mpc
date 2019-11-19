@@ -1,71 +1,71 @@
 # Params.set_params(int_precision=32,f=22,k=32)
 
 # Test standard if-else
-x = sint(0)
-if sint(0) < sint(1):
-    x = sint(1)
+x = s_int(0)
+if s_int(0) < s_int(1):
+    x = s_int(1)
 else:
-    x = sint(2)
+    x = s_int(2)
 
-test(x, sint(1))
+test(x, s_int(1))
 
 
-y = sint(10)
-if sint(0) >= sint(1):
-    y = sint(20)
+y = s_int(10)
+if s_int(0) >= s_int(1):
+    y = s_int(20)
 else:
-    y = sint(30)
+    y = s_int(30)
 
-test(y, sint(30))
-
-
-z = sint(100)
-if sint(1) < sint(2):
-    z = sint(200)
-
-test(z, sint(200))
+test(y, s_int(30))
 
 
-a = sint(100)
-if sint(1) >= sint(5):
-    a = sint(100)
+z = s_int(100)
+if s_int(1) < s_int(2):
+    z = s_int(200)
 
-test(a, sint(100))
+test(z, s_int(200))
+
+
+a = s_int(100)
+if s_int(1) >= s_int(5):
+    a = s_int(100)
+
+test(a, s_int(100))
 
 
 # Test if-elif-else
 
-b = sint(25)
+b = s_int(25)
 
-if sint(0) < sint(1):
-    b = sint(3)
-elif sint(0) < sint(2):
-    b = sint(5)
+if s_int(0) < s_int(1):
+    b = s_int(3)
+elif s_int(0) < s_int(2):
+    b = s_int(5)
 else:
-    b = sint(10)
+    b = s_int(10)
 
 
-test(b, sint(3))
+test(b, s_int(3))
 
 
 
-c = sint(10)
-if sint(0) > sint(1):
-    c = sint(21)
-elif sint(0) < sint(3):
-    c = sint(31)
+c = s_int(10)
+if s_int(0) > s_int(1):
+    c = s_int(21)
+elif s_int(0) < s_int(3):
+    c = s_int(31)
 else:
-    c = sint(41)
+    c = s_int(41)
 
-test(c, sint(31))
+test(c, s_int(31))
 
 
-d = sint(1)
-if sint(0) <= sint(1):
-    d = sint(22)
-elif sint(0) > sint(3):
-    d = sint(38)
+d = s_int(1)
+if s_int(0) <= s_int(1):
+    d = s_int(22)
+elif s_int(0) > s_int(3):
+    d = s_int(38)
 else:
-    d = sint(46)
+    d = s_int(46)
 
-test(d, sint(22))
+test(d, s_int(22))

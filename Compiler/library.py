@@ -1120,6 +1120,7 @@ def stop_timer(timer_id=0):
     stop_clock(timer_id)
     get_tape().start_new_basicblock(name='post-stop-timer')
 
+"""
 def test(value, lower=None, upper=None, prec=None):
     lineno = inspect.currentframe().f_back.f_lineno
     if isinstance(value, _mem):
@@ -1159,6 +1160,7 @@ def test(value, lower=None, upper=None, prec=None):
     print "Test at", lineno
     if lineno + 2000 > get_program().allocated_mem[reg_type]:
         get_program().allocated_mem[reg_type] = 2 * (lineno + 1000)
+"""
 
 def test1(value, lower=None, upper=None):
     if isinstance(value, sint) or value.reg_type == 's':
