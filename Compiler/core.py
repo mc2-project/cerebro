@@ -609,4 +609,5 @@ def array_index_secret_store_a(l, index, value, nparallel=1):
     else:
         raise NotImplementedError
 
-
+def reveal_all(v, s):
+    print v

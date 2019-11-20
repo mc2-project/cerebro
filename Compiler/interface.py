@@ -35,11 +35,15 @@ class ClearIntegerFactory(object):
             return cint_gc(Params.intp, value)
 
 class SecretIntegerFactory(object):
-    def __call__(self, party):
+    def __call__(self, value):
         if mpc_type == SPDZ:
-            return sint.get_private_input_from(party)
+            return sint(value)
+        elif mpc_type == LOCAL:
+            raise ValueError("Secret integer called for local phase")
         else:
-            return sint_gc(Params.intp, party)
+            #return sint_gc(Params.intp, input_party=value)
+            raise ValueError("Cannot instantiate secret integers in GC. Secret integers must be read using .read_input")
+
 
     def read_input(self, party):
         if mpc_type == SPDZ:
@@ -353,6 +357,12 @@ def reveal_all(v, text=""):
                 @library.for_range(v.columns)
                 def g(j):
                     library.print_ln("{}[%s][%s] = %s".format(text), i, j, v[i][j].reveal())
+
+        elif isinstance(v, (regint, cint, cfix)):
+            if text == "":
+                text = "value"
+            library.print_ln("{} = %s".format(text), v)
+
         else:
             raise NotImplemented
     else:
@@ -409,26 +419,26 @@ compilerLib.VARS["write_private_data"] = write_private_data
 
 
 
-
 fx_error = 1e-3
 # TESTING CODE STARTS HERE
+
 def test(value, lower=None, upper=None, prec=None):
     if mpc_type == SPDZ:
         lineno = inspect.currentframe().f_back.f_lineno
-        if isinstance(value, _mem):
+        if isinstance(value, library._mem):
             value = value.read()
             reg_type = value.reg_type
-        if isinstance(value, sfloat):
+        elif isinstance(value, sfloat):
             lineno *= 1000
-            library.store_in_mem(reveal(value.v), lineno + 1000)
-            library.store_in_mem(reveal(value.p), lineno + 1250)
-            library.store_in_mem(reveal(value.z), lineno + 1500)
-            library.store_in_mem(reveal(value.s), lineno + 1750)
+            library.store_in_mem(library.reveal(value.v), lineno + 1000)
+            library.store_in_mem(library.reveal(value.p), lineno + 1250)
+            library.store_in_mem(library.reveal(value.z), lineno + 1500)
+            library.store_in_mem(library.reveal(value.s), lineno + 1750)
             #store_in_mem(reveal(value.err), lineno + 2000)
             reg_type = 'c'
         elif isinstance(value, sfix):
             lineno *= 1000
-            library.store_in_mem(reveal(value.v), lineno + 1000)
+            library.store_in_mem(library.reveal(value.v), lineno + 1000)
             reg_type = 'c'
         elif isinstance(value, cfix):
             lineno *= 1000
@@ -443,25 +453,32 @@ def test(value, lower=None, upper=None, prec=None):
             library.store_in_mem(msw, lineno + 2000)
             reg_type = 'c'
         else:
-            if not value.is_clear:
-                value = reveal(value)
+
+            #if not value.is_clear:
+                #value = library.reveal(value)
+            if isinstance(value, (sint, sfix)):
+                value = library.reveal(value)
             if value.size > 1:
                 lineno *= 1000
+
             library.store_in_mem(value, lineno + 1000)
             reg_type = 'c'
+
         print "Test at", lineno
-        if lineno + 2000 > get_program().allocated_mem[reg_type]:
+        if lineno + 2000 > library.get_program().allocated_mem[reg_type]:
             library.get_program().allocated_mem[reg_type] = 2 * (lineno + 1000)
-    elif:
-        if isinstance(value, sint_gc):
-            library.reveal(value == lower)
-        elif isinstance(value, sfix_gc):
-            library.reveal(abs(value - lower) < fx_error)
+    elif mpc_type == GC:
+        if isinstance(value, (sint_gc, cint_gc)):
+            reveal_all(value == lower)
+        elif isinstance(value, (sfix_gc, cfix_gc)):
+            reveal_all(abs(value - lower) < fx_error)
         else:
             raise ValueError("Invalid type for GC")
     else:
         raise ValueError("Invalid type")
 
+
+compilerLib.VARS["test"] = test
 
 import ast
 import astor
@@ -1106,6 +1123,7 @@ class ASTChecks(ast.NodeTransformer):
             return self.negate_condition(ast.Name(id=test[0], ctx=ast.Load()))
 
     # Given a list of (condition_name, True/False), merge these conditions into a single condition
+    # This essentially ands all the conditions together by multiplying them.
     def merge_test_list(self, test_list):
         ret = test_list[0]
         ret = self.merge_test_single(ret)
@@ -1113,6 +1131,17 @@ class ASTChecks(ast.NodeTransformer):
             ret = ast.BinOp(left=ret, op=ast.Mult(), right=self.merge_test_single(test))
 
         return ret
+
+
+    def merge_or(self, lst_conds):
+        import astunparse
+        ret = lst_conds[0]
+        for test in lst_conds[1:]:
+            ret = ast.BinOp(left=ret, op=ast.Add(), right=test)
+
+        cond_ret = ast.Call(func=ast.Name(id="max", ctx=ast.Load()), args=[ast.Num(n=1), ret], keywords=[], starargs=None, kwargs=None)
+        return cond_ret
+        #return ret
 
     # First, merge the conditions into a single condition, then negate the entire condition
     def neg_merge_test_list(self, test_list):
@@ -1131,9 +1160,11 @@ class ASTChecks(ast.NodeTransformer):
     def assign_transform_multi(self, target, conditions_list, has_else=False):
         current_sum = None
         current_condition_list = []
+        conds = []
         for (test_list, value) in conditions_list:
             test_v = self.merge_test_list(test_list)
             current_condition_list += test_list
+            conds.append(test_v)
             prod = ast.BinOp(left=test_v, op=ast.Mult(), right=value)
             if current_sum is None:
                 current_sum = prod
@@ -1142,9 +1173,13 @@ class ASTChecks(ast.NodeTransformer):
 
 
         if not has_else:
-            neg_cond = self.neg_merge_test_list(current_condition_list)
+            merge_or = self.merge_or(conds)
+            # Set a statement 
+            neg_cond = self.negate_condition(merge_or)
             final_prod = ast.BinOp(left=neg_cond, op=ast.Mult(), right=target)
             current_sum = ast.BinOp(left=current_sum, op=ast.Add(), right=final_prod)
+
+
         
         return ast.Assign(targets=[target], value=current_sum)
 
@@ -1191,10 +1226,12 @@ class ASTChecks(ast.NodeTransformer):
         self.if_stack.append((test_name, False))
         self.depth += 1
 
+        has_else = False 
         for n in node.orelse:
             if isinstance(n, ast.If):
                 statements += self.visit(n)
             elif isinstance(n, ast.Assign):
+                has_else = True
                 for target in n.targets:
                     if isinstance(target, ast.Name):
                         if target.id not in self.assignments:
@@ -1211,16 +1248,13 @@ class ASTChecks(ast.NodeTransformer):
         self.if_stack.pop()
 
 
-        if len(node.orelse) == 0:
-            has_else = False
-        else:
-            has_else = True 
-
-
         if self.depth == 0:
             for (name, test_list) in self.assignments.iteritems():
                 statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list, has_else=has_else)
-                statements.append(statement)
+                if isinstance(statement, list):
+                    statements += statement
+                else:
+                    statements.append(statement)
             for (name, l) in self.sub_assignments.iteritems():
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_index", ctx=ast.Load)], value=ast.Num(-1)))
                 statements.append(ast.Assign(targets=[ast.Name(id=name+"_value", ctx=ast.Load)], value=ast.Num(-1)))
@@ -1228,11 +1262,19 @@ class ASTChecks(ast.NodeTransformer):
                 index_statement = self.assign_transform_multi(ast.Name(id=name+"_index", ctx=ast.Store), index_test_list, has_else=has_else)
                 value_test_list = l[1]
                 value_statement = self.assign_transform_multi(ast.Name(id=name+"_value", ctx=ast.Store), value_test_list, has_else=has_else)
-                statements.append(index_statement)
-                statements.append(value_statement)
+                if isinstance(index_statement, list):
+                    statements += index_statement
+                else:
+                    statements.append(index_statement)
+                if isinstance(value_statement, list):
+                    statements += value_statement
+                else:
+                    statements.append(value_statement)
                 sub = ast.Subscript(value=ast.Name(id=name, ctx=ast.Load), slice=ast.Name(id=name+"_index", ctx=ast.Load), ctx=ast.Store)
                 assign = ast.Assign(targets=[sub], value=ast.Name(id=name+"_value", ctx=ast.Load))
                 statements.append(assign)
+
+
 
         ast.copy_location(statements[0], node)
         counter = 0
@@ -1241,6 +1283,11 @@ class ASTChecks(ast.NodeTransformer):
             s.col_offset = statements[0].col_offset
             counter += 1
 
+
+        for s in statements:
+            print "STATEMENTS[i]"
+            print astunparse.unparse(s)
+        
         return statements
 
 
@@ -2284,7 +2331,6 @@ class ASTParser(object):
     def parse(self, split_program=False, loop_unroll=False, inline=False):
         # Run through a bunch of parsers
         self.tree = ASTChecks().visit(self.tree)
-
         if split_program:
             local_program = self.split_program()
             return {}, local_program
@@ -2301,6 +2347,7 @@ class ASTParser(object):
 
     def execute(self, context):
         source = astor.to_source(self.tree)
+        # source = astunparse.unparse(self.tree)
         if self.debug:
             print(source)
 

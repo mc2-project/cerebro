@@ -70,7 +70,6 @@ def read_modp(address):
     if res > p / 2:
         res -= p
 
-    print "Read mod p: ", res
     return res
 
 def read_int(address):
@@ -114,7 +113,8 @@ def test_value(value, mem_value, lineno, index, lower=None, upper=None):
             fail = True
             print "Failure in line %d, index %d: read %s, expected in [%s,%s), %s" % \
                 (lineno, index, mem_value, lower, upper, type(value))
-            assert(False)
+            assert(False), "Failure in line %d, index %d: read %s, expected in [%s,%s), %s" % \
+                (lineno, index, mem_value, lower, upper, type(value))
     else:
         if lower is None:
             lower = value
@@ -127,13 +127,14 @@ def test_value(value, mem_value, lineno, index, lower=None, upper=None):
         if fail:
             print "Failure in line %d, index %d: read %s, expected %s, %s" % \
                 (lineno, index, mem_value, lower, type(value))
-            assert(False)
+            assert(False), "Failure in line %d, index %d: read %s, expected %s, %s" % \
+                (lineno, index, mem_value, lower, type(value))
     if fail and options.stop_on_fail:
         exit(1)
 
     if not fail:
         print "Test in line %d passed. Read %s, expected %s" % (lineno, mem_value, lower)
-        assert(True)
+        assert(True), "Test in line %d passed. Read %s, expected %s" % (lineno, mem_value, lower)
 
 ##
 # tests all outputs. for sfloat it also tests

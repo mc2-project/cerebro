@@ -131,6 +131,21 @@ class cbits(bits):
     def __str__(self):
         return str("{}: v = {}".format(self.gid, self.value))
 
+    def __mul__(self, other):
+        if isinstance(other, cint_gc):
+            return other.__mul__(self)
+        else:
+            raise ValueError("cbit cannot multiply with type {0}".format(type(other)))
+
+    def __rsub__(self, other):
+        return cint_gc(1, self.value).__rsub__(other)
+
+    def __sub__(self, other):
+        return cint_gc(1, self.value).__sub__(other)
+
+    def __add__(self, other):
+        return cint_gc(1, self.value).__add__(other)
+
     __rxor__ = __xor__
     __rand__ = __and__
 
@@ -538,6 +553,10 @@ class cint_gc(int_gc):
             self_value = self.get_decimal()
             other_value = other
             return (self_value, other_value)
+        elif isinstance(other, cbits):
+            self_value = self.get_decimal()
+            other_value = other.value
+            return (self_value, other_value)
         else:
             return NotImplemented
 
@@ -563,7 +582,6 @@ class cint_gc(int_gc):
         return cint_gc(self.length, v1 + v2)
 
     def __sub__(self, other):
-        print "cint_gc sub"
         ret = self.preprocess(other)
         if ret is NotImplemented:
             return other.__sub__(self, reverse=True)
@@ -571,7 +589,6 @@ class cint_gc(int_gc):
         return cint_gc(self.length, v1 - v2)
 
     def __rsub__(self, other):
-        print "cing_gc rsub"
         ret = self.preprocess(other)
         if ret is NotImplemented:
             return other.__sub__(self, reverse=True)
