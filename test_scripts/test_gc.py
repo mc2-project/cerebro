@@ -106,14 +106,15 @@ class TestGC(unittest.TestCase):
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(program_name)
 
-	"""
+	
 	def test_fused(self):
 		test_name = 'test_fused'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, "")
+		self.preprocessing.gen_data(test_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(program_name)
-	"""
+	
 
 	
 
