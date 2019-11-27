@@ -94,15 +94,34 @@ class bits(object):
         res = ~res
         return res
 
+
+    
+
+    def __rsub__(self, other):
+        if isinstance(other, int):
+            if other != 0 and other != 1:
+                raise ValueError("int - bit, the int right now can only be 0 or 1.")
+            return cint_gc(1, other).__sub__(self)
+        raise ValueError("Can't sub regular stuff with bits.")
+
+    def __mul__(self, other):
+        if isinstance(other, (int_gc, cint_gc)):
+            return other.__mul__(self)
+
+        if isinstance(other, (bits, cbits)):
+            return self.__and__(other)
+
+        raise ValueError("Multiplying of bit does not work with: {}".format(type(other)))
+
     def reveal(self, name=""):
         self.set_gid()
         program_gc.output_wires.append(self.gid)
-        
         v = {}
         v["type"] = "bits"
         v["name"] = name
         v["value"] = self.gid
         assert(self.gid is not None)
+        program_gc.output_wires_map[self.gid] = v
         return v
 
 class cbits(bits):
@@ -112,6 +131,9 @@ class cbits(bits):
         if (value != 0) and (value != 1):
             raise ValueError("cbits must have a value of 0 or 1")
         self.value = value
+
+        # EXPERIMENTAL
+        # self.set_gid()
 
     def __invert__(self):
         return cbits((self.value + 1) % 2)
@@ -132,43 +154,50 @@ class cbits(bits):
         return str("{}: v = {}".format(self.gid, self.value))
 
     def __mul__(self, other):
-        if isinstance(other, cint_gc):
+        if isinstance(other, (int_gc, cint_gc)):
             return other.__mul__(self)
         else:
             raise ValueError("cbit cannot multiply with type {0}".format(type(other)))
 
     def __rsub__(self, other):
-        return cint_gc(1, self.value).__rsub__(other)
+        return cint_gc(other.length, self.value).__rsub__(other)
 
     def __sub__(self, other):
-        return cint_gc(1, self.value).__sub__(other)
+        return cint_gc(other.length, self.value).__sub__(other)
 
     def __add__(self, other):
-        return cint_gc(1, self.value).__add__(other)
+        return cint_gc(other.length, self.value).__add__(other)
 
     __rxor__ = __xor__
     __rand__ = __and__
 
     def reveal(self, name=""):
         # cbits does not need to be revealed
+        #self.set_gid()
+        #program_gc.output_wires.append(self.gid)
         v = {}
         v["type"] = "cbits"
         v["name"] = name
         v["value"] = self.value
+        #assert(self.gid is not None)
+        program_gc.output_wires.append(v)
+        program_gc.output_wires_map[self.gid] = v
         return v
-
+    """
     def set_gid(self):
         # cbits does not need a gid
         pass
+    """
             
 class sbits(bits):
     __slots__ = []
     def __init__(self, input_party=-1):
         super(sbits, self).__init__(input_party)
-    
+
     def test_instance(self, other):
         if not isinstance(other, sbits):
             raise ValueError("requires type sbits")
+
 
 def add_full(dest, op1, op2, size, carry_in=None, carry_out=None):
     if size == 0:
@@ -212,7 +241,6 @@ def sub_full(dest, op1, op2, size, borrow_in=None, borrow_out=None):
         borrow = cbits(0)
 
     skip_last = int(borrow_out is None)
-
     i = 0
     while size > skip_last:
         bxa = op1[i] ^ op2[i]
@@ -220,7 +248,6 @@ def sub_full(dest, op1, op2, size, borrow_in=None, borrow_out=None):
         dest[i] = bxa ^ borrow
         t = bxa & bxc
         borrow = borrow ^ t
-
         i += 1
         size -= 1
 
@@ -319,10 +346,14 @@ class int_gc(object):
             raise NotImplementedError
 
     def test_instance(self, other):
-        if not (isinstance(other, (int_gc))):
+        if not (isinstance(other, (int_gc, int, bits, cbits))):
             raise ValueError("Type {} not supported with integer".format(type(other)))
+        if isinstance(other, (int, bits, cbits)):
+            return
+        """
         if not (self.length == other.length):
             raise ValueError("Integer lengths must match")
+        """
 
     def __and__(self, other):
         if isinstance(other, bits):
@@ -352,12 +383,19 @@ class int_gc(object):
 
     # This function shouldn't be called
     def __invert__(self):
-        assert(False)
+        #if self.length == 1:
+        return self.bits[0].__invert__()
+        #assert(False)
 
     def __add__(self, other):
         self.test_instance(other)
-        dest = int_gc(self.length)
-        add_full(dest.bits, self.bits, other.bits, self.length)
+        if isinstance(other, int):
+            dest = int_gc(self.length)
+            other_ = cint_gc(self.length, other)
+            add_full(dest.bits, self.bits, other_.bits, self.length)
+        else:
+            dest = int_gc(self.length)
+            add_full(dest.bits, self.bits, other.bits, self.length)
         return dest
 
     def __sub__(self, other, reverse=False):
@@ -369,6 +407,16 @@ class int_gc(object):
             self.test_instance(other)
             sub_full(dest.bits, self.bits, other.bits, self.length)
         return dest        
+
+
+    def __rsub__(self, other):
+        if isinstance(other, int):
+            return self.__sub__(cint_gc(self.length, other), reverse=True)
+        elif isinstance(other, int_gc):
+            return self.__sub__(other, reverse=True)
+        else:
+            raise ValueError("We do not support type: {0}".format(type(other)))
+
 
     def __neg__(self):
         dest = int_gc(self.length)
@@ -391,8 +439,25 @@ class int_gc(object):
 
     def __mul__(self, other):
         self.test_instance(other)
-        dest = int_gc(self.length)
-        mul_full(dest.bits, self.bits, other.bits, self.length)
+        if isinstance(other, int):
+            dest = int_gc(self.length)
+            other_ = cint_gc(self.length, other)
+            mul_full(dest.bits, self.bits, other_.bits, self.length)
+        elif isinstance(other, (bits, cbits)):
+            dest = int_gc(self.length)
+            for i in range(self.length):
+                dest.bits[i] = self.bits[i].__and__(other)
+        else:
+            this_int = self
+            if self.length < other.length:
+                this_int = self.convert(other.length)
+                dest = int_gc(other.length)
+                mul_full(dest.bits, this_int.bits, other.bits, other.length)
+            else:
+                other = other.convert(self.length)
+                dest = int_gc(self.length)
+                mul_full(dest.bits, this_int.bits, other.bits, self.length)
+
         return dest
 
     def __div__(self, other, reverse=False):
@@ -407,14 +472,17 @@ class int_gc(object):
         sign = self.bits[other.length - 1] ^ other.bits[other.length - 1]
         div_full(dest.bits, i1.bits, i2.bits, self.length)
         dest_temp = [None for i in range(self.length)]
-	cond_neg(sign, dest_temp, dest.bits, self.length)
+        cond_neg(sign, dest_temp, dest.bits, self.length)
         for i in range(len(dest_temp)):
             dest.bits[i] = dest_temp[i]
         return dest
 
     def __ge__(self, other):
         self.test_instance(other)
-        res = self - other
+        if isinstance(other, int):
+            res = self - cint_gc(self.length, other)
+        else:
+            res = self - other
         ret = ~res.bits[self.length - 1]
         return ret
 
@@ -422,6 +490,8 @@ class int_gc(object):
         return ~(self >= other)
 
     def __le__(self, other):
+        if isinstance(other, int):
+            return cint_gc(self.length, other).__ge__(self)
         return other.__ge__(self)
 
     def __gt__(self, other):
@@ -495,7 +565,15 @@ class int_gc(object):
             for i in range(0, self.length):
                 dest.bits[i] = self.bits[i]
             for i in range(self.length, new_length):
-                dest.bits[i] = dest.bits[self.length-1]
+                # Extending msb might be problematic for bits since 1 gets extended to -1.
+                if self.length == 1:
+                    # 0-extend any bits.
+                    dest.bits[i] = cbits(0)
+                else:
+                    # MSB-extend other ints.
+                    dest.bits[i] = dest.bits[self.length-1]
+                
+                
         else:
             dest = int_gc(new_length)
             dest.bits = [self.bits[i] for i in range(0, new_length)]
@@ -521,7 +599,7 @@ class cint_gc(int_gc):
         assert(length > 0)
         self.bits = []
         self.length = length
-        
+        self.value = value
         if value is None:
             self.bits = [cbits(0) for i in range(self.length)]
         else:
@@ -537,11 +615,11 @@ class cint_gc(int_gc):
 
     def get_decimal(self):
         value = 0
-        idx = len(self.bits) - 1
+        idx = 0
         for b in self.bits:
             if b.value == 1:
                 value += (b.value << idx)
-            idx -= 1
+            idx += 1
         return value
 
     def preprocess(self, other):
@@ -549,7 +627,7 @@ class cint_gc(int_gc):
             self_value = self.get_decimal()
             other_value = other.get_decimal()
             return (self_value, other_value)
-        elif isinstance(other, int):
+        elif isinstance(other, (int, long)):
             self_value = self.get_decimal()
             other_value = other
             return (self_value, other_value)
@@ -584,6 +662,16 @@ class cint_gc(int_gc):
     def __sub__(self, other):
         ret = self.preprocess(other)
         if ret is NotImplemented:
+            if isinstance(other, bits):
+                dest = int_gc(self.length)
+                other_ = int_gc(self.length)
+                other_.bits[0] = other
+                sub_full(dest.bits, self.bits, other_.bits, self.length)
+                return dest
+            elif isinstance(other, cbits):
+                other_ = cint_gc(self.length, other.value)
+                return self.__sub__(other_)
+
             return other.__sub__(self, reverse=True)
         (v1, v2) = ret
         return cint_gc(self.length, v1 - v2)
@@ -591,7 +679,7 @@ class cint_gc(int_gc):
     def __rsub__(self, other):
         ret = self.preprocess(other)
         if ret is NotImplemented:
-            return other.__sub__(self, reverse=True)
+            return other.__sub__(self, reverse=False)
         (v1, v2) = ret
         return cint_gc(self.length, v2 - v1)
 
@@ -602,7 +690,17 @@ class cint_gc(int_gc):
     def __mul__(self, other):
         ret = self.preprocess(other)
         if ret is NotImplemented:
-            return other.__mul__(self)
+            if isinstance(other, bits):
+                dest = int_gc(self.length)
+                for i in range(self.length):
+                    dest.bits[i] = self.bits[i].__and__(other)
+                return dest
+            elif isinstance(other, (cbits)):
+                dest = cint_gc(self.length, self.value * other.value)
+                return dest
+            
+            raise ValueError("cint_gc mul not compatible with type: {}".format(type(other)))
+            #return other.__mul__(self)
         (v1, v2) = ret
         return cint_gc(self.length, v1 * v2)
 
@@ -978,8 +1076,9 @@ class sfix_gc(object):
         return v
 
 def array_index_secret_load_gc(l, index):
-    if isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
-        res_list = sfixArrayGC(l.length)
+    print "array index secret load gc", type(l), type(index)
+    if isinstance(l, (sfixArrayGC, sintArrayGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
+        res_list = type(l)(l.length)
         for i in range(l.length):
             if isinstance(index, sfix_gc):
                 v = cfix_gc(v=i)
@@ -991,7 +1090,7 @@ def array_index_secret_load_gc(l, index):
         for i in range(1, l.length):
             res = res.__xor__(res_list[i])
         return res
-    elif isinstance(l, sfixMatrixGC) and isinstance(index, (sint_gc, sfix_gc)):
+    elif isinstance(l, (sfixMatrixGC, sintMatrixGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
         res_mat = sfixMatrixGC(l.rows, l.columns)
         for i in range(l.rows):
             if isinstance(index, sfix_gc):

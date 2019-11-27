@@ -128,6 +128,7 @@ class _sint(_register):
     right_shift = lambda self,other,x=None,y=None: self >> other
     bit_decompose = lambda self,length=None,*args: \
         [(self >> i) & 1 for i in range(length or program.bit_length)]
+    read_input = lambda self, party: _sint(5)
     __lt__ = less_than
     __gt__ = greater_than
     __le__ = less_equal
@@ -146,7 +147,7 @@ sint.basic_type = _sint
 sint.type = _sint
 reveal = lambda x: x
 # Used for integrating SPDZ and GC
-s_int = sint
+s_int = _sint()
 
 
 class _cint(_register):
@@ -447,6 +448,9 @@ class Array(list):
         else:
             list.__setitem__(self, index, self.value_type(value))
 
+    def read_input(self, length, party):
+        return Array(length, self.value_type)
+
 class Matrix(list):
     def __init__(self,n,m,t,*args):
         self[:] = [Array(m, t) for i in range(n)]
@@ -509,7 +513,7 @@ sint.MemValue = lambda value: MemValue(sint(value))
 sint.Array = lambda size, addr=None: Array(size, sint, addr)
 sint.Matrix = lambda n, m, addr=None: Matrix(n, m, sint, addr)
 # Used for integrating SPDZ and GC
-s_int_array = sint.Array 
+s_int_array = sint.Array(0)
 s_int_mat = sint.Matrix
 
 sfix.MemValue = lambda value: MemValue(sfix(value))

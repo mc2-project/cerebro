@@ -1,78 +1,85 @@
-# Params.set_params(int_precision=32,f=22,k=32)
+cond_true = s_int.read_input(0)
+cond_false = s_int.read_input(0)
 
-# Test standard if-else
 z = c_int(100)
-if c_int(1) < c_int(2):
+if cond_true:
     z = c_int(200)
 
-
 x = c_int(-1)
-if c_int(1) < c_int(3):
+if cond_true:
     x = c_int(1)
 else:
     x = c_int(2)
 
-test(x, c_int(1))
-
-
 y = c_int(10)
-if c_int(-1) >= c_int(1):
+if cond_false:
     y = c_int(20)
 else:
     y = c_int(30)
 
-
 a = c_int(100)
-if c_int(1) >= c_int(5):
-    a = c_int(100)
-
-
+if cond_false:
+    a = c_int(200)
 
 # Test if-elif-else
-
 b = c_int(25)
 
-if c_int(0) < c_int(1):
+if cond_true:
     b = c_int(3)
-elif c_int(0) < c_int(2):
+elif cond_true:
     b = c_int(5)
 else:
     b = c_int(10)
 
 
 c = c_int(10)
-if c_int(0) > c_int(1):
+if cond_false:
     c = c_int(21)
-elif c_int(0) < c_int(3):
+elif cond_true:
     c = c_int(31)
 else:
     c = c_int(41)
 
 d = c_int(1)
-if c_int(0) <= c_int(1):
+if cond_true:
     d = c_int(22)
-elif c_int(0) > c_int(3):
+elif cond_false:
     d = c_int(38)
 else:
     d = c_int(46)
 
 e = c_int(3)
-if c_int(0) <= c_int(1):
+if cond_true:
     e = c_int(5)
-elif c_int(1) <= c_int(2):
+elif cond_true:
     e = c_int(8)
 
 f = c_int(10)
-if c_int(1) > c_int(2):
+if cond_false:
     f = c_int(12)
-elif c_int(3) < c_int(0):
+elif cond_false:
     f = c_int(15)
 
-test(z, c_int(200))
+
+
+test(x, c_int(1))
 test(y, c_int(30))
+test(z, c_int(200))
 test(a, c_int(100))
 test(b, c_int(3))
 test(c, c_int(31))
 test(d, c_int(22))
 test(e, c_int(5))
 test(f, c_int(10))
+
+"""
+reveal_all(x, "should be 1")
+reveal_all(y, "should be 30")
+reveal_all(z, "should be 200")
+reveal_all(a, "should be 100")
+reveal_all(b, "should be 3")
+reveal_all(c, "should be 31")
+reveal_all(d, "should be 22")
+reveal_all(e, "should be 5")
+reveal_all(f, "should be 10")
+"""

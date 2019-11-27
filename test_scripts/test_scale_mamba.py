@@ -20,6 +20,12 @@ class Preprocessing:
 		if status_code != 0:
 			assert(False)
 
+	def gen_data(self, program_name):
+		program_name = program_name.rsplit('/', 1)[-1]
+		status_code = subprocess.call("cd Input_Data && python gen_data.py ./ {0}".format(program_name), shell=True)
+		if status_code != 0:
+			assert(False)
+
 	def run_online(self, program_name):
 		p0 = subprocess.Popen(["./Player.x 0 {}".format(program_name)], shell=True)
 		p1 = subprocess.Popen(["./Player.x 1 {}".format(program_name)], shell=True)
@@ -44,32 +50,37 @@ class TestScaleMamba(unittest.TestCase):
 		test_name = 'test_cond'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, '')
+		self.preprocessing.gen_data(program_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(test_name)
 	
 
 	
-
+	
 	def test_unroll(self):
 		test_name = 'test_unroll'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, '-ur')
+		self.preprocessing.gen_data(program_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(test_name)
 
 
-
+	
 	def test_inline(self):
 		test_name = 'test_inline'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, "-in")
+		self.preprocessing.gen_data(program_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(test_name)
+
 
 	def test_fused(self):
 		test_name = 'test_fused'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, "")
+		self.preprocessing.gen_data(program_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(test_name)
 

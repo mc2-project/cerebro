@@ -56,7 +56,7 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
 
     debug = True
     a = ASTParser(prog.infile, party, debug, options)
-    vectorized_calls, local_program = a.parse(options.split, options.unroll)
+    vectorized_calls, local_program = a.parse(options.split, options.unroll, options.inline)
 
     
     if local_program:
@@ -155,7 +155,7 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     print 'Compiling file', prog.infile
     party = options.party
     a = ASTParser(prog.infile, party, debug=True)
-    a.parse()
+    a.parse(options.split, options.unroll, options.inline)
     a.execute(VARS)
 
     # Write output

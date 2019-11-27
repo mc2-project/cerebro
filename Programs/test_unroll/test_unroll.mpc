@@ -1,6 +1,7 @@
-total = sint(0)
+
+total = s_int.read_input(0)
 
 for i in range(10):
-    total += sint(i)
+    total += i
 
-test(total, sint(45))
+test(total, 45)
