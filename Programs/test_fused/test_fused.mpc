@@ -1,13 +1,13 @@
 # Test the fused operator of array_index_secret_load_if
-array = s_int_array(2)
-array[0] = sint(0)
-array[1] = sint(1)
-index0 = sint(0)
-index1 = sint(1)
-cond = sint(0) < sint(1)
-res = array_index_secret_load_if(cond, array, index0, index1)
-test(res, sint(1))
-
-cond = sint(0) > sint(1)
-res = array_index_secret_load_if(cond, array, index0, index1)
-test(res, sint(0))
+# Array is [0, 1] for testing purposes.
+# cond is True/1 for testing purposes.
+array = s_int_array.read_input(2, 0)
+cond_true = s_int.read_input(0)
+cond_false = s_int.read_input(0)
+# index0 = 0, index1 = 1
+index0 = s_int.read_input(0)
+index1 = s_int.read_input(0)
+res = array_index_secret_load_if(cond_true, array, index0, index1)
+test(res, 1)
+res2 = array_index_secret_load_if(cond_false, array, index0, index1)
+test(res2, 0)

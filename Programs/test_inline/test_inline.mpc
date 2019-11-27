@@ -1,14 +1,14 @@
 # Test inlining with conflicting global and local variable names
-x = sint(5)
+five = s_int.read_input(0)
 
 
 def f(x):
-    y = x + 5
+    y = x + 7
     return y
 
 
-y = f(x)
+y = f(five)
 
 
 
-test(y, sint(10))
+test(y, 12)

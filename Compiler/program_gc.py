@@ -45,6 +45,7 @@ class ProgramGC(object):
         self.input_wires = {}
         self.output_wires = []
         self.output_objects = []
+        self.output_wires_map = {}
 
         print "[GC compilation] Writing to file"
         self.f = open(self.outfile, 'w')
@@ -102,7 +103,25 @@ class ProgramGC(object):
         wire_count = self.total_wires
         for b in self.output_wires:
             wire_count += 1
-            self.f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
+            if isinstance(b, dict):
+                val = b["value"]
+                self.f.write("2 1 {} {} {} XOR\n".format(-1, val, wire_count))
+            else:
+                self.f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
+                
+            """
+            wire_count += 1
+            wire_obj = self.output_wires_map[b]
+            if wire_obj["type"] == "bits":
+                self.f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
+            elif wire_obj["type"] == "cbits":
+                self.f.write("2 1 {} {} {} XOR\n".format(-1, wire_obj["value"], wire_count - self.total_wires))
+                #self.f.write("2 1 {} {} {} XOR\n".format(self.total_wires, b, wire_count))
+            else:
+                raise ValueError("Type: {0} is not supported.".format(wire_obj["type"]))
+            """
+
+            
 
         # Seek to the beginning and rewrite
         self.f.seek(0, 0)

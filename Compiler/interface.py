@@ -49,6 +49,7 @@ class SecretIntegerFactory(object):
         if mpc_type == SPDZ:
             return sint.get_private_input_from(party)
         else:
+            print "LENGTH: ", Params.intp
             return sint_gc(Params.intp, input_party=party)
 
 class ClearIntegerMatrixFactory(object):
@@ -157,7 +158,7 @@ class SecretIntegerArrayFactory(object):
         else:
             ret = sintArrayGC(length)
             for i in range(ret.length):
-                ret[i] = sint_gc(v=None, input_party=party)
+                ret[i] = sint_gc(Params.intp, input_party=party)
             return ret
 
 import struct
@@ -468,14 +469,17 @@ def test(value, lower=None, upper=None, prec=None):
         if lineno + 2000 > library.get_program().allocated_mem[reg_type]:
             library.get_program().allocated_mem[reg_type] = 2 * (lineno + 1000)
     elif mpc_type == GC:
-        if isinstance(value, (sint_gc, cint_gc)):
-            reveal_all(value == lower)
+        if isinstance(value, (sint_gc, cint_gc, int_gc)):
+            if isinstance(lower, int):
+                reveal_all(value == cint_gc(Params.intp, lower))
+            else:
+                reveal_all(value == lower)
         elif isinstance(value, (sfix_gc, cfix_gc)):
             reveal_all(abs(value - lower) < fx_error)
         else:
-            raise ValueError("Invalid type for GC")
+            raise ValueError("Invalid type {} to test for GC".format(type(value)))
     else:
-        raise ValueError("Invalid type")
+        raise ValueError("Invalid type of computation.")
 
 
 compilerLib.VARS["test"] = test
@@ -1139,7 +1143,13 @@ class ASTChecks(ast.NodeTransformer):
         for test in lst_conds[1:]:
             ret = ast.BinOp(left=ret, op=ast.Add(), right=test)
 
-        cond_ret = ast.Call(func=ast.Name(id="max", ctx=ast.Load()), args=[ast.Num(n=1), ret], keywords=[], starargs=None, kwargs=None)
+        #cond_ret = ast.Call(func=ast.Name(id="max", ctx=ast.Load()), args=[ast.Num(n=1), ret], keywords=[], starargs=None, kwargs=None)
+        if mpc_type == SPDZ:
+            cond_ret = ast.Compare(left=ret, ops=[ast.GtE()], comparators=[ast.Num(n=1)])
+        else:
+            num = ast.Call(func=ast.Name(id='c_int'), args=[ast.Num(n=1)], keywords=[], starargs=None, kwargs=None)
+            cond_ret = ast.Compare(left=ret, ops=[ast.GtE()], comparators=[num])
+            print "unparse", astunparse.unparse(num)
         return cond_ret
         #return ret
 
@@ -1184,7 +1194,7 @@ class ASTChecks(ast.NodeTransformer):
         return ast.Assign(targets=[target], value=current_sum)
 
     def visit_If(self, node):
-        if not isinstance(node.test, ast.Compare):
+        if not isinstance(node.test, (ast.Compare, ast.Name)):
             raise ValueError("Currently, the if conditional has to be a single Compare expression")
         if len(node.body) > 1:
             raise ValueError("We also don't allow multiple statements inside an if statement")
@@ -1196,10 +1206,13 @@ class ASTChecks(ast.NodeTransformer):
             self.if_stack = []
 
         statements = []
-        test_name = self.test_name + str(self.test_counter)
-        self.test_counter += 1
-        test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
-        statements.append(test_assign)
+        if isinstance(node.test, ast.Compare):
+            test_name = self.test_name + str(self.test_counter)
+            self.test_counter += 1
+            test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
+            statements.append(test_assign)
+        else:
+            test_name = node.test.id
 
         self.if_stack.append((test_name, True))
         self.depth += 1
@@ -1275,18 +1288,18 @@ class ASTChecks(ast.NodeTransformer):
                 statements.append(assign)
 
 
+        if len(statements):
+            ast.copy_location(statements[0], node)
+            counter = 0
+            for s in statements:
+                s.lineno = statements[0].lineno + counter
+                s.col_offset = statements[0].col_offset
+                counter += 1
 
-        ast.copy_location(statements[0], node)
-        counter = 0
-        for s in statements:
-            s.lineno = statements[0].lineno + counter
-            s.col_offset = statements[0].col_offset
-            counter += 1
 
-
-        for s in statements:
-            print "STATEMENTS[i]"
-            print astunparse.unparse(s)
+            for s in statements:
+                print "STATEMENTS[i]"
+                print astunparse.unparse(s)
         
         return statements
 
@@ -2338,10 +2351,12 @@ class ASTParser(object):
 
         if loop_unroll:
             self.loop_unroll()
-        elif inline:
-            self.inline()
         else:
             self.tree = ForLoopParser().visit(self.tree)
+
+        if inline:
+            self.inline()
+        
 
         return {}, ""
 
