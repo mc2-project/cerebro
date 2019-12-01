@@ -62,3 +62,11 @@ Alternatives
 
 
 
+Testing
+***************************
+	* Included with Cerebro are a set of tests for both SCALE-MAMBA and emp-agmpc.
+	* To run the tests with SCALE-MAMBA, run ``cd mc2/crypto_backend/SCALE-MAMBA`` and then run ``python test_scripts/test_scale_mamba.py``.
+	* To run the tests with emp-agmpc, run ``cd mc2/crypto_backend/emp-toolkit/emp-agmpc`` and then run ``python test_scripts/test_gc.py``.
+
+
+

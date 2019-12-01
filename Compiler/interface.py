@@ -835,7 +835,6 @@ class CountFnCall(ast.NodeVisitor):
             return
 
         before_visit = self.counter
-        #print "In for loop: ", node.lineno
         for item in node.body:
             if isinstance(item, ast.For) and item.lineno in self.fns_to_calls.keys():
                 self.counter += self.fns_to_calls[item.lineno]
@@ -849,7 +848,6 @@ class CountFnCall(ast.NodeVisitor):
         if node.lineno not in self.fns_to_calls.keys():
             self.fns_to_calls[node.lineno] = diff * num_iter
 
-        #print "For loop {0} calls the target function {1} times".format(node.lineno, diff * num_iter)
 
 
     def eval_args_helper(self, node):
@@ -892,8 +890,6 @@ class CountFnCall(ast.NodeVisitor):
                 self.counter = before_visit + self.fns_to_calls[new_target_fn_name]
 
                 # A bare matmul call not in the enclosing scope of any other function.
-                #if not len(self.scope_stack):
-                    #self.matmul_to_calls[new_target_fn_name] += 1
             elif fn_name in self.mllib_fn:
                 new_target_fn_name = fn_name + str(node.lineno)
                 if fn_name == "LogisticRegression":
@@ -972,7 +968,6 @@ class CountFnCall(ast.NodeVisitor):
 
 
 import copy
-# TODO: Incorporate scope possibly.
 class ConstantPropagation(ast.NodeTransformer):
     """NodeTransformer that will inline any Number and String
     constants defined on the module level wherever they are used
@@ -1061,40 +1056,7 @@ class ConstantPropagation(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
         return node
 
-    """
-
-    def visit_BinOp(self, node):
-        try:
-            val = self.eval_args_helper(node)
-            return ast.Num(n=val)
-        except Exception as e:
-            #print e
-            #print "ConstantPropagation Exception"
-            return self.generic_visit(node)
-
-
-    def visit_Compare(self, node):
-        rename_left = self.visit(node.left)
-        if rename_left:
-            node.left = rename_left
-        for i in range(len(node.comparators)):
-            rename_comparator = self.visit(node.comparators[i])
-            if rename_comparator:
-                node.comparators[i] = rename_comparator
-
-        if len(node.ops) > 1:
-            print "Doesn't support more than 1 comparison operator at a time."
-            return node
-
-        try:
-            val = self.eval_compare_helper(node)
-            return val
-
-        except Exception as e:
-            #print e
-            return node
-
-    """
+    
     def eval_compare_helper(self, node):
         left = node.left
         comapre_op = node.ops[0]
@@ -1326,8 +1288,8 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
     def __init__(self):
         # Hardcoded for SCALE-MAMBA
-        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix", "Piecewise"]
-        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat"]
+        self.secret_types = ["sint", "sfix", "s_fix", "s_fix_mat", "sfixMatrix", "sintMatrix", "Piecewise", "s_int_mat", "s_int", "sintMatrixGC", "sfixMatrixGC"]
+        self.clear_types = ["cint", "cfix", "c_fix", "cfixMatrix", "c_fix_mat", "c_int_mat", "cintMatrix", "cintMatrixGC", "cfixMatrixGC", "c_int"]
         self.python_clear = ["True", "False"]
         self.private_inputs = ["read_input_from", "read_input"]
         self.aggregation_fns = ["sum", "avg", "min_lib", "max_lib", "sum_lib", "reduce_lib"]
@@ -1340,11 +1302,8 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         # Map (mat_name, lineno) to dimension of matrix
         self.mat_to_dim = {}
         self.vectorized_calls = {}
-
+        # Maps name to ast node
         self.name_to_node = {}
-
-
-
         # Maps variable name to its counter.
         self.var_to_count = {}
         # A global counter to keep track of relative ordering of variables.
@@ -1365,11 +1324,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
     def visit_Call(self, node):
         if isinstance(node.func, ast.Attribute):
             try:
-            #print "ATTRIBUTE HELP:", node.__dict__, node.func.__dict__
                 name = node.func.value.id
             except Exception as e:
-                #print astunparse.unparse(node)
-                #print "The above line is causing error. Pls Fix!"
+                print "Program Splitter error: ", e
                 return
             if self.name_exists(name):
                 next_lineno = self.get_next_var_num(name)
@@ -1382,7 +1339,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         if self.name_exists(arg.id):
                             self.var_graph.add_edge((arg.id, self.var_to_count[arg.id]), (name, next_lineno))
 
-            # Deal with this dimension crap.
+            # Deal with matrix dimensions when linking inputs/outputs between local and secret.
             try:
                 ref_to_name = self.lookup(name)
             except ValueError as e:
@@ -1418,7 +1375,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
 
-    # HOLY SHIT this is very messy.
+    
     def visit_Assign(self, node):
         # multi-assignment, figure out later
         if isinstance(node.targets[0], ast.Tuple):
@@ -1456,7 +1413,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                     self.track_input_output_dependencies(node.value.args, lst_var_names, node, res_type)
 
             # Multiassignment of variables like a,b = c, d, currently barely supported.
-            # Probably do not want to support this. The graph gets completely fucked up by this.
+            # Probably do not want to support this. The graph gets very messed up.
             elif isinstance(node.value, ast.Tuple):
                 raise ValueError("No multiassignment allowed for now, until I figure out a way to fix this")
             """
@@ -1530,28 +1487,19 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
             # Calling a function that is a library function
             elif isinstance(node.value, ast.Call):
-
                 # a = sfix(5)
                 fn_name = self.get_fn_name(node.value)
                 if fn_name in self.secret_types:
                     self.add_to_graph(node, node.targets[0].id, (MC2_Types.SECRET, ""))
                     # Add dimension
-                    if fn_name in ("s_fix_mat", "sfixMatrix"):
+                    if fn_name in ("s_fix_mat", "s_int_mat"):
                         self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
 
 
                 # a = cfix(5)
                 elif fn_name in self.clear_types:
-                    #self.var_tracker[(node.targets[0].id, next_lineno)] = (MC2_Types.CLEAR, "")
-                    #self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=(MC2_Types.CLEAR, ""), op=node)
-                    #next_lineno = self.get_next_var_num(node.targets[0].id)
-
                     self.add_to_graph(node, node.targets[0].id, (MC2_Types.CLEAR, ""))
-
-                    if fn_name in ("c_fix_mat", "cfixMatrix"):
-                        #rows = node.value.args[0].n
-                        #cols = node.value.args[1].n
-                        #self.mat_to_dim[(node.targets[0].id, next_lineno)]
+                    if fn_name in ("c_fix_mat", "c_int_mat"):
                         self.process_mat_declare(node.targets[0].id, self.var_to_count[node.targets[0].id], node.value.args)
 
 
@@ -1566,7 +1514,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         else:
                             # Hack
                             if len(node.value.args) == 0:
-                                print "0 PARAMETER FUNCTION CALL. Skip for now!"
+                                print "0 Parameter function call, Skip for now!"
                                 res_type = (MC2_Types.SECRET, "")
                                 return
                             elif isinstance(node.value.args[0], ast.Num):
@@ -1597,14 +1545,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                                 elts = [ast.Name(id=ele[0] + str(ele[1])) for ele in lst_private_inputs]
                                 #Add in a node that is like sub_list = [priv1_a, priv1_b, ... ]
                                 ast_node = ast.Assign(targets=[ast.Name(id=name_sublist)], value=ast.List(elts=elts))
-                                #self.var_graph.add_node((name_sublist, sublist_lineno), op=ast_node, mc2_type=(MC2_Types.PRIVATE, private_party))
-
-                                #for ref_to_input in lst_private_inputs:
-                                    #self.var_graph.add_edge(ref_to_input, (name_sublist, sublist_lineno))
-
-
-                                #lst_sublists.append((name_sublist, sublist_lineno))
-
+                            
                             self.add_to_graph(node, node.targets[0].id, lst_res_type)
                             if fn_name not in self.reduce_fn:
                                 self.aggregations[(fn_name, node.targets[0].id, self.var_to_count[node.targets[0].id])] = private_party_to_inputs
@@ -1615,32 +1556,13 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
                             print "Aggregation: ", self.var_to_count[node.targets[0].id]
 
-                            # Hack!!! Treat lists as 1-d column vectors.
-
-                            # Add edges between each private var to their own local list.
-                            """
-                            copy_aggregation_node = copy.deepcopy(node)
-                            copy_aggregation_node.args = [ast.Name(id=sublist_ref[0]) for sublist_ref in lst_sublists]
-                            #self.var_graph.add_node((iter_name, iter_new_lineno), op=copy_aggregation_node, mc2_type=lst_res_type)
-                            for sublist_ref in lst_sublists:
-                                self.var_graph.add_edge(sublist_ref, (iter_name, self.var_to_count[iter_name]))
-
-
-
-
-                            self.var_graph.add_edge((iter_name, self.var_to_count[iter_name]), (node.targets[0].id, self.var_to_count[node.targets[0].id]))
-
-                            """
-
+                            # Treat lists as 1-d column vectors.
                         else:
                             # All the matrix-related library functions.
                             rows, cols = self.track_dim_library_fn(fn_name, node.targets[0].id, node.value.args)
                             next_lineno = self.get_next_var_num(node.targets[0].id)
                             self.mat_to_dim[(node.targets[0].id, next_lineno)] = (rows, cols)
-                            # print "Library fn: {0} outputs this: {1}".format(fn_name, node.targets[0].id), rows, cols
-
                             self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
-                            # print node.targets[0].id, res_type
                             print "Var: {0} has type: {1}".format(node.targets[0].id, res_type)
                             # Track dependencies between input and output
                             self.track_input_output_dependencies(node.value.args, [node.targets[0]], node, res_type)
@@ -1650,8 +1572,6 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             # a = b, where b is another variable
             elif isinstance(node.value, ast.Name) and not isinstance(node.targets[0], ast.Subscript):
                 # Sometimes you have arr[i][j] = ... and I guess we're not doing copying or containers, that'd be very difficult.
-                #print "Assign name: {0} to value: {1}".format(node.targets[0].id, node.value.id)
-                #print "Check value is correct type. Val: {0}, type: {1}".format(node.value.id, self.lookup_type(node.value.id))
                 if node.value.id in self.python_clear:
                     mc2_type = (MC2_Types.CLEAR, "")
                     next_lineno = self.get_next_var_num(node.targets[0].id)
@@ -1683,16 +1603,10 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             # a = b + c
             elif isinstance(node.value, ast.BinOp):
                 names = set()
-                #left_name = self.get_subscript_name(node.value.left, names)
-                #right_name = self.get_subscript_name(node.value.right)
                 self.get_binop_name(node.value, names)
-                #res_type = self.check_types([ast.Name(id=left_name), ast.Name(id=right_name)])
                 res_type = self.check_types([ast.Name(id=name) for name in list(names)])
-                #print "Subscript left name: {0}, left_type: {1}, right name: {2}, right type: {3}, res_type:{4}".format(left_name, self.lookup_type(left_name), right_name, self.lookup_type(right_name), res_type)
                 next_lineno = self.get_next_var_num(node.targets[0].id)
                 self.var_tracker[(node.targets[0].id, next_lineno)] = res_type
-
-
                 for name in names:
                     try:
                         if self.name_exists(name):
@@ -1702,41 +1616,17 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
 
                     except ValueError as e:
-                        pass
-                        #print e
-                        #print "Probably encountered an ast.Num object"
+                        #pass
+                        print e
+                        
 
                 self.name_to_node[(node.targets[0].id, next_lineno)] = node
-                """
-                try:
-
-                    if self.name_exists(left_name):
-                        ref_to_rhs = self.lookup(left_name)
-                        self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
-                        self.var_graph.add_edge(ref_to_rhs, (node.targets[0].id, next_lineno))
-                    if self.name_exists(right_name):
-                        ref_to_rhs = self.lookup(right_name)
-                        self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=res_type, op=node)
-                        self.var_graph.add_edge(ref_to_rhs, (node.targets[0].id, next_lineno))
-
-                    self.name_to_node[(node.targets[0].id, next_lineno)] = node
-                except ValueError as e:
-                    print e
-                    print "Probably encountered an ast.Num object"
-                """
-
 
             elif isinstance(node.value, ast.List):
                 mc2_type = (MC2_Types.SECRET, "")
-                #self.var_tracker[(node.targets[0].id, next_lineno)] = mc2_type
-                #self.var_graph.add_node((node.targets[0].id, next_lineno), mc2_type=mc2_type, op=node)
-                #next_lineno = self.get_next_var_num(node.targets[0].id)
                 self.add_to_graph(node, node.targets[0].id, mc2_type)
-
                 lst_name = node.targets[0].id
                 self.mat_to_dim[(lst_name, self.var_to_count[lst_name])] = []
-
-
                 key_to_lst = (lst_name, self.var_to_count[lst_name])
                 self.lst_to_types[key_to_lst] = []
 
@@ -1779,12 +1669,12 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                         if mat_dim != None:
                             self.mat_to_dim[(node.targets[0].id, next_lineno)] = mat_dim
 
-    # Track dimensions of amtrix from library calls
+    # Track dimensions of matrix from library calls
     def track_dim_library_fn(self, fn_name, name, args):
+        matrix_init_fn = ("sintMatrix", "sintMatrixGC", "sfixMatrix", "sfixMatrixGC", "s_int_mat", "c_int_mat", "cintMatrixGC", "cintMatrix", "cfixMatrix", "cfixMatrixGC")
         if fn_name in ("matinv", "matadd", "matsub", "placeholder"):
             first_arg = args[0].id
             latest_ref = self.lookup(first_arg)
-            #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
             return self.mat_to_dim[latest_ref]
 
         elif fn_name in ("transpose", "placeholder"):
@@ -1795,17 +1685,15 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         elif fn_name in ("mat_const_mul", "placeholder"):
             second_arg = args[1].id
             latest_ref = self.lookup(second_arg)
-            #self.mat_to_dim[(name, lineno)] = self.mat_to_dim[latest_ref]
             return self.mat_to_dim[latest_ref]
         elif fn_name in ("matmul", "placeholder"):
-            # DO SHIT HERE???????
+            # TODO: Potentially remove all these arguments from matmul.
             first_arg = args[0].id
             second_arg = args[1].id
             latest_ref_first = self.lookup(first_arg)
             latest_ref_second = self.lookup(second_arg)
             left_rows, left_cols = self.mat_to_dim[latest_ref_first]
             right_rows, right_cols = self.mat_to_dim[latest_ref_second]
-            #self.mat_to_dim[(name, lineno)] = (left_rows, right_cols)
             key = (left_rows, left_cols, right_rows, right_cols, 'sfix')
             if key not in self.vectorized_calls.keys():
                 self.vectorized_calls[key] = 0
@@ -1814,8 +1702,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             self.vectorized_calls[key] += 1
 
             return (left_rows, right_cols)
+
         else:
-            print "Matrix library function name", fn_name, name
+            print "Error calling Matrix library function name", fn_name, name
             raise ValueError
 
     def get_subscript_name(self, node):
@@ -1948,23 +1837,15 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             self.name_to_node[(name, lineno)].lineno = lineno
 
 
-        #print "Postprocessing graph, adding line-numbers"
-        #for name, lineno in sorted(self.name_to_node.keys(), key=lambda item: item[1]):
-            #print name, lineno, self.name_to_node[(name, lineno)].lineno
-
-
-
 
     def trace_private_computation(self, party):
         # List of local
         lst_local_ops = []
         lst_local_nodes = set()
         # List of operations that you want to "get rid of" in the main program.
-        #lst_private = []
         lst_private = []
         secret_to_dependents = {}
         d = {}
-        #print "NUMBER OF NODES: ", len(self.var_graph.nodes())
         for node in self.var_graph.nodes(data=True):
             print node
             d[node[0]] = node
@@ -1979,11 +1860,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
         while self.pq:
             priority, node = heapq.heappop(self.pq)
             node_type = d[node][1]['mc2_type']
-            #print "Node type: ", node_type
 
             if node_type[0] == MC2_Types.SECRET and self.check_if_source_private(node):
                 lst_local_ops.append(d[node])
-                # lst_private.append(d[node])
                 if self.var_graph.in_edges(node):
                     lst_priv_dependents = []
                     for source, target in self.var_graph.in_edges(node):
@@ -1996,14 +1875,12 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                     secret_to_dependents[node] = lst_priv_dependents
             elif node_type[0] != MC2_Types.SECRET:
                 check_private = (node_type[0] == MC2_Types.PRIVATE and node_type[1] == party)
-                #print "CHECK PRIVATE: ", check_private, node_type, node_type[1], party
                 if node_type[0] == MC2_Types.PRIVATE:
-
                     lst_private.append(d[node])
 
 
                 if check_private or node_type[0] == MC2_Types.CLEAR:
-                    if d[node][1]['op'] not in lst_local_nodes: #and self.var_graph.in_edges(d[node][0]):
+                    if d[node][1]['op'] not in lst_local_nodes:
                         lst_local_ops.append(d[node])
                         lst_local_nodes.add(d[node][1]['op'])
 
@@ -2012,16 +1889,12 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                     heapq.heappush(self.pq, (target[1], target))
 
 
-
-
-
         return lst_local_ops, secret_to_dependents, lst_private, d
 
 
     def insert_local_compute(self, lst_clear_private, secret_to_dependents, party, node_dict):
 
         # Sort secret nodes by k
-        #print "List local: ", lst_clear_private
         sorted_secret_keys = sorted(secret_to_dependents.keys(), key=lambda item: item[1])
 
         lst_to_insert = []
@@ -2040,12 +1913,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
                 # Extracts the variable name of the secret node's dependents.
                 lst_secret_dependents = [e[0][0] for e in lst_secret_dependents]
                 # Get the line number of the latest reference to any of the dependents to this secret node
-                # lst = [item[0][1] if (item[0][1] < secret_lineno and item[0][0] in lst_secret_dependents and item[1]['mc2_type'][1] == party) else -float('inf') for item in lst_clear_private]
                 clear_node = max(lst_clear_private, key=lambda item: item[0][1] if (item[0][1] < secret_lineno and item[0][0] in lst_secret_dependents and item[1]['mc2_type'][1] == party) else -float('inf'))
                 clear_index = lst_clear_private.index(clear_node)
                 lst_to_insert.append((clear_node, secret_node))
-
-                #print "CLEAR NODE: ", clear_node
 
 
 
@@ -2054,8 +1924,6 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             secret_node_dependent = secret_to_dependents[secret_node]
             secret_name = secret_node_dependent[0][0][0]
             ast_node = ast.Call(starargs=None, kwargs=None, keywords=[], func=ast.Attribute(attr="append", value=ast.Name(id="data")), args=[ast.Name(id=secret_name)])
-
-            #ast.Assign(targets=[ast.Name(id='data')], value=ast.BinOp(left=ast.Name(id='data'), right=ast.Name(id=secret_node_dependent[0][0][0]), op=ast.Add()))
             d = {'op':ast_node, 'mc2_type': (MC2_Types.PRIVATE, party)}
             lst_clear_private.insert(index + 1, (None, d))
 
@@ -2096,16 +1964,11 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
         local_program = self.write_local_program(lst_clear_private, party)
 
-
-        #lst_secret_nodes.extend([e[1] for e in lst_to_insert])
-        #print "LIST SECRET: ", lst_secret_nodes
         return lst_clear_private, lst_secret_nodes, local_program
 
 
 
     def write_local_program(self, lst_clear_private, party):
-        #temp_mpc_type = mpc_type
-        #mpc_type = LOCAL
         s = ""
         s += "pmat = p_mat()\n"
         s += "pmat.preprocess()\n"
@@ -2116,7 +1979,6 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             else:
                 s+= "{0}_{1} = []\n".format(fn_name, lineno)
         for node in lst_clear_private:
-            #print "Private node: ", astunparse.unparse(node[1]['op'])
             mc2_type = node[1]['mc2_type']
             check_private = (mc2_type[0] == MC2_Types.PRIVATE and mc2_type[1] == party)
             if check_private or mc2_type[0] == MC2_Types.CLEAR:
@@ -2141,6 +2003,7 @@ class ProgramSplitterHelper(ast.NodeVisitor):
 
         print "LOCAL PROGRAM"
         print s
+        print "LOCAL PROGRAM STOP"
         return s
 
     # For precomputation, rename s_fix_mat.read_input ----> pmat.read_input
@@ -2236,11 +2099,8 @@ class ProgramSplitter(ast.NodeTransformer):
 
 
     def visit_Call(self, node):
-
         if hasattr(node, 'lineno'):
-
             secret_node = self.is_secret(node)
-
             if secret_node != None:
                 # Insert assign
                 private_dependent, private_party = self.secret_to_dependents[secret_node][0]
@@ -2250,7 +2110,6 @@ class ProgramSplitter(ast.NodeTransformer):
                     # HACK: Assume values are just 1 by 1 matrices.
                     rows, cols = (1, 1)
                 private_name = "private_input" + str(node.lineno)
-
                 call_node = ast.Call(kwargs=None, starargs=None, keywords=[], func=ast.Attribute(attr="read_input", value=ast.Name(id="s_fix_mat")), args=[ast.Num(n=rows), ast.Num(n=cols), ast.Num(n=private_party)])
                 temp_assign = ast.Assign(targets=[ast.Name(id=private_name)], value=call_node)
                 node.args[0].id = private_name
@@ -2276,8 +2135,6 @@ class ProgramSplitter(ast.NodeTransformer):
 
         return None
 
-
-
     def is_private(self, node):
         lineno = node.lineno
         for priv_node in self.lst_private:
@@ -2298,13 +2155,11 @@ class CountMatmulHelper(ast.NodeVisitor):
 
     def __init__(self, mat_to_dim):
         self.mat_to_dim = mat_to_dim
-
         self.vectorized_calls = {}
 
 
     def visit_Assign(self, node):
         if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
-
             if node.value.func.id == "matmul":
                 left_rows = node.value.args[2].n
                 left_cols = node.value.args[3].n
@@ -2328,10 +2183,7 @@ class ASTParser(object):
         f.close()
         if mpc_type == SPDZ:
             header = "open_channel(0)\n"
-            #header += "pmat = p_mat()\n"
-            #header += "pmat.preprocess()\n"
             s = header + s + "\nclose_channel(0)\n"
-            #pass
 
         
         self.tree = ast.parse(s)
@@ -2364,7 +2216,9 @@ class ASTParser(object):
         source = astor.to_source(self.tree)
         # source = astunparse.unparse(self.tree)
         if self.debug:
+            print("**************************************** Source code start ****************************************")
             print(source)
+            print("**************************************** Source code end ****************************************")
 
         exec(source, context)
         self.output_source(source)

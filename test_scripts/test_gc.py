@@ -32,7 +32,6 @@ class Preprocessing:
 
 	# Need for compiler to have function write in line.
 	def run_test(self, program_name):
-		#status_code = subprocess.call(["python test_scripts/test-result.py {}".format(program_name)], shell=True)
 		# Read output file 
 		output_file = os.path.join(program_name, "agmpc.output")
 		outputs = []

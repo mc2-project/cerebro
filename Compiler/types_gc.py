@@ -132,9 +132,6 @@ class cbits(bits):
             raise ValueError("cbits must have a value of 0 or 1")
         self.value = value
 
-        # EXPERIMENTAL
-        # self.set_gid()
-
     def __invert__(self):
         return cbits((self.value + 1) % 2)
 
@@ -172,22 +169,15 @@ class cbits(bits):
     __rand__ = __and__
 
     def reveal(self, name=""):
-        # cbits does not need to be revealed
-        #self.set_gid()
-        #program_gc.output_wires.append(self.gid)
+        # cbits do not need to be revealed
         v = {}
         v["type"] = "cbits"
         v["name"] = name
         v["value"] = self.value
-        #assert(self.gid is not None)
         program_gc.output_wires.append(v)
         program_gc.output_wires_map[self.gid] = v
         return v
-    """
-    def set_gid(self):
-        # cbits does not need a gid
-        pass
-    """
+
             
 class sbits(bits):
     __slots__ = []
@@ -700,7 +690,6 @@ class cint_gc(int_gc):
                 return dest
             
             raise ValueError("cint_gc mul not compatible with type: {}".format(type(other)))
-            #return other.__mul__(self)
         (v1, v2) = ret
         return cint_gc(self.length, v1 * v2)
 
@@ -1077,7 +1066,7 @@ class sfix_gc(object):
 
 def array_index_secret_load_gc(l, index):
     if isinstance(l, (sfixArrayGC, sintArrayGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
-        res_list = [None] * l.length #type(l)(l.length)
+        res_list = [None] * l.length
         for i in range(l.length):
             if isinstance(index, sfix_gc):
                 v = cfix_gc(v=i)
@@ -1090,7 +1079,6 @@ def array_index_secret_load_gc(l, index):
             res = res.__xor__(res_list[i])
         return res
     elif isinstance(l, (sfixMatrixGC, sintMatrixGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
-        #res_mat = sfixMatrixGC(l.rows, l.columns)
         res_mat = [[None] * l.columns for _ in l.rows]
         for i in range(l.rows):
             if isinstance(index, sfix_gc):
