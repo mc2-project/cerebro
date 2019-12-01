@@ -13,6 +13,7 @@ Welcome to Cerebro's documentation!
    setup/setup.rst
    setup/tutorial.rst
    usage/references.rst
+   todo/todo.rst
    
    
 

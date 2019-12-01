@@ -42,7 +42,7 @@ To have a user provide input data do the following:
 	* In another file (for example hello.py), run the program that generates the user data.
 	* At the very end of the program, set the variable ``data`` equal to the array of the user's input data. For example, if my input data is 1,2,3, then at the very end of the program we have the line: ``data = [1, 2, 3]``
 	* Call ``python gen_data.py [file_name]`` where file_name is the python file containing the data.
-	* The script generates a file f0/f1 or input.txt. The former is used for arithmetic circuits and can be left alone while the latter text file can be moved depending on your needs. (More is explained above in the EMP_AGMPC section).
+	* The script generates a file f0 and input.txt. The former is used for arithmetic circuits and can be left alone while the latter text file can be moved depending on your needs. (More is explained above in the EMP_AGMPC section).
 
 Limitations: Currently the way the script is written, the input size is at most 64 bits in length.
 
