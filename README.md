@@ -1,8 +1,8 @@
 Cerebro: A Coopetitive Learning Platform
 
-### Building Documentation
+### Documentation
 
-Run `cd docs` then run `sphinx-build -b html source build`. The documentation should be under `mc2/docs/build/index.html`.
+Documentation is currently at: https://mc2-project.github.io/cerebro-docs/
 
 
 
