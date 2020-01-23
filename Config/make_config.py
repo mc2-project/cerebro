@@ -18,7 +18,7 @@ def main():
     server_list = server_list.splitlines()
     server_list = server_list[0:args.num_party]
 
-    f = open("./emp-agmpc/emp-agmpc/cmpc_config.h", 'w')
+    f = open("./emp-toolkit/emp-agmpc/emp-agmpc/cmpc_config.h", 'w')
     f.write("#ifndef __CMPC_CONFIG\n")
     f.write("#define __CMPC_CONFIG\n")
     f.write("const static int abit_block_size = 1024;\n")
@@ -48,7 +48,7 @@ def main():
 
     f.close()
 
-    os.system("cd ./emp-agmpc && make")
+    os.system("cd ./emp-toolkit/emp-agmpc && cmake . && make")
     os.system("cd ./SCALE-MAMBA/Data && rm -rf Memory-P0 && rm -rf *.key")
     os.system("cd ./SCALE-MAMBA && cp Auto-Test-Data/Cert-Store/* Cert-Store/")
     os.system("cd ./SCALE-MAMBA && cp Auto-Test-Data/" + str(args.num_party) +"/* Data/")

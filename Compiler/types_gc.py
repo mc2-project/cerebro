@@ -102,16 +102,30 @@ class bits(object):
             if other != 0 and other != 1:
                 raise ValueError("int - bit, the int right now can only be 0 or 1.")
             return cint_gc(1, other).__sub__(self)
-        raise ValueError("Can't sub regular stuff with bits.")
+
+        return NotImplemented
 
     def __mul__(self, other):
         if isinstance(other, (int_gc, cint_gc)):
             return other.__mul__(self)
-
+        
         if isinstance(other, (bits, cbits)):
             return self.__and__(other)
 
-        raise ValueError("Multiplying of bit does not work with: {}".format(type(other)))
+        if isinstance(other, int):
+            if other != 0 and other != 1:
+                raise ValueError("int bit must be only 0 or 1")
+            return cint_gc(1, other).__mul__(self)
+
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, int):
+            if other != 0 and other != 1:
+                raise ValueError("int bit must be only 0 or 1")
+            return cbits(other).__mul__(self)
+
+        return NotImplemented
 
     def reveal(self, name=""):
         self.set_gid()

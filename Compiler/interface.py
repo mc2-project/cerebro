@@ -394,30 +394,38 @@ def write_private_data(lst_data):
 
 
 ClearInteger = ClearIntegerFactory()
+ClearIntegerMatrix = ClearIntegerMatrixFactory()
+
 SecretInteger = SecretIntegerFactory()
+SecretIntegerArray = SecretIntegerArrayFactory()
+SecretIntegerMatrix = SecretIntegerMatrixFactory()
+
 ClearFixedPoint = ClearFixedPointFactory()
 ClearFixedPointMatrix = ClearFixedPointMatrixFactory()
+
 SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
 SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
-ClearIntegerMatrix = ClearIntegerMatrixFactory()
-SecretIntegerMatrix = SecretIntegerMatrixFactory()
-SecretIntegerArray = SecretIntegerArrayFactory()
+
+# List of supported types and MPC specific functions
 
 compilerLib.VARS["c_int"] = ClearInteger
+compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
+
 compilerLib.VARS["s_int"] = SecretInteger
+compilerLib.VARS["s_int_array"] = SecretIntegerArray
+compilerLib.VARS["s_int_mat"] = SecretIntegerMatrix
+
 compilerLib.VARS["c_fix"] = ClearFixedPoint
+compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
+
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
-compilerLib.VARS["s_int_array"] = SecretIntegerArray
-compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
 compilerLib.VARS["s_fix_mat"] = SecretFixedPointMatrix
-compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
-compilerLib.VARS["s_int_mat"] = SecretIntegerMatrix
+
 compilerLib.VARS["p_mat"] = PrivateFixedPointMatrix
 compilerLib.VARS["reveal_all"] = reveal_all
 compilerLib.VARS["write_private_data"] = write_private_data
-
 
 
 fx_error = 1e-3
