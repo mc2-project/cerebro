@@ -1176,24 +1176,24 @@ class MatrixGC(object):
         return v
 
 class cintArrayGC(ArrayGC):
-    def __init__(self, length, value_type):
+    def __init__(self, length):
         super(cintArrayGC, self).__init__(length, cint_gc)
         self.data = [cint_gc(0) for i in range(length)]
 
 class cintMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, value_type):
+    def __init__(self, rows, columns):
         super(cintMatrixGC, self).__init__(rows, columns, cint_gc)
-        self.data = [cintArrayGC(columns, value_type) for i in range(rows)]
+        self.data = [cintArrayGC(columns) for i in range(rows)]
 
 class cfixArrayGC(ArrayGC):
-    def __init__(self, length, value_type):
+    def __init__(self, length):
         super(cfixArrayGC, self).__init__(length, cfix_gc)
         self.data = [cfix_gc(0) for i in range(length)]
 
 class cfixMatrixGC(MatrixGC):
-    def __init__(self, rows, columns, value_type):
+    def __init__(self, rows, columns):
         super(cfixMatrixGC, self).__init__(rows, columns, cfix_gc)
-        self.data = [cfixArrayGC(columns, value_type) for i in range(rows)]
+        self.data = [cfixArrayGC(columns) for i in range(rows)]
 
 class sintArrayGC(ArrayGC):
     def __init__(self, length):
