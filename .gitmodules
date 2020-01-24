@@ -1,12 +1,12 @@
 [submodule "crypto_backend/emp-toolkit/emp-tool"]
 	path = crypto_backend/emp-toolkit/emp-tool
-	url = https://github.com/ryandeng1/emp-tool.git
+	url = https://github.com/mc2-project/emp-tool.git
 [submodule "crypto_backend/emp-toolkit/emp-ot"]
 	path = crypto_backend/emp-toolkit/emp-ot
-	url = https://github.com/ryandeng1/emp-ot.git
+	url = https://github.com/mc2-project/emp-ot.git
 [submodule "crypto_backend/emp-toolkit/emp-agmpc"]
 	path = crypto_backend/emp-toolkit/emp-agmpc
-	url = https://github.com/ryandeng1/emp-agmpc.git
+	url = https://github.com/mc2-project/emp-agmpc.git
 [submodule "crypto_backend/SCALE-MAMBA"]
 	path = crypto_backend/SCALE-MAMBA
-	url = https://github.com/ryandeng1/SCALE-MAMBA.git
+	url = https://github.com/mc2-project/SCALE-MAMBA.git
