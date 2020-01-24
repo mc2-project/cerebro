@@ -20,6 +20,11 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
     from interface import ASTParser as ASTParser
     import inspect
     import copy
+
+    # Change the default directory
+    root_dir = os.getcwd()
+    os.chdir("./crypto_backend/SCALE-MAMBA/")
+    
     interface.mpc_type = interface.SPDZ
 
     _interface = [t[1] for t in inspect.getmembers(interface, inspect.isclass)]
@@ -98,9 +103,10 @@ def run_arithmetic(args, options, param=-1, merge_opens=True, \
 
     # Write file to output 
     prog.write_bytes(options.outfile)
+
+    os.chdir(root_dir)
+    
     return prog
-
-
 
 # Helper method to remove the triples used for matrix multiplication
 def sub_vectorized_triples(vectorized_calls, req_num):
@@ -131,14 +137,16 @@ def sub_vectorized_triples(vectorized_calls, req_num):
 
 
 # Similar 
-def run_gc(args, options, param=-1, merge_opens=True, \
-           reallocate=True, debug=False):
+def run_gc(args, options, param=-1):
 
     from Compiler.program_gc import ProgramGC
     import instructions_gc, types_gc
     import interface
     from interface import ASTParser as ASTParser
     import inspect
+
+    root_dir = os.getcwd()
+    os.chdir("./crypto_backend/emp-toolkit/emp-agmpc/")
 
     interface.mpc_type = interface.GC
 
@@ -159,26 +167,54 @@ def run_gc(args, options, param=-1, merge_opens=True, \
     a.execute(VARS)
 
     # Write output
-    # prog.write_bytes(prog.outfile)
+    prog.write_bytes(prog.outfile)
 
+    os.chdir(root_dir)
     return prog
 
 
-def run(args, options, param=-1, merge_opens=True, \
-        reallocate=True, debug=False):
+import copy
+
+def default_options(options):
+    options_arithmetic = copy.deepcopy(options)
+    options_boolean = copy.deepcopy(options)
+
+    # Some default parameters need to be set for arithmetic
+    options_arithmetic.fdflag = True
+    options_arithmetic.comparison = "log"
+    options_arithmetic.merge_opens = True
+    options_arithmetic.max_parallel_open = False
+    options_arithmetic.dead_code_elimination = False
+    options_arithmetic.reorder_between_opens = True
+    options_arithmetic.continuous = False
+    options_arithmetic.noreallocate = False
+    options_arithmetic.outfile = ""
+
+    return (options_arithmetic, options_boolean)
     
+
+def plan(mpc_filename, constants_filename, options, param=-1):
+    (options_arithmetic, options_boolean) = default_options(options)
+    
+    arithmetic_prog = run_arithmetic([mpc_filename], options_arithmetic, param)
+    boolean_prog = run_gc([mpc_filename], options_boolean, param)
+    run_planner(arithmetic_prog, boolean_prog, constants_filename)
+    
+def run(args, options, param=-1):
+    (options_arithmetic, options_boolean) = default_options(options)
+
     # Do planning
     if options.constant_file:
-        arithmetic_prog = run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
-        boolean_prog = run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+        arithmetic_prog = run_arithmetic(args[1:], options_arithmetic, param)
+        boolean_prog = run_gc(args[1:], options_boolean, param)
         run_planner(arithmetic_prog, boolean_prog, options.constant_file)
 
     else:
         if args[0] == 'a':
-            return run_arithmetic(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+            return run_arithmetic(args[1:], options, param)
 
         elif args[0] == 'b':
-            return run_gc(args[1:], options, param, merge_opens=merge_opens, debug=debug)
+            return run_gc(args[1:], options, param)
         else:
             raise ValueError("Must choose either arithmetic (a) or GC (b)")
             print "---------------------------------------------"

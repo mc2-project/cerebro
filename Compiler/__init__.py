@@ -2,7 +2,7 @@ from config import *
 import compilerLib, program, instructions, types, library, mllib, floatingpoint, mpc_math
 import program_gc, instructions_gc, types_gc
 import inspect
-from compilerLib import run
+from compilerLib import run, plan
 
 
 # add all instructions to the program VARS dictionary

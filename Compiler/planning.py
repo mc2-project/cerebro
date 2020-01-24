@@ -287,7 +287,7 @@ def read_circuit_file(path):
 	num_out = 0
 	num_ands = 0
 	num_gates = 0
-	cf = open(path, "r") 
+	cf = open(path, "r")
 	# First line is the number of gates and wires, so to get the number of gates, we take the first element.
 	num_gates = int(cf.readline().split(" ")[0])
 	# Second line contains the number of inputs
@@ -326,8 +326,6 @@ def agmpc_offline(num_in, num_out, num_ands, num_gates, constants_dict):
 	# Communication cost
 	#total_cost += (num_parties - 1) * num_gates * constants_dict['g2_b']
 	return offline_cost
-
-
 
 def agmpc_online(num_gates, constants_dict):
 	online_cost = 0

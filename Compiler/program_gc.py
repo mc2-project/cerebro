@@ -128,8 +128,7 @@ class ProgramGC(object):
         self.f.write("{} {}\n".format(self.num_instructions + 1 + len(self.output_wires), self.total_wires + 1 + len(self.output_wires)))
         self.f.write("{} {} {}\n".format(self.total_inputs, 0, len(self.output_wires)))
         self.f.write("\n")
-
-        #self.f.close()
+        self.f.close()
 
         # Write input wire configuration for each party
         # format = party, wire start, wire end
