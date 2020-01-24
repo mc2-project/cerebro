@@ -102,6 +102,33 @@ class SecretFixedPointFactory(object):
         else:
             return sfix_gc(v=None, input_party=party)
 
+class ClearFixedPointArrayFactory(object):
+    def __call__(self, length):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
+        if mpc_type == SPDZ:
+            ret = cfixArray(length)
+            return ret
+        else:
+            ret = cfixArrayGC(length)
+            for i in range(length):
+                ret[i] = cfix_gc(0)
+            return ret
+
+class ClearIntegerArrayFactory(object):
+    def __call__(self, length):
+        if not isinstance(length, int):
+            raise ValueError("Array length must be a publicly known integer")
+        if mpc_type == SPDZ:
+            ret = cintArray(length)
+            return ret
+        else:
+            ret = cintArrayGC(length)
+            for i in range(length):
+                ret[i] = cint_gc(0)
+            return ret
+
+
 class SecretFixedPointArrayFactory(object):
     def __call__(self, length):
         if not isinstance(length, int):
@@ -395,6 +422,7 @@ def write_private_data(lst_data):
 
 ClearInteger = ClearIntegerFactory()
 ClearIntegerMatrix = ClearIntegerMatrixFactory()
+ClearIntegerArray = ClearIntegerArrayFactory()
 
 SecretInteger = SecretIntegerFactory()
 SecretIntegerArray = SecretIntegerArrayFactory()
@@ -402,6 +430,8 @@ SecretIntegerMatrix = SecretIntegerMatrixFactory()
 
 ClearFixedPoint = ClearFixedPointFactory()
 ClearFixedPointMatrix = ClearFixedPointMatrixFactory()
+ClearFixedPointArray = ClearFixedPointArrayFactory()
+
 
 SecretFixedPoint = SecretFixedPointFactory()
 SecretFixedPointArray = SecretFixedPointArrayFactory()
@@ -411,6 +441,8 @@ SecretFixedPointMatrix = SecretFixedPointMatrixFactory()
 
 compilerLib.VARS["c_int"] = ClearInteger
 compilerLib.VARS["c_int_mat"] = ClearIntegerMatrix
+compilerLib.VARS["c_int_array"] = ClearIntegerArray
+
 
 compilerLib.VARS["s_int"] = SecretInteger
 compilerLib.VARS["s_int_array"] = SecretIntegerArray
@@ -418,6 +450,9 @@ compilerLib.VARS["s_int_mat"] = SecretIntegerMatrix
 
 compilerLib.VARS["c_fix"] = ClearFixedPoint
 compilerLib.VARS["c_fix_mat"] = ClearFixedPointMatrix
+compilerLib.VARS["c_fix_array"] = ClearFixedPointArray
+
+
 
 compilerLib.VARS["s_fix"] = SecretFixedPoint
 compilerLib.VARS["s_fix_array"] = SecretFixedPointArray
@@ -462,9 +497,6 @@ def test(value, lower=None, upper=None, prec=None):
             library.store_in_mem(msw, lineno + 2000)
             reg_type = 'c'
         else:
-
-            #if not value.is_clear:
-                #value = library.reveal(value)
             if isinstance(value, (sint, sfix)):
                 value = library.reveal(value)
             if value.size > 1:
@@ -473,7 +505,6 @@ def test(value, lower=None, upper=None, prec=None):
             library.store_in_mem(value, lineno + 1000)
             reg_type = 'c'
 
-        print "Test at", lineno
         if lineno + 2000 > library.get_program().allocated_mem[reg_type]:
             library.get_program().allocated_mem[reg_type] = 2 * (lineno + 1000)
     elif mpc_type == GC:
@@ -1423,10 +1454,9 @@ class ProgramSplitterHelper(ast.NodeVisitor):
             # Multiassignment of variables like a,b = c, d, currently barely supported.
             # Probably do not want to support this. The graph gets very messed up.
             elif isinstance(node.value, ast.Tuple):
-                raise ValueError("No multiassignment allowed for now, until I figure out a way to fix this")
+                raise ValueError("No multiassignment allowed for now.")
             """
             elif isinstance(node.value, ast.Tuple):
-                print "MULTIASSIGNMENT"
                 right_hand_side_var_names = []
                 for name_obj in node.value.elts:
                     right_hand_side_var_names.append(name_obj.id)
