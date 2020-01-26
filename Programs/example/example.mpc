@@ -1,0 +1,12 @@
+ALICE = 0
+BOB = 1
+
+alice_networth = s_int.read_input(ALICE)
+bob_networth = s_int.read_input(BOB)
+
+if alice_networth < bob_networth:
+    res = BOB
+else:
+    res = ALICE
+
+reveal_all(res, "The richer player is")

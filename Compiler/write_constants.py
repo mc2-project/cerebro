@@ -55,9 +55,10 @@ constants["c1_h"] = 1
 constants["c2_h"] = 1
 constants["c3_h"] = 1
 constants["c4_h"] = 1
+constants["c_v"] = 1
 constants["c1_v"] = 1
 constants["c2_v"] = 1
-constants["c3_h"] = 1
+constants["c3_v"] = 1
 constants["m_a_online"] = 1
 constants["b_a_online"] = 1
 

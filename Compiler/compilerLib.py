@@ -198,7 +198,7 @@ def plan(mpc_filename, constants_filename, options, param=-1):
     
     arithmetic_prog = run_arithmetic([mpc_filename], options_arithmetic, param)
     boolean_prog = run_gc([mpc_filename], options_boolean, param)
-    run_planner(arithmetic_prog, boolean_prog, constants_filename)
+    return run_planner(arithmetic_prog, boolean_prog, constants_filename)
     
 def run(args, options, param=-1):
     (options_arithmetic, options_boolean) = default_options(options)
@@ -233,6 +233,7 @@ def run_planner(arithmetic_prog, boolean_prog, constant_file):
         print "Decision: ", d_b['decision']
         print "Cost: ", d_b['total_cost']
         print "---------------------------------------------"
+        return "boolean"
 
     else:
         print "---------------------------------------------"
@@ -240,4 +241,4 @@ def run_planner(arithmetic_prog, boolean_prog, constant_file):
         print "Decision: ", d_a['decision']
         print "Cost: ", d_a['total_cost']
         print "---------------------------------------------"
-               
+        return "arithmetic"
