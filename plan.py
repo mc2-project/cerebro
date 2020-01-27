@@ -28,12 +28,13 @@ def process_input(input_filename):
 
 def execute_framework(decision, party_id, program_name):
     root_dir = os.getcwd()
+    print "Executing {} framework".format(decision)
     if decision == "arithmetic":
         os.chdir("./crypto_backend/SCALE-MAMBA/")
-        subprocess.call("./Player {} {}".format(party_id, program_name))
+        subprocess.Popen(shlex.split("./Player {} {}".format(party_id, program_name)))
     elif decision == "boolean":
         os.chdir("./crypto_backend/emp-toolkit/emp-agmpc/")
-        subprocess.call("./bin/run_circuit {} 2000 {} {} {} ".format(party_id, program_name, program_name, program_name))
+        subprocess.Popen(shlex.split("./bin/run_circuit {} 2000 {} {} {} ".format(party_id, program_name, program_name, program_name)))
     else:
         raise ValueError("Framework {} is not supported as a valid execution backend".format(decision))
     os.chdir(root_dir)
@@ -59,7 +60,7 @@ def main():
     decision = Compiler.plan(program_name, constants_file, options)
 
     process_input(input_filename)
-    #execute_framework(decision, party_id, program_name)
+    execute_framework(decision, party_id, program_name)
 
 if __name__ == '__main__':
     main()

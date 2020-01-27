@@ -9,4 +9,4 @@ if alice_networth < bob_networth:
 else:
     res = ALICE
 
-reveal_all(res, "The richer player is")
+reveal_all(res, "The richer player ")
