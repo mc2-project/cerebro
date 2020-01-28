@@ -49,9 +49,8 @@ def main():
     plan_file = args.plan_file
 
     config_file = open(args.config, 'r')
-    config_data = yaml.load(config_file.read())
+    config = yaml.load(config_file.read(), Loader=yaml.SafeLoader)
     config_file.close()
-    config = yaml.dump(config_data)
     
     party_id = config["party_id"]
     program_dir = config["program_dir"]
