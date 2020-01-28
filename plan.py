@@ -31,6 +31,9 @@ def main():
     constants_file = config["constants_file"]
     program_dir = config["program_dir"]
     program_name = config["program_name"]
+
+    options = args
+    options.party = party_id
     decision = Compiler.plan(program_dir + "/" + program_name, constants_file, options)
 
     # write out the final plan to a file
@@ -38,9 +41,7 @@ def main():
     plan["decision"] = decision
     plan_json = json.dumps(plan)
 
-    plan_file = args.plan_file
-    if plan_file == "":
-        plan_file = "./mpc_exec_plan"
+    plan_file = config["plan_file"]
 
     f = open(plan_file, 'w')
     f.write(plan_json)

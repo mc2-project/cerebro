@@ -3,15 +3,6 @@ import json
 import subprocess, shlex, os, yaml
 
 def process_input(directory, filename):
-    # def f(s, x, start=0):
-    #     pos = s.find(x, start)
-    #     if pos == -1:
-    #         return start-1
-    #     return f(s, x, pos+1)
-
-    # split = f(input_filename, "/")
-    directory = input_filename[:split]
-    filename = input_filename[split+1:-3]
     cmd = "python Input_Data/gen_data.py {} {}".format(directory, filename)
     proc = subprocess.Popen(shlex.split(cmd))
     print "Finished processing input"
