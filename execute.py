@@ -28,7 +28,9 @@ def execute_framework(decision, party_id, program_name):
 
 def process_output(decision, program_dir, program_name):
     if decision == "boolean":
-        proc = subprocess.Popen(shlex.split("python Output_Data/agmpc_output_parser.py {}".format(program_dir + "/" + program_name + "/agmpc.txt.output")))
+        output_data_file = program_dir + "/" + program_name + "/agmpc.txt.output"
+        circuit_directory = program_dir + "/" + program_name
+        proc = subprocess.Popen(shlex.split("python Output_Data/agmpc_output_parser.py {} {}".format(output_data_file, circuit_directory)))
         print proc.communicate()[0]
 
 def main():
