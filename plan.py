@@ -7,44 +7,18 @@
 
 
 import argparse
-import subprocess, shlex, os
+import json, subprocess, shlex, os
 
 import Compiler
 import Compiler.planning as planning
 
-def process_input(input_filename):
-    def f(s, x, start=0):
-        pos = s.find(x, start)
-        if pos == -1:
-            return start-1
-        return f(s, x, pos+1)
-
-    split = f(input_filename, "/")
-    directory = input_filename[:split]
-    filename = input_filename[split+1:-3]
-    cmd = "python Input_Data/gen_data.py {} {}".format(directory, filename)
-    subprocess.Popen(shlex.split(cmd))
-    return 
-
-def execute_framework(decision, party_id, program_name):
-    root_dir = os.getcwd()
-    print "Executing {} framework".format(decision)
-    if decision == "arithmetic":
-        os.chdir("./crypto_backend/SCALE-MAMBA/")
-        subprocess.Popen(shlex.split("./Player {} {}".format(party_id, program_name)))
-    elif decision == "boolean":
-        os.chdir("./crypto_backend/emp-toolkit/emp-agmpc/")
-        subprocess.Popen(shlex.split("./bin/run_circuit {} 2000 {} {} {} ".format(party_id, program_name, program_name, program_name)))
-    else:
-        raise ValueError("Framework {} is not supported as a valid execution backend".format(decision))
-    os.chdir(root_dir)
 
 def main():
-    parser = argparse.ArgumentParser(description="A compiler for generating arithmetic or GC circuits from .mpc files")
+    parser = argparse.ArgumentParser(description="A compiler/planner for secure multi-party computation")
     parser.add_argument("constants_file", type=str, help="Path to the file for the constants in the cost model")
     parser.add_argument("party", type=str, help="Party number (e.g., 0, 1, etc.)")
     parser.add_argument('program', type=str, help="Name of the .mpc program; file should be placed in Programs")
-    parser.add_argument("input_file", type=str, help="Name of the file with inputs (file should be written in Python and under Input_Data; see documentation for further explanation")
+    parser.add_argument("--plan", dest="plan_file", default="", help="Path to the output plan")
 
     # Temporarily disable splitting since it is a work-in-progress
     parser.add_argument("-sp", "--split", action="store_false", default=False, dest="split", help="Whether or not to split the program")
@@ -56,11 +30,22 @@ def main():
     party_id = options.party
     constants_file = options.constants_file
     program_name = options.program
-    input_filename = options.input_file
     decision = Compiler.plan(program_name, constants_file, options)
 
-    process_input(input_filename)
-    execute_framework(decision, party_id, program_name)
+    # write out the final plan to a file
+    plan = {}
+    plan["decision"] = decision
+    plan["program"] = program_name
+    plan["party_id"] = party_id
+    plan_json = json.dumps(plan)
 
+    plan_file = args.plan_file
+    if plan_file == "":
+        plan_file = "./mpc_exec_plan"
+
+    f = open(plan_file, 'w')
+    f.write(plan_json)
+    f.close()
+    
 if __name__ == '__main__':
     main()

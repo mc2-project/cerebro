@@ -1,0 +1,9 @@
+ALICE = 0
+BOB = 1
+
+alice_networth = sint.get_private_input_from(ALICE)
+bob_networth = sint.get_private_input_from(BOB)
+
+player = alice_networth < bob_networth
+
+print_ln("The richer player = %s", player.reveal())

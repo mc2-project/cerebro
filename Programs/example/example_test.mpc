@@ -1,7 +1,0 @@
-ALICE = 0
-BOB = 1
-alice_networth = s_int.read_input(0)
-bob_networth = s_int.read_input(1)
-test0 = alice_networth < bob_networth
-res = test0 * 1 + (1 - test0) * 0
-reveal_all(res, 'The richer player is')
