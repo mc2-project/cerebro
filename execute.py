@@ -1,15 +1,15 @@
 import argparse
 import json
-import subprocess, shlex, os
+import subprocess, shlex, os, yaml
 
-def process_input(input_filename):
-    def f(s, x, start=0):
-        pos = s.find(x, start)
-        if pos == -1:
-            return start-1
-        return f(s, x, pos+1)
+def process_input(directory, filename):
+    # def f(s, x, start=0):
+    #     pos = s.find(x, start)
+    #     if pos == -1:
+    #         return start-1
+    #     return f(s, x, pos+1)
 
-    split = f(input_filename, "/")
+    # split = f(input_filename, "/")
     directory = input_filename[:split]
     filename = input_filename[split+1:-3]
     cmd = "python Input_Data/gen_data.py {} {}".format(directory, filename)
@@ -42,13 +42,21 @@ def process_output(decision, program_name):
 
 def main():
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("input_filename", type=str, help="Path to the inputs")
-    parser.add_argument("--plan", type=str, default="", dest="plan_file", help="""Path to the file with the plan; default file is "./mpc_exec_plan" """)
+    parser.add_argument("--config", default="config.yaml", type=str, help="Path to the configuration file")
+    parser.add_argument("--plan", type=str, default="mpc_exec_plan", dest="plan_file", help="""Path to the file with the plan; default file is "./mpc_exec_plan" """)
 
     args = parser.parse_args()
     plan_file = args.plan_file
-    if plan_file == "":
-        plan_file = "./mpc_exec_plan"
+
+    config_file = open(args.config, 'r')
+    config_data = yaml.load(config_file.read())
+    config_file.close()
+    config = yaml.dump(config_data)
+    
+    party_id = config["party_id"]
+    program_dir = config["program_dir"]
+    program_name = config["program_name"]
+    input_dir = config["input_dir"]
 
     f = open(plan_file, 'r')
     plan_json = f.read()
@@ -56,12 +64,10 @@ def main():
     plan = json.loads(plan_json)
 
     decision = plan["decision"]
-    program = plan["program"]
-    party_id = plan["party_id"]
     
-    process_input(args.input_filename)
-    execute_framework(decision, party_id, program)
-    process_output()
+    process_input(input_dir, program_name)
+    execute_framework(decision, party_id, program_name)
+    process_output(decision, program_name)
 
 if __name__ == "__main__":
     main()
