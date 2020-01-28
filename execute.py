@@ -26,9 +26,9 @@ def execute_framework(decision, party_id, program_name):
     print "Finished executing {} framework for program {}".format(decision, program_name)
     os.chdir(root_dir)
 
-def process_output(decision, program_name):
+def process_output(decision, program_dir, program_name):
     if decision == "boolean":
-        proc = subprocess.Popen(shlex.split("python Output_Data/agmpc_output_parser.py {}".format(program_name + "/agmpc.txt.output")))
+        proc = subprocess.Popen(shlex.split("python Output_Data/agmpc_output_parser.py {}".format(program_dir + "/" + program_name + "/agmpc.txt.output")))
         print proc.communicate()[0]
 
 def main():
@@ -57,7 +57,7 @@ def main():
     
     process_input(input_dir, program_name)
     execute_framework(decision, party_id, program_name)
-    process_output(decision, program_name)
+    process_output(decision, program_dir, program_name)
 
 if __name__ == "__main__":
     main()
