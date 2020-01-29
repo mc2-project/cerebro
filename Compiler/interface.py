@@ -398,7 +398,7 @@ def reveal_all(v, text=""):
             def f(i):
                 @library.for_range(v.columns)
                 def g(j):
-                    library.print_ln("{}[%s][%s] = %s".format(text), i, j, v[i][j].reveal())
+                   library.print_ln("{}[%s][%s] = %s".format(text), i, j, v[i][j].reveal())
 
         elif isinstance(v, (regint, cint, cfix)):
             if text == "":

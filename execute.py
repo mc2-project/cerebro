@@ -5,6 +5,7 @@ import subprocess, shlex, os, yaml
 def process_input(directory, filename):
     cmd = "python Input_Data/gen_data.py {} {}".format(directory, filename)
     proc = subprocess.Popen(shlex.split(cmd))
+    proc.communicate()
     print "Finished processing input"
     return 
 

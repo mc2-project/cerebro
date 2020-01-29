@@ -1,0 +1,79 @@
+# This demo shows how to train a logistic regression model on a small data set, along with an example compute policy
+
+Params.set_params(int_precision=64, f=32, k=64)
+NUM_PARTIES = 3
+
+SGD_ITERS = 2
+train_data_size = 300
+test_data_size = 30
+train_data_size_per_party = int(train_data_size / NUM_PARTIES)
+test_data_size_per_party = int(test_data_size / NUM_PARTIES)
+dim = 5
+BATCH_SIZE = 5
+
+X_train = s_fix_mat(train_data_size, dim)
+y_train = s_fix_mat(train_data_size, 1)
+X_test = s_fix_mat(test_data_size, dim)
+y_test = s_fix_mat(test_data_size, 1)
+min_scores = s_fix_array(NUM_PARTIES)
+
+# TODO: this honestly looks very ugly
+for p in range(NUM_PARTIES):
+    X_train_i = s_fix_mat.read_input(train_data_size_per_party, dim, p)
+    y_train_i = s_fix_mat.read_input(train_data_size_per_party, 1, p)
+    X_test_i = s_fix_mat.read_input(test_data_size_per_party, dim, p)
+    y_test_i = s_fix_mat.read_input(test_data_size_per_party, 1, p)
+    min_score = s_fix.read_input(p)
+    copy_ith_matrix(X_train, X_train_i, p, train_data_size_per_party, dim)
+    copy_ith_matrix(y_train, y_train_i, p, train_data_size_per_party, 1)
+    copy_ith_matrix(X_test, X_test_i, p, test_data_size_per_party, dim)
+    copy_ith_matrix(y_test, y_test_i, p, test_data_size_per_party, 1)
+    min_scores[p] = min_score
+
+w = s_fix_mat(dim, 1)
+alpha_B = c_fix(0.002)
+
+XB = s_fix_mat(BATCH_SIZE, dim)
+yB = s_fix_mat(BATCH_SIZE, 1)
+
+for i in range(SGD_ITERS):
+    batch_low = i * BATCH_SIZE
+    batch_high = (i + 1) * BATCH_SIZE
+
+    for j in range(BATCH_SIZE):
+        for d in range(dim):
+            XB[j][d] = X_train[batch_low + j][d]
+        yB[j][0] = y_train[batch_low + j][0]
+
+    w_ret = matmul(XB, w)
+    #reveal_all(w_ret, "w_ret")
+    w_sigmoid = sigmoid(w_ret)
+    #reveal_all(w_sigmoid, "w_sigmoid")
+    w_sub = matsub(w_sigmoid, yB)
+    XB_T = transpose(XB)
+    w_1 = matmul(XB_T, w_sub)
+    #reveal_all(w_1, "w_1")
+    w_2 = mat_const_mul(alpha_B, w_1)
+    #reveal_all(w_2, "w_2")
+    w_res = matsub(w, w_2)
+    mat_assign(w, w_res)
+
+# Policy evaluation
+if_release = c_fix(1.0)
+thresh = c_fix(0.5)
+for p in range(NUM_PARTIES):
+    X_test_i = get_ith_matrix(X_test, p, test_data_size_per_party, dim)
+    y_test_i = get_ith_matrix(y_test, p, test_data_size_per_party, 1)
+    Xw = matmul(X_test_i, w)
+    prob = sigmoid(Xw)
+    # TODO: This mechanism is weird; can we unroll to get rid of the score array hack?
+    score = s_fix_array(1)
+    for i in range(30):
+        v = c_fix(1) * (prob[i][0] < thresh)
+        check = (v == (y_test[i][0]))
+        score[0] += check
+
+    if_release = if_release * score[0]
+
+w_final = mat_const_mul(if_release, w)
+reveal_all(w_final, "w_final")
