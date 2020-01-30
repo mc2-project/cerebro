@@ -225,7 +225,7 @@ def _matmul_gc(A, B, C):
                 v += A[i][k] * B[k][j]
             C[i][j] = v
 
-def matmul(A, B, left_rows, left_cols, right_rows, right_cols, mat_type, nparallel=1):
+def matmul(A, B, left_rows=0, left_cols=0, right_rows=0, right_cols=0, mat_type=0, nparallel=1):
 
     if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
         return np.matmul(A, B)
