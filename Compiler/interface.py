@@ -547,7 +547,7 @@ import astunparse
 
 # Used to convert expressions with binary operators like 5 * 6 into values.
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-             ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
+        ast.Div: op.floordiv, ast.FloorDiv: op.floordiv, ast.Pow: op.pow, ast.BitXor: op.xor,
              ast.USub: op.neg, ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.GtE: op.ge, ast.LtE: op.le}
 
 class ForLoopParser(ast.NodeTransformer):
