@@ -188,6 +188,7 @@ def default_options(options):
     options_arithmetic.reorder_between_opens = True
     options_arithmetic.continuous = False
     options_arithmetic.noreallocate = False
+    options_arithmetic.preserve_mem_order = False
     options_arithmetic.outfile = ""
 
     return (options_arithmetic, options_boolean)
@@ -196,8 +197,8 @@ def default_options(options):
 def plan(mpc_filename, constants_filename, options, param=-1):
     (options_arithmetic, options_boolean) = default_options(options)
     
-    arithmetic_prog = run_arithmetic([mpc_filename], options_arithmetic, param)
     boolean_prog = run_gc([mpc_filename], options_boolean, param)
+    arithmetic_prog = run_arithmetic([mpc_filename], options_arithmetic, param)
     return run_planner(arithmetic_prog, boolean_prog, constants_filename)
     
 def run(args, options, param=-1):

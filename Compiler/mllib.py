@@ -13,6 +13,11 @@ from operator import itemgetter
 
 import numpy as np
 
+def get_same_type(inp, *args):
+    print type(inp)
+    out = type(inp)(*args)
+    return out
+
 def get_diff_types(data_list):
     cint_data = [d for d in data_list if type(d) == cint]
     pint_data = [(d, d.pid) for d in data_list if type(d) == pint]
@@ -225,7 +230,7 @@ def _matmul_gc(A, B, C):
                 v += A[i][k] * B[k][j]
             C[i][j] = v
 
-def matmul(A, B, left_rows=0, left_cols=0, right_rows=0, right_cols=0, mat_type=0, nparallel=1):
+def matmul(A, B, left_rows=0, left_cols=0, right_rows=0, right_cols=0, mat_type=None, nparallel=1):
 
     if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
         return np.matmul(A, B)
@@ -736,9 +741,7 @@ def DecisionTree(tree, levels):
 
 
 def get_ith_matrix(mat, index, rows, cols, mat_type=sfixMatrix):
-    #ret = s_fix_mat(rows, cols)
-    #ret = sfixMatrix(rows, cols)
-    ret = mat_type(rows, cols)
+    ret = get_same_type(mat, rows, cols)
     for i in range(rows):
         for j in range(cols):
             ret[i][j] = mat[index * rows + i][j]
@@ -748,6 +751,18 @@ def copy_ith_matrix(dest, src, index, rows, cols):
     for i in range(rows):
         for j in range(cols):
             dest[index * rows + i][j] = src[i][j]
+
+# dest_pos = [start_row, end_row, start_col, end_col]
+def copy_matrix_slice(dest, src, dest_pos, src_pos):
+    [src_start_row, src_end_row, src_start_col, src_end_col] = src_pos
+    [dest_start_row, dest_end_row, dest_start_col, dest_end_col] = dest_pos
+    
+    num_rows = src_end_row - src_start_row
+    num_cols = src_end_col - src_start_col
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            dest[i + dest_start_row][j + dest_start_col] = src[i + src_start_row][j + src_start_col]
 
 # Local computation of weight vector.
 def admm_local(XXinv, Xy, u, z, rho, num_cols):
@@ -918,5 +933,29 @@ def ADMM(XTX_inv_lst, XTy_lst, admm_iter, num_parties, num_cols, rho, l):
 
     return z
 
-
-
+# Assumes that the matrices are of the same type
+# Only supports 2-dimensional matrices
+def concatenate(matrix_list, axis=0):
+    num_rows = 0
+    num_cols = 0
+    
+    if axis == 0:
+        num_rows = sum([m.rows for m in matrix_list])
+        num_cols = matrix_list[0].columns
+    else:
+        num_cols = sum([m.cols for m in matrix_list])
+        num_rows = matrix_list[0].rows
+            
+    ret = get_same_type(matrix_list[0], num_rows, num_cols)
+    current_row = 0
+    current_col = 0
+    for i in range(len(matrix_list)):
+        mat = matrix_list[i]
+        if axis == 0:
+            copy_matrix_slice(ret, mat, [0, mat.rows, 0, mat.columns], [current_row, current_row + mat.rows, 0, num_cols])
+            current_row += mat.rows
+        else:
+            copy_matrix_slice(ret, mat, [0, mat.rows, 0, mat.columns], [0, num_rows, current_col, current_col + mat.columns])
+            current_col += mat.columns
+    
+    return ret

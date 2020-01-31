@@ -94,9 +94,6 @@ class bits(object):
         res = ~res
         return res
 
-
-    
-
     def __rsub__(self, other):
         if isinstance(other, int):
             if other != 0 and other != 1:
