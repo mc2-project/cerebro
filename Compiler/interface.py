@@ -275,7 +275,7 @@ class SecretFixedPointMatrixFactory(object):
                     ret[i][j] = cfix_gc(0)
             return ret
 
-    def read_input(self, rows, columns, party):
+    def read_input(self, rows, columns, party, ret=None, row_offset=0, col_offset=0):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise ValueError("Matrix sizes must be publicly known integers")
 
@@ -283,19 +283,21 @@ class SecretFixedPointMatrixFactory(object):
             raise ValueError("Shouldn't be local.")
 
         if mpc_type == SPDZ:
-            ret = sfixMatrix(rows, columns)
-            @library.for_range(ret.rows)
+            if ret is None:
+                ret = sfixMatrix(rows, columns)
+            @library.for_range(row_offset, row_offset + rows)
             def f(i):
-                @library.for_range(ret.columns)
+                @library.for_range(col_offset, col_offset + columns)
                 def g(j):
                     v = sint.get_private_input_from(party)
                     ret[i][j] = sfix.load_sint(v, scale=False)
             return ret
         else:
-            ret = sfixMatrixGC(rows, columns)
-            for i in range(ret.rows):
-                for j in range(ret.columns):
-                    ret[i][j] = sfix_gc(v=None, input_party=party)
+            if ret is None:
+                ret = sfixMatrixGC(rows, columns)
+            for i in range(rows):
+                for j in range(columns):
+                    ret[i+row_offset][j+col_offset] = sfix_gc(v=None, input_party=party)
             return ret
 
 

@@ -17,78 +17,58 @@ X_test = s_fix_mat(test_data_size, dim)
 y_test = s_fix_mat(test_data_size, 1)
 min_scores = s_fix_array(NUM_PARTIES)
 
-# TODO: this honestly looks very ugly
-
-X_train_list = []
-y_train_list = []
-X_test_list = []
-y_test_list = []
-
 for p in range(NUM_PARTIES):
-    X_train_i = s_fix_mat.read_input(train_data_size_per_party, dim, p)
-    y_train_i = s_fix_mat.read_input(train_data_size_per_party, 1, p)
-    X_test_i = s_fix_mat.read_input(test_data_size_per_party, dim, p)
-    y_test_i = s_fix_mat.read_input(test_data_size_per_party, 1, p)
+    s_fix_mat.read_input(train_data_size_per_party, dim, p, ret=X_train, row_offset=p*train_data_size_per_party)
+    s_fix_mat.read_input(train_data_size_per_party, 1, p, ret=y_train, row_offset=p*train_data_size_per_party)
+    s_fix_mat.read_input(test_data_size_per_party, dim, p, ret=X_test, row_offset=p*test_data_size_per_party)
+    s_fix_mat.read_input(test_data_size_per_party, 1, p, ret=y_test, row_offset=p*test_data_size_per_party)
     min_score = s_fix.read_input(p)
-    # copy_ith_matrix(X_train, X_train_i, p, train_data_size_per_party, dim)
-    # copy_ith_matrix(y_train, y_train_i, p, train_data_size_per_party, 1)
-    # copy_ith_matrix(X_test, X_test_i, p, test_data_size_per_party, dim)
-    # copy_ith_matrix(y_test, y_test_i, p, test_data_size_per_party, 1)
-
-    X_train_list.append(X_train_i)
-    y_train_list.append(y_train_i)
-    X_test_list.append(X_test_i)
-    y_test_list.append(y_test_i)
-    
     min_scores[p] = min_score
 
 w = s_fix_mat(dim, 1)
 alpha_B = c_fix(0.002)
 
-X_train = concatenate(X_train_list)
-y_train = concatenate(y_train_list)
+XB = s_fix_mat(BATCH_SIZE, dim)
+yB = s_fix_mat(BATCH_SIZE, 1)
 
-# XB = s_fix_mat(BATCH_SIZE, dim)
-# yB = s_fix_mat(BATCH_SIZE, 1)
+for i in range(SGD_ITERS):
+    batch_low = i * BATCH_SIZE
+    batch_high = (i + 1) * BATCH_SIZE
 
-# for i in range(SGD_ITERS):
-#     batch_low = i * BATCH_SIZE
-#     batch_high = (i + 1) * BATCH_SIZE
+    for j in range(BATCH_SIZE):
+        for d in range(dim):
+            XB[j][d] = X_train[batch_low + j][d]
+        yB[j][0] = y_train[batch_low + j][0]
 
-#     for j in range(BATCH_SIZE):
-#         for d in range(dim):
-#             XB[j][d] = X_train[batch_low + j][d]
-#         yB[j][0] = y_train[batch_low + j][0]
+    w_ret = matmul(XB, w)
+    #reveal_all(w_ret, "w_ret")
+    w_sigmoid = sigmoid(w_ret)
+    #reveal_all(w_sigmoid, "w_sigmoid")
+    w_sub = matsub(w_sigmoid, yB)
+    XB_T = transpose(XB)
+    w_1 = matmul(XB_T, w_sub)
+    #reveal_all(w_1, "w_1")
+    w_2 = mat_const_mul(alpha_B, w_1)
+    #reveal_all(w_2, "w_2")
+    w_res = matsub(w, w_2)
+    mat_assign(w, w_res)
 
-#     w_ret = matmul(XB, w)
-#     #reveal_all(w_ret, "w_ret")
-#     w_sigmoid = sigmoid(w_ret)
-#     #reveal_all(w_sigmoid, "w_sigmoid")
-#     w_sub = matsub(w_sigmoid, yB)
-#     XB_T = transpose(XB)
-#     w_1 = matmul(XB_T, w_sub)
-#     #reveal_all(w_1, "w_1")
-#     w_2 = mat_const_mul(alpha_B, w_1)
-#     #reveal_all(w_2, "w_2")
-#     w_res = matsub(w, w_2)
-#     mat_assign(w, w_res)
+# Policy evaluation
+if_release = c_fix(1.0)
+thresh = c_fix(0.5)
+for p in range(NUM_PARTIES):
+    X_test_i = get_ith_matrix(X_test, p, test_data_size_per_party, dim)
+    y_test_i = get_ith_matrix(y_test, p, test_data_size_per_party, 1)
+    Xw = matmul(X_test_i, w)
+    prob = sigmoid(Xw)
+    # TODO: This mechanism is weird; can we unroll to get rid of the score array hack?
+    score = s_fix_array(1)
+    for i in range(test_data_size_per_party):
+        v = c_fix(1) * (prob[i][0] < thresh)
+        check = (v == (y_test[i][0]))
+        score[0] += check
 
-# # Policy evaluation
-# if_release = c_fix(1.0)
-# thresh = c_fix(0.5)
-# for p in range(NUM_PARTIES):
-#     X_test_i = get_ith_matrix(X_test, p, test_data_size_per_party, dim)
-#     y_test_i = get_ith_matrix(y_test, p, test_data_size_per_party, 1)
-#     Xw = matmul(X_test_i, w)
-#     prob = sigmoid(Xw)
-#     # TODO: This mechanism is weird; can we unroll to get rid of the score array hack?
-#     score = s_fix_array(1)
-#     for i in range(30):
-#         v = c_fix(1) * (prob[i][0] < thresh)
-#         check = (v == (y_test[i][0]))
-#         score[0] += check
+    if_release = if_release * score[0]
 
-#     if_release = if_release * score[0]
-
-# w_final = mat_const_mul(if_release, w)
-# reveal_all(w_final, "w_final")
+w_final = mat_const_mul(if_release, w)
+reveal_all(w_final, "w_final")

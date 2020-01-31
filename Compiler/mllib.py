@@ -933,29 +933,9 @@ def ADMM(XTX_inv_lst, XTy_lst, admm_iter, num_parties, num_cols, rho, l):
 
     return z
 
-# Assumes that the matrices are of the same type
-# Only supports 2-dimensional matrices
-def concatenate(matrix_list, axis=0):
-    num_rows = 0
-    num_cols = 0
-    
-    if axis == 0:
-        num_rows = sum([m.rows for m in matrix_list])
-        num_cols = matrix_list[0].columns
-    else:
-        num_cols = sum([m.cols for m in matrix_list])
-        num_rows = matrix_list[0].rows
-            
-    ret = get_same_type(matrix_list[0], num_rows, num_cols)
-    current_row = 0
-    current_col = 0
-    for i in range(len(matrix_list)):
-        mat = matrix_list[i]
-        if axis == 0:
-            copy_matrix_slice(ret, mat, [0, mat.rows, 0, mat.columns], [current_row, current_row + mat.rows, 0, num_cols])
-            current_row += mat.rows
-        else:
-            copy_matrix_slice(ret, mat, [0, mat.rows, 0, mat.columns], [0, num_rows, current_col, current_col + mat.columns])
-            current_col += mat.columns
+# Concats two matrices together vertically
+def concatenate_vertical(mat1, mat2):
+    ret = get_same_type(mat1, mat1.row + mat2.rows, mat1.columns)
+    copy_matrix_slice(ret, mat, [0, mat.rows, 0, mat.columns], [current_row, current_row + mat.rows, 0, num_cols])
     
     return ret
