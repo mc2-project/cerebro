@@ -3,13 +3,13 @@
 Params.set_params(int_precision=64, f=32, k=64)
 NUM_PARTIES = 3
 
-SGD_ITERS = 1
-train_data_size = 100
-test_data_size = 10
-train_data_size_per_party = int(train_data_size / NUM_PARTIES)
-test_data_size_per_party = int(test_data_size / NUM_PARTIES)
-dim = 5
+train_data_size = 3
+test_data_size = 3
+train_data_size_per_party = train_data_size / NUM_PARTIES
+test_data_size_per_party = test_data_size / NUM_PARTIES
+dim = 1
 BATCH_SIZE = 1
+SGD_ITERS = train_data_size / BATCH_SIZE
 
 X_train = s_fix_mat(train_data_size, dim)
 y_train = s_fix_mat(train_data_size, 1)

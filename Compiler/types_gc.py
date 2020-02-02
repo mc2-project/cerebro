@@ -34,20 +34,108 @@ class bits(object):
     def __str__(self):
         return str(self.gid)
 
+    def __xor__(self, other):
+        assert(False)
+        
+    def __and__(self, other):
+        assert(False)
+
+    def __or__(self, other):
+        assert(False)
+
+    def reveal(self, name=""):
+        self.set_gid()
+        program_gc.output_wires.append(self.gid)
+        v = {}
+        v["type"] = "bits"
+        v["name"] = name
+        v["value"] = self.gid
+        assert(self.gid is not None)
+        program_gc.output_wires_map[self.gid] = v
+        return v
+
+class cbits(bits):
+    __slots__ = ["value"]
+    def __init__(self, value):
+        super(cbits, self).__init__()
+        if (value != 0) and (value != 1):
+            raise ValueError("cbits must have a value of 0 or 1")
+        self.value = value
+
+    def __invert__(self):
+        return cbits((self.value + 1) % 2)
+
+    def __xor__(self, other):
+        if isinstance(other, cbits):
+            return cbits(self.value ^ other.value)
+        return other.__xor__(self)
+
+    def __and__(self, other):
+        if isinstance(other, cbits):
+            return cbits(self.value & other.value)
+        return other.__and__(self)
+
+    def __or__(self, other):
+        if isinstance(other, cbits):
+            return cbits(self.value | other.value)
+        return other.__or__(self)
+
+    __rxor__ = __xor__
+    __rand__ = __and__
+    __ror__ = __or__
+
+    def __str__(self):
+        return str("{}: v = {}".format(self.gid, self.value))
+
+    def __mul__(self, other):
+        if isinstance(other, (int_gc, cint_gc)):
+            return other.__mul__(self)
+        else:
+            raise ValueError("cbit cannot multiply with type {0}".format(type(other)))
+
+    def __rsub__(self, other):
+        return cint_gc(other.length, self.value).__rsub__(other)
+
+    def __sub__(self, other):
+        return cint_gc(other.length, self.value).__sub__(other)
+
+    def __add__(self, other):
+        return cint_gc(other.length, self.value).__add__(other)
+
+    def reveal(self, name=""):
+        # cbits do not need to be revealed
+        v = {}
+        v["type"] = "cbits"
+        v["name"] = name
+        v["value"] = self.value
+        program_gc.output_wires.append(v)
+        program_gc.output_wires_map[self.gid] = v
+        return v
+
+            
+class sbits(bits):
+    __slots__ = []
+    def __init__(self, input_party=-1):
+        super(sbits, self).__init__(input_party)
+
+    def test_instance(self, other):
+        if not isinstance(other, sbits):
+            raise ValueError("requires type sbits")
+
     def _and(self, other):
-        res = bits()
+        res = sbits()
         and_gc(res, self, other)
         res.set_gid()
         return res
 
     def _xor(self, other):
-        res = bits()
+        res = sbits()
         xor_gc(res, self, other)
         res.set_gid()
         return res
 
     def _invert(self):
-        res = bits()
+        res = sbits()
         invert_gc(res, self)
         res.set_gid()
         return res
@@ -62,11 +150,15 @@ class bits(object):
                 return self
             else:
                 return self._invert()
-        elif isinstance(other, (bits, sbits)):
+        elif isinstance(other, sbits):
             return self._xor(other)
+        elif isinstance(other, bits):
+            print "bits should not be returned"
+            assert(False)
         else:
-            return other.__xor__(self)
-
+            print "{} xor {} is not implemented".format(type(self), type(other))
+            return NotImplemented
+        
     def __and__(self, other):
         if isinstance(other, cbits):
             if other.value == 0:
@@ -74,10 +166,14 @@ class bits(object):
             else:
                 self.set_gid()
                 return self
-        elif isinstance(other, (bits, sbits)):
+        elif isinstance(other, sbits):
             return self._and(other)
+        elif isinstance(other, bits):
+            print "bits should not be returned"
+            assert(False)
         else:
-            return other.__and__(self)
+            print "{} xor {} is not implemented".format(type(self), type(other))
+            return NotImplemented
 
     def __or__(self, other):
         a = self & other
@@ -106,10 +202,10 @@ class bits(object):
         if isinstance(other, (int_gc, cint_gc)):
             return other.__mul__(self)
         
-        if isinstance(other, (bits, cbits)):
+        elif isinstance(other, cbits):
             return self.__and__(other)
 
-        if isinstance(other, int):
+        elif isinstance(other, int):
             if other != 0 and other != 1:
                 raise ValueError("int bit must be only 0 or 1")
             return cint_gc(1, other).__mul__(self)
@@ -123,82 +219,6 @@ class bits(object):
             return cbits(other).__mul__(self)
 
         return NotImplemented
-
-    def reveal(self, name=""):
-        self.set_gid()
-        program_gc.output_wires.append(self.gid)
-        v = {}
-        v["type"] = "bits"
-        v["name"] = name
-        v["value"] = self.gid
-        assert(self.gid is not None)
-        program_gc.output_wires_map[self.gid] = v
-        return v
-
-class cbits(bits):
-    __slots__ = ["value"]
-    def __init__(self, value):
-        super(cbits, self).__init__()
-        if (value != 0) and (value != 1):
-            raise ValueError("cbits must have a value of 0 or 1")
-        self.value = value
-
-    def __invert__(self):
-        return cbits((self.value + 1) % 2)
-
-    def __xor__(self, other):
-        if isinstance(other, cbits):
-            return cbits(self.value ^ other.value)
-        else:
-            return other.__xor__(self)
-
-    def __and__(self, other):
-        if isinstance(other, cbits):
-            return cbits(self.value & other.value)
-        else:
-            return other.__and__(self)
-
-    def __str__(self):
-        return str("{}: v = {}".format(self.gid, self.value))
-
-    def __mul__(self, other):
-        if isinstance(other, (int_gc, cint_gc)):
-            return other.__mul__(self)
-        else:
-            raise ValueError("cbit cannot multiply with type {0}".format(type(other)))
-
-    def __rsub__(self, other):
-        return cint_gc(other.length, self.value).__rsub__(other)
-
-    def __sub__(self, other):
-        return cint_gc(other.length, self.value).__sub__(other)
-
-    def __add__(self, other):
-        return cint_gc(other.length, self.value).__add__(other)
-
-    __rxor__ = __xor__
-    __rand__ = __and__
-
-    def reveal(self, name=""):
-        # cbits do not need to be revealed
-        v = {}
-        v["type"] = "cbits"
-        v["name"] = name
-        v["value"] = self.value
-        program_gc.output_wires.append(v)
-        program_gc.output_wires_map[self.gid] = v
-        return v
-
-            
-class sbits(bits):
-    __slots__ = []
-    def __init__(self, input_party=-1):
-        super(sbits, self).__init__(input_party)
-
-    def test_instance(self, other):
-        if not isinstance(other, sbits):
-            raise ValueError("requires type sbits")
-
 
 def add_full(dest, op1, op2, size, carry_in=None, carry_out=None):
     if size == 0:
@@ -335,7 +355,7 @@ class int_gc(object):
     value_type = sbits
     def __init__(self, length):
         self.length = length
-        self.bits = [bits() for i in range(length)]
+        self.bits = [None for i in range(length)]
 
     # This is a total hack
     def conv(self, v):
@@ -691,15 +711,15 @@ class cint_gc(int_gc):
     def __mul__(self, other):
         ret = self.preprocess(other)
         if ret is NotImplemented:
-            if isinstance(other, bits):
+            if isinstance(other, sbits):
                 dest = int_gc(self.length)
                 for i in range(self.length):
                     dest.bits[i] = self.bits[i].__and__(other)
                 return dest
-            elif isinstance(other, (cbits)):
+            elif isinstance(other, cbits):
                 dest = cint_gc(self.length, self.value * other.value)
                 return dest
-            
+
             raise ValueError("cint_gc mul not compatible with type: {}".format(type(other)))
         (v1, v2) = ret
         return cint_gc(self.length, v1 * v2)
@@ -801,6 +821,13 @@ class cfix_gc(object):
             return (self + other_fix)
         elif isinstance(other, sint_gc):
             return self + sfix_gc(v=other, scale=True)
+        elif isinstance(other, cbits):
+            other_int = cint_gc(1, value=other.value)
+            return self.__add__(other_int)
+        elif isinstance(other, sbits):
+            other_int = sint_gc(1)
+            other_int.bits[0] = other
+            return self.__add__(other_int)
         else:
             return other.__add__(self)
     
@@ -824,6 +851,10 @@ class cfix_gc(object):
             return cfix_gc(v=(self.v * other), scale=False)
         elif isinstance(other, sint_gc):
             return (self * sfix_gc(v=other, scale=True))
+        elif isinstance(other, cbits):
+            return cfix_gc(v=(self.v * other), scale=False)
+        elif isinstance(other, sbits):
+            return sfix_gc(v=(self.v * other), scale=False)
         else:
             return other.__mul__(self)
 
@@ -1027,7 +1058,7 @@ class sfix_gc(object):
             other_sfix = sfix_gc(v=other, scale=True)
             return self.__div__(other_sfix, reverse=reverse)
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __eq__(self, other):
         if isinstance(other, cfix_gc):
@@ -1038,7 +1069,7 @@ class sfix_gc(object):
             other_fix = sfix_gc(other.length, other)
             return (self == other_fix)
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __ne__(self, other):
         return ~(self == other)
@@ -1055,7 +1086,7 @@ class sfix_gc(object):
             other_fix = sfix_gc(other.length, other)
             return (self >= other_fix)
         else:
-            raise NotImplementedError
+            return NotImplemented
         
     def __lt__(self, other):
         return ~(self >= other)
@@ -1106,7 +1137,7 @@ def array_index_secret_load_gc(l, index):
                 res[j] = res[j].__xor__(res_mat[i][j])
         return res
     else:
-        raise NotImplementedError
+        return NotImplemented
 
 def array_index_secret_store_gc(l, index, value):
     if isinstance(l, sfixArrayGC) and isinstance(index, (sint_gc, sfix_gc)):
@@ -1118,7 +1149,7 @@ def array_index_secret_store_gc(l, index, value):
             test = v.__eq__(index)
             l[i] = (test & value) + (~test & l[i])
     else:
-        raise NotImplementedError
+        return NotImplemented
 
 def cond_assign_gc(condition, v1, v2):
     assert(isinstance(condition, sbits))
@@ -1136,7 +1167,7 @@ class ArrayGC(object):
         elif isinstance(index, int):
             return self.data[index]
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __setitem__(self, index, value):
         if isinstance(index, (sint_gc, sfix_gc)):
@@ -1144,7 +1175,7 @@ class ArrayGC(object):
         elif isinstance(index, int):
             self.data[index] = value
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def reveal(self, name=""):
         v = {}
