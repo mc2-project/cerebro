@@ -3,12 +3,12 @@
 Params.set_params(int_precision=64, f=32, k=64)
 NUM_PARTIES = 3
 
-train_data_size = 3
-test_data_size = 3
+train_data_size = 60
+test_data_size = 9
 train_data_size_per_party = train_data_size / NUM_PARTIES
 test_data_size_per_party = test_data_size / NUM_PARTIES
-dim = 1
-BATCH_SIZE = 1
+dim = 5
+BATCH_SIZE = 10
 SGD_ITERS = train_data_size / BATCH_SIZE
 
 X_train = s_fix_mat(train_data_size, dim)
