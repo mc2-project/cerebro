@@ -997,8 +997,16 @@ class sfix_gc(object):
         elif isinstance(other, sint_gc):
             other_fix = sfix_gc(v=other, scale=True)
             return (self + other_fix)
+        elif isinstance(other, cbits):
+            other_fix = cfix_gc(value=other.value)
+            return self + other_fix
+        elif isinstance(other, sbits):
+            other_val = sint_gc(1)
+            other_val.bits[0] = other
+            other_fix = sfix_gc(v=other_val)
+            return self + other_fix
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Do not support sfix addition with type: {0}".format(type(other)))
     
     def __sub__(self, other, reverse=False):
         if isinstance(other, cfix_gc):
@@ -1033,6 +1041,14 @@ class sfix_gc(object):
         elif isinstance(other, sint_gc):
             other_sfix = sfix_gc(other, scale=True)
             return (ret * other_sfix)
+        elif isinstance(other, cbits):
+            other_fix = cfix_gc(value=other.value)
+            return self * other_fix
+        elif isinstance(other, (cbits, sbits)):
+            other_val = sint_gc(1)
+            other_val.bits[0] = other
+            other_sfix = sfix_gc(v=other_val)
+            return self * other_sfix
         else:
             raise NotImplementedError
 
