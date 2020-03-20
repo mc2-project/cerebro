@@ -1080,7 +1080,7 @@ class sfix_gc(object):
 
 def array_index_secret_load_gc(l, index):
     if isinstance(l, (sfixArrayGC, sintArrayGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
-        res_list = [None] * l.length
+        res_list = type(l)(l.length) #[None] * l.length
         for i in range(l.length):
             if isinstance(index, sfix_gc):
                 v = cfix_gc(v=i)
@@ -1093,7 +1093,7 @@ def array_index_secret_load_gc(l, index):
             res = res.__xor__(res_list[i])
         return res
     elif isinstance(l, (sfixMatrixGC, sintMatrixGC)) and isinstance(index, (sint_gc, int_gc, sfix_gc)):
-        res_mat = [[None] * l.columns for _ in l.rows]
+        res_mat = type(l)(l.rows, l.columns) #[[None] * l.columns for _ in range(l.rows)]
         for i in range(l.rows):
             if isinstance(index, sfix_gc):
                 v = cfix_gc(v=i)
