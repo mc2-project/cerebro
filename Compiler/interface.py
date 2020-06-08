@@ -1017,7 +1017,7 @@ class ConstantPropagation(ast.NodeTransformer):
         self._constants = {}
 
     def visit_Module(self, node):
-        """Find eglible variables to be inlined and store
+        """Find eligible variables to be inlined and store
         the Name->value mapping in self._constants for later use"""
         assigns = [x for x in node.body if type(x) == ast.Assign]
         for assign in assigns:
@@ -1029,6 +1029,7 @@ class ConstantPropagation(ast.NodeTransformer):
     def visit_Name(self, node):
         """If node.id is in self._constants, replace the
         loading of the node with the actual value"""
+        print "Visit name: ", node.id
         for k in self._constants.keys():
             if node.id == k:
                 #print "Name: {0}, value: {1}".format(node.id, self._constants[k].n)
@@ -1071,6 +1072,7 @@ class ConstantPropagation(ast.NodeTransformer):
                 #print "Multiassignment not supported: ", node.value.__dict__
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
+            print "Constant-Propagation Exception"
             print e
         # Visit the left hand side of the assignment
         if isinstance(copy_assign.targets[0], ast.Subscript):
@@ -1091,10 +1093,10 @@ class ConstantPropagation(ast.NodeTransformer):
             right_val = self.eval_args_helper(node.right)
             res = operators[type(node.op)](left_val, right_val)
             return res
-
+    """
     def visit_FunctionDef(self, node):
         return node
-
+    """
     
     def eval_compare_helper(self, node):
         left = node.left

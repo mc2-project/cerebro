@@ -491,6 +491,9 @@ def mat_assign(o, i, nparallel=1):
             for u in range(i.rows):
                 for v in range(i.columns):
                     o[u][v] = i[u][v]
+    elif isinstance(i, list):
+        for u in range(len(i)):
+            o[u] = i[u]
     else:
         raise NotImplementedError
                     
