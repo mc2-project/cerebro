@@ -230,7 +230,7 @@ class SecretFixedPointMatrixFactory(object):
 
 
     # Reads input from file.
-    def read_clear_input(self, rows, columns, party, f, input_file="../Input_Data/f0"):
+    def read_clear_input(self, rows, columns, party, f, input_file="./Input_Data/f0"):
         input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
         lst_inputs = np.fromfile(f, input_type, rows * columns)
         precision = sfix.f
@@ -332,7 +332,7 @@ class ClearFixedPointMatrixFactory(object):
 
 class PrivateFixedPointMatrix(object):
     def preprocess(self, precision=36):
-        input_file="../Input_Data/f0"
+        input_file="./Input_Data/f0"
         input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
         lst_inputs = np.fromfile(input_file, input_type)
 
@@ -408,7 +408,7 @@ def write_private_data(lst_data):
         lst_private_data += matrix.flatten().tolist()
 
     lst_private_data = [e * pow(2, 36) for e in lst_private_data]
-    f = open("../Input_Data" + "/f0", 'w')
+    f = open("./Input_Data" + "/f0", 'w')
     for d in lst_private_data:
         sign = d < 0
         output = struct.pack("?", sign)
