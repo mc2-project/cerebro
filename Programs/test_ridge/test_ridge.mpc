@@ -20,40 +20,40 @@ def local_compute(x_data, y_data):
         lam_identity[j][j] = lam
 
     XTX_lam_identity = matadd(XTX, lam_identity)
-    XTX_inv = matinv(XTX_lam_identity)
-    return XTX_inv, XTy
 
-def ridge(XTX_inv_lst, XTy_lst):
-    XTX_inv = XTX_inv_lst[0]
+    return XTX_lam_identity, XTy
+
+def ridge(XTX_lst, XTy_lst):
+    XTX = XTX_lst[0]
     XTy = XTy_lst[0]
     for i in range(1, NUM_PARTIES):
-        XTX_inv_next = XTX_inv_lst[i]
-	XTy_next = XTy_lst[i]
-	XTX_inv = matadd(XTX_inv, XTX_inv_next)
-	XTy = matadd(XTy, XTy_next)
-    
+        XTX_next = XTX_lst[i]
+        XTy_next = XTy_lst[i]
+        XTX = matadd(XTX, XTX_next)
+        XTy = matadd(XTy, XTy_next)
+
+    XTX_inv = matinv(XTX)
     w = matmul(XTX_inv, XTy, num_cols, num_cols, num_cols, 1, sfix)
     return w
 
 
 
 def get_input_data():
-    XTX_inv_lst = []
+    XTX_lst = []
     XTy_lst = []
     for i in range(NUM_PARTIES):
         x_data = s_fix_mat.read_input(num_rows, num_cols, i)
         y_data = s_fix_mat.read_input(num_rows, 1, i)
-        XTX_inv, XTy = local_compute(x_data, y_data)
-        XTX_inv_lst.append(XTX_inv)
+        XTX, XTy = local_compute(x_data, y_data)
+        XTX_lst.append(XTX)
         XTy_lst.append(XTy)
-    return XTX_inv_lst, XTy_lst
+    return XTX_lst, XTy_lst
 
 
 def main():
-    XTX_inv_lst, XTy_lst = get_input_data()
-    w = ridge(XTX_inv_lst, XTy_lst)
+    XTX_lst, XTy_lst = get_input_data()
+    w = ridge(XTX_lst, XTy_lst)
     return w
-
 
 what = main()
 reveal_all(what, "weights")
