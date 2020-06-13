@@ -13,15 +13,7 @@ def local_compute(x_data, y_data):
     X_T = transpose(x_data)
     XTy = matmul(X_T, y_data, num_cols, num_rows, num_rows, 1, sfix)
     XTX = matmul(X_T, x_data, num_cols, num_rows, num_rows, num_cols, sfix)
-    lam_identity = c_fix_mat(num_cols, num_cols)
-    zero = c_fix(0)
-    mat_const_mul(zero, lam_identity)
-    for j in range(num_cols):
-        lam_identity[j][j] = lam
-
-    XTX_lam_identity = matadd(XTX, lam_identity)
-
-    return XTX_lam_identity, XTy
+    return XTX, XTy
 
 def ridge(XTX_lst, XTy_lst):
     XTX = XTX_lst[0]
@@ -31,8 +23,15 @@ def ridge(XTX_lst, XTy_lst):
         XTy_next = XTy_lst[i]
         XTX = matadd(XTX, XTX_next)
         XTy = matadd(XTy, XTy_next)
+    lam_identity = c_fix_mat(num_cols, num_cols)
+    zero = c_fix(0)
+    mat_const_mul(zero, lam_identity)
+    for j in range(num_cols):
+        lam_identity[j][j] = lam
 
-    XTX_inv = matinv(XTX)
+    XTX_lam_identity = matadd(XTX, lam_identity)
+    reveal_all(XTX_lam_identity)
+    XTX_inv = matinv(XTX_lam_identity)
     w = matmul(XTX_inv, XTy, num_cols, num_cols, num_cols, 1, sfix)
     return w
 
