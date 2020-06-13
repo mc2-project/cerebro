@@ -3,7 +3,7 @@ import json
 import struct
 
 np.random.seed(42)
-float_precision = 32
+float_precision = 36
 l = 0.05
 p =  748288838313422294120286634350736906063837463248897
 num_rows = 10
@@ -36,7 +36,9 @@ def write_spdz(input_folder, data):
 
 
 w, x, y = make_ridge_data(num_rows, num_cols)
-
+print(x)
+print("-----------------")
+print(y)
 data = []
 
 for i in range(num_rows):
@@ -48,4 +50,3 @@ for i in range(num_rows):
     data.append(y[i] * pow(2, float_precision))
 
 
-print data
