@@ -323,7 +323,7 @@ class ClearFixedPointMatrixFactory(object):
         elif mpc_type == LOCAL:
             return np.zeros((rows, columns))
         else:
-            ret = cfixMatrixGC(rows, columns)
+            ret = cfixMatrixGC(rows, columns, cfix_gc)
             for i in range(ret.rows):
                 for j in range(ret.columns):
                     ret[i][j] = cfix_gc(0)
@@ -406,10 +406,10 @@ def write_private_data(lst_data):
     lst_private_data = []
     for matrix in lst_data:
         lst_private_data += matrix.flatten().tolist()
-
-    lst_private_data = [e * pow(2, 36) for e in lst_private_data]
+    # Need to left shift by 36 due to the way SCALE-MAMBA reads in fixed-point input.
+    lst_private_data_pow = [e * pow(2, 36) for e in lst_private_data]
     f = open("./Input_Data" + "/f0", 'w')
-    for d in lst_private_data:
+    for d in lst_private_data_pow:
         sign = d < 0
         output = struct.pack("?", sign)
         f.write(output)
@@ -417,6 +417,12 @@ def write_private_data(lst_data):
         f.write(output)
     f.close()
 
+    data_rev = lst_private_data[::-1]
+    f = open("./Input_Data" + "/agmpc.input", 'w')
+    for d in data_rev:
+        output = struct.pack(">q", int(d))
+        f.write(output)
+    f.close()
 
 
 
