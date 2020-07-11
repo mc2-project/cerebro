@@ -299,7 +299,11 @@ def matadd(A, B, nparallel=1):
         C = sfixMatrix(A.rows, A.columns)
         _matadd(A, B, C, sfix, nparallel)
         return C
-
+    
+    elif type(A) in (sfixMatrixGC, cfixMatrixGC) and type(B) in (sfixMatrixGC, cfixMatrixGC):
+        C = cfixMatrixGC(A.rows, A.columns, cfix_gc)
+        _matadd(A, B, C, cfix_gc, nparallel)
+        return C
 
 def _matsub(A, B, C, int_type, nparallel=1):
     @for_range_multithread(nparallel, A.rows * A.columns, A.rows * A.columns)
@@ -521,7 +525,7 @@ def get_identity_matrix(value_type, n):
                 vfix = sfix.load_sint(v)
                 ret[i][j] = vfix
         return ret
-    elif isinstance(value_type, (sfix_gc, sfixMatrixGC)):
+    elif isinstance(value_type, (sfix_gc, sfixMatrixGC, cfix_gc, cfixMatrixGC)):
         ret = sfixMatrixGC(n, n)
         for i in range(n):
             for j in range(n):
@@ -530,21 +534,68 @@ def get_identity_matrix(value_type, n):
     else:
         raise NotImplementedError
 
+def cond_assign(cond, val1, val2):
+    res = ((~cond) & val1).__xor__(cond & val2)
+    return res
+
 def matinv(A, nparallel=1):
     if isinstance(A, np.ndarray):
         return np.linalg.inv(A)
 
 
 
-    if not isinstance(A, sfixMatrix) and not isinstance(A, cfixMatrix):
-        raise NotImplementedError
+    #if not isinstance(A, sfixMatrix) and not isinstance(A, cfixMatrix):
+        #raise NotImplementedError
     
     n = A.rows
-    X = A.__class__(A.rows, A.columns)
+    X = A.__class__(A.rows, A.columns, cfix_gc)
     mat_assign(X, A)
     
     I = get_identity_matrix(A, A.rows)
 
+    for j in range(n):
+        for i in range(j, n):
+            b1 = X[i][j].__lt__(cfix_gc(0.00001))
+            b2 = X[i][j].__gt__(cfix_gc(-0.00001))
+            b = ~(b1 & b2) #1 - b1 * b2
+            X[i][j] = b & X[i][j]
+            for k in range(n):
+                a1 = X[j][k]
+                a2 = X[i][k]
+                X[j][k] = cond_assign(b, a2, a1)
+                X[i][k] = cond_assign(b, a1, a2)
+                a1 = I[j][k]
+                a2 = I[i][k]
+                I[j][k] = cond_assign(b, a2, a1)
+                I[i][k] = cond_assign(b, a1, a2)
+            xjj_inv = cfix_gc(1).__div__(X[j][j])
+            t = cond_assign(b, xjj_inv, cfix_gc(1))
+            for k in range(n):
+                X[j][k] = t * X[j][k]
+                I[j][k] = t * I[j][k]
+
+            for L in range(j):
+                t = cfix_gc(-1) * X[L][j]
+                for k in range(n):
+                    a1 = X[L][k] + t * X[j][k]
+                    a2 = X[L][k]
+                    b1 = I[L][k] + t * I[j][k]
+                    b2 = I[L][k]
+                    X[L][k] = cond_assign(b, a1, a2)
+                    I[L][k] = cond_assign(b, b1, b2)
+            for L in range(j+1, n):
+                # from j+1 to n
+                t = cfix_gc(-1) * X[L][j]
+                for k in range(n):
+                    a1 = X[L][k] + t * X[j][k]
+                    a2 = X[L][k]
+                    b1 = I[L][k] + t * I[j][k]
+                    b2 = I[L][k] 
+                    X[L][k] = cond_assign(b, a1, a2)
+                    I[L][k] = cond_assign(b, b1, b2)
+        
+    return I
+    """
     @for_range(n)
     def f0(j):
         #@for_range(j, n)
@@ -605,7 +656,7 @@ def matinv(A, nparallel=1):
                             I[L][k] = cond_assign_a(b, b1, b2)
         
     return I
-
+    """
 # Assumes that the piecewise function is public for now
 # Format: bounds in the form of [lower, upper]
 # Function in the form of a*x + b

@@ -442,7 +442,7 @@ class int_gc(object):
         return ret
 
     def __mul__(self, other):
-        self.test_instance(other)
+        #self.test_instance(other)
         if isinstance(other, int):
             dest = int_gc(self.length)
             other_ = cint_gc(self.length, other)
@@ -451,6 +451,8 @@ class int_gc(object):
             dest = int_gc(self.length)
             for i in range(self.length):
                 dest.bits[i] = self.bits[i].__and__(other)
+        elif isinstance(other, sfix_gc):
+            return sfix_gc(self.__mul__(other.v))
         else:
             this_int = self
             if self.length < other.length:
@@ -461,7 +463,7 @@ class int_gc(object):
                 other = other.convert(self.length)
                 dest = int_gc(self.length)
                 mul_full(dest.bits, this_int.bits, other.bits, self.length)
-
+        
         return dest
 
     def __div__(self, other, reverse=False):
@@ -869,6 +871,8 @@ class cfix_gc(object):
         elif isinstance(other, sint_gc):
             other_sfix = sfix_gc(v=other, scale=True)
             return (other_sfix >= self)
+        elif isinstance(other, sfix_gc):
+            return other >= self
         else:
             raise NotImplementedError
 
@@ -881,6 +885,33 @@ class cfix_gc(object):
     def __gt__(self, other):
         return ~(self <= other)
 
+    def __and__(self, other):
+        if isinstance(other, cfix_gc):
+            v = self.v & other.v
+            return cfix_gc(v)
+        elif isinstance(other, bits):
+            res = cint_gc(self.v.length)
+            for i in range(len(res.bits)):
+                res.bits[i] = self.v.bits[i] & other 
+            return sfix_gc(res)
+        else:    
+            return cfix_gc(self.v & other)
+
+    def __xor__(self, other):
+        print(type(self), type(other))
+        if isinstance(other, cfix_gc):
+            v = self.v ^ other.v
+            return cfix_gc(v)
+
+        elif isinstance(other, bits):
+            res = cint_gc(self.v.length)
+            for i in range(len(res.bits)):
+                res.bits[i] = self.v.bits[i] ^ other
+            return sfix_gc(res)
+        else:
+            raise ValueError("Cannot xor type: {0} with type: {1}".format(type(self), type(other)))
+        #else:
+            #return cfix_gc(self.v ^ other)
 
 # This is a wrapper around sint
 # Implementes fixed point logic

@@ -6,7 +6,7 @@ num_cols = 10
 num_rows = 10
 
 # Constants
-local_compute = False
+#local_compute = False
 lam = c_fix(0.05)
 
 def local_compute(x_data, y_data):
