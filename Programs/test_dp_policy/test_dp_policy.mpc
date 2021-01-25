@@ -1,0 +1,11 @@
+Params.set_params(int_precision=64, f=32, k=64)
+NUM_PARTIES = 6
+dim = 23
+weights = s_fix_mat.read_input(dim, 1, 0)
+random_numbers = s_fix_mat.read_input(dim, NUM_PARTIES, 0)
+for i in range(dim):
+        noise = c_fix(0)
+        for j in range(NUM_PARTIES):
+                noise = noise + random_numbers[i][j]
+        weights[i][0] = weights[i][0] + noise
+reveal_all(weights, "updated_weights")
