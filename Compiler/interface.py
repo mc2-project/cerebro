@@ -49,7 +49,6 @@ class SecretIntegerFactory(object):
         if mpc_type == SPDZ:
             return sint.get_private_input_from(party)
         else:
-            print "LENGTH: ", Params.intp
             return sint_gc(Params.intp, input_party=party)
 
 class ClearIntegerMatrixFactory(object):
@@ -230,7 +229,7 @@ class SecretFixedPointMatrixFactory(object):
 
 
     # Reads input from file.
-    def read_clear_input(self, rows, columns, party, f, input_file="../Input_Data/f0"):
+    def read_clear_input(self, rows, columns, party, f, input_file="./Input_Data/f0"):
         input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
         lst_inputs = np.fromfile(f, input_type, rows * columns)
         precision = sfix.f
@@ -323,7 +322,7 @@ class ClearFixedPointMatrixFactory(object):
         elif mpc_type == LOCAL:
             return np.zeros((rows, columns))
         else:
-            ret = cfixMatrixGC(rows, columns)
+            ret = cfixMatrixGC(rows, columns, cfix_gc)
             for i in range(ret.rows):
                 for j in range(ret.columns):
                     ret[i][j] = cfix_gc(0)
@@ -332,7 +331,7 @@ class ClearFixedPointMatrixFactory(object):
 
 class PrivateFixedPointMatrix(object):
     def preprocess(self, precision=36):
-        input_file="../Input_Data/f0"
+        input_file="./Input_Data/f0"
         input_type = np.dtype([('f1', np.bool), ('f2', np.int64)])
         lst_inputs = np.fromfile(input_file, input_type)
 
@@ -406,10 +405,10 @@ def write_private_data(lst_data):
     lst_private_data = []
     for matrix in lst_data:
         lst_private_data += matrix.flatten().tolist()
-
-    lst_private_data = [e * pow(2, 36) for e in lst_private_data]
-    f = open("../Input_Data" + "/f0", 'w')
-    for d in lst_private_data:
+    # Need to left shift by 36 due to the way SCALE-MAMBA reads in fixed-point input.
+    lst_private_data_pow = [e * pow(2, 36) for e in lst_private_data]
+    f = open("./Input_Data" + "/f0", 'w')
+    for d in lst_private_data_pow:
         sign = d < 0
         output = struct.pack("?", sign)
         f.write(output)
@@ -417,6 +416,12 @@ def write_private_data(lst_data):
         f.write(output)
     f.close()
 
+    data_rev = lst_private_data[::-1]
+    f = open("./Input_Data" + "/agmpc.input", 'w')
+    for d in data_rev:
+        output = struct.pack(">q", int(d))
+        f.write(output)
+    f.close()
 
 
 
@@ -464,8 +469,7 @@ compilerLib.VARS["write_private_data"] = write_private_data
 
 
 fx_error = 1e-3
-# TESTING CODE STARTS HERE
-
+# Code used for unit tests.
 def test(value, lower=None, upper=None, prec=None):
     if mpc_type == SPDZ:
         lineno = inspect.currentframe().f_back.f_lineno
@@ -613,7 +617,7 @@ class ProcessDependencies(ast.NodeVisitor):
 
     def visit_Call(self, node):
         parent = self.get_parent()
-        # Some nodes don't have ids?
+        # Some nodes don't have ids
         if 'id' in node.func.__dict__.keys():
             fn_name = node.func.id
             # Add in extra identifier.
@@ -623,9 +627,6 @@ class ProcessDependencies(ast.NodeVisitor):
 
 
             self.process_fn_call(parent, fn_name, new_target_fn_name, node.lineno)
-
-
-
 
             self.scope_stack.pop(0)
 
@@ -639,8 +640,7 @@ class ProcessDependencies(ast.NodeVisitor):
         else:
             self.G.add_edge(parent, fn_name)
 
-
-
+        # Hardcoded function names
         if fn_name in self.mllib_fn:
             # For each mllib call, have to add extra nodes to indicate matmul calls.
             if fn_name == "LogisticRegression":
@@ -679,10 +679,10 @@ class ProcessDependencies(ast.NodeVisitor):
 
 
         parent = self.get_parent()
-        #print "For loop: Adding edge from: {0} to {1}".format(parent, node.lineno)
+        # print "For loop: Adding edge from: {0} to {1}".format(parent, node.lineno)
         self.G.add_edge(parent, node.lineno)
         self.scope_stack.insert(0, node.lineno)
-        #print "Visiting for loop in function: ", self.scope_stack[0]
+        # print "Visiting for loop in function: ", self.scope_stack[0]
         for item in node.body:
             self.visit(item)
 
@@ -733,7 +733,6 @@ class CountFnCall(ast.NodeVisitor):
     # Add in all the matmul nodes. Set each 'matmul' function in fns_to_calls to 1 since each matmul calls matmul once.
     def preprocess(self):
         for fn_name in self.G.nodes():
-            #print "Function name: ", fn_name
             if self.target_fn in str(fn_name):
                 self.fns_to_calls[fn_name] = 1
                 self.matmul_to_calls[fn_name] = 0
@@ -744,7 +743,6 @@ class CountFnCall(ast.NodeVisitor):
 
     def process(self):
         topological_ordering = list(reversed(list(nx.topological_sort(self.G))))
-        #print "Topological ordering: ", topological_ordering
         for node in topological_ordering:
             # Has to actually be called
             if node in self.functions.keys() and len(self.G.in_edges(node)):
@@ -933,7 +931,7 @@ class CountFnCall(ast.NodeVisitor):
                 new_target_fn_name = fn_name + str(node.lineno)
                 if fn_name == "LogisticRegression":
                     lst_info = []
-                    # VERY HARDCODED
+                    # Hardcoded for the number of arguments.
                     # lst_info will contain batch_size, sgd_iters, dimension of data.
                     for i in range(2, 5):
                         # Means it's a constant value
@@ -951,7 +949,7 @@ class CountFnCall(ast.NodeVisitor):
 
                     LR_matmul_node1 = "matmulLR1_" + str(node.lineno)
                     LR_matmul_node2 = "matmulLR2_" + str(node.lineno)
-                    # UGH, this is such bad code. This is for calling library functions that don't do the same # of matmuls for each dimensions.
+                    # This is for calling library functions that don't do the same # of matmuls for each dimensions.
                     self.fns_to_calls[new_target_fn_name] = 2 * sgd_iters
                     self.fns_to_calls[LR_matmul_node1] = sgd_iters
                     self.fns_to_calls[LR_matmul_node2] = sgd_iters
@@ -1017,7 +1015,7 @@ class ConstantPropagation(ast.NodeTransformer):
         self._constants = {}
 
     def visit_Module(self, node):
-        """Find eglible variables to be inlined and store
+        """Find eligible variables to be inlined and store
         the Name->value mapping in self._constants for later use"""
         assigns = [x for x in node.body if type(x) == ast.Assign]
         for assign in assigns:
@@ -1029,6 +1027,7 @@ class ConstantPropagation(ast.NodeTransformer):
     def visit_Name(self, node):
         """If node.id is in self._constants, replace the
         loading of the node with the actual value"""
+        print "Visit name: ", node.id
         for k in self._constants.keys():
             if node.id == k:
                 #print "Name: {0}, value: {1}".format(node.id, self._constants[k].n)
@@ -1071,6 +1070,7 @@ class ConstantPropagation(ast.NodeTransformer):
                 #print "Multiassignment not supported: ", node.value.__dict__
         except Exception as e:
             # For some reason, cannot evaluate the right hand side
+            print "Constant-Propagation Exception"
             print e
         # Visit the left hand side of the assignment
         if isinstance(copy_assign.targets[0], ast.Subscript):
@@ -1091,10 +1091,6 @@ class ConstantPropagation(ast.NodeTransformer):
             right_val = self.eval_args_helper(node.right)
             res = operators[type(node.op)](left_val, right_val)
             return res
-
-    def visit_FunctionDef(self, node):
-        return node
-
     
     def eval_compare_helper(self, node):
         left = node.left

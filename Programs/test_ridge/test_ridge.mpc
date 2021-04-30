@@ -1,0 +1,59 @@
+Params.set_params(int_precision=49, f=36, k=64)
+NUM_PARTIES = 2
+
+# Dimensions of X data matrix.
+num_cols = 10
+num_rows = 10
+
+# Constants
+#local_compute = False
+lam = c_fix(0.05)
+
+def local_compute(x_data, y_data):
+    X_T = transpose(x_data)
+    XTy = matmul(X_T, y_data, num_cols, num_rows, num_rows, 1, sfix)
+    XTX = matmul(X_T, x_data, num_cols, num_rows, num_rows, num_cols, sfix)
+    return XTX, XTy
+
+def ridge(XTX_lst, XTy_lst):
+    XTX = XTX_lst[0]
+    XTy = XTy_lst[0]
+    for i in range(1, NUM_PARTIES):
+        XTX_next = XTX_lst[i]
+        XTy_next = XTy_lst[i]
+        XTX = matadd(XTX, XTX_next)
+        XTy = matadd(XTy, XTy_next)
+    lam_identity = c_fix_mat(num_cols, num_cols)
+    for j in range(num_cols):
+        lam_identity[j][j] = lam
+
+    XTX_lam_identity = matadd(XTX, lam_identity)
+    XTX_inv = matinv(XTX_lam_identity)
+    w = matmul(XTX_inv, XTy, num_cols, num_cols, num_cols, 1, sfix)
+    return w
+
+
+
+def get_input_data():
+    XTX_lst = []
+    XTy_lst = []
+    for i in range(NUM_PARTIES):
+        x_data = s_fix_mat.read_input(num_rows, num_cols, i)
+        y_data = s_fix_mat.read_input(num_rows, 1, i)
+        XTX, XTy = local_compute(x_data, y_data)
+        XTX_lst.append(XTX)
+        XTy_lst.append(XTy)
+    return XTX_lst, XTy_lst
+
+
+def main():
+    XTX_lst, XTy_lst = get_input_data()
+    w = ridge(XTX_lst, XTy_lst)
+    return w
+
+what = main()
+reveal_all(what, "weights")
+
+
+
+

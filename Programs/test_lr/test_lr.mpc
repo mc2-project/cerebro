@@ -9,10 +9,8 @@ BATCH_SIZE = 128
 X = s_fix_mat.read_input(data_size, dim, 0)
 y = s_fix_mat.read_input(data_size, 1, 0)
 
-#reveal_all(y, "y vector")
 
 w = s_fix_mat(dim, 1)
-#alpha_B = sfix(0.01 / BATCH_SIZE)
 alpha_B = c_fix(0.01 / BATCH_SIZE)
 
 XB = s_fix_mat(BATCH_SIZE, dim)
@@ -27,18 +25,13 @@ for i in range(SGD_ITERS):
             XB[j][d] = X[batch_low + j][d]
         yB[j][0] = y[batch_low + j][0]
 
-    w_ret = matmul(XB, w)
-    #reveal_all(w_ret, "w_ret")
+    w_ret = matmul(XB, w, BATCH_SIZE, dim, dim, 1, sfix)
     w_sigmoid = sigmoid(w_ret)
-    #reveal_all(w_sigmoid, "w_sigmoid")
     w_sub = matsub(w_sigmoid, yB)
     XB_T = transpose(XB)
-    w_1 = matmul(XB_T, w_sub)
-    #reveal_all(w_1, "w_1")
+    w_1 = matmul(XB_T, w_sub, dim, BATCH_SIZE, BATCH_SIZE, 1, sfix)
     w_2 = mat_const_mul(alpha_B, w_1)
-    #reveal_all(w_2, "w_2")
     w_res = matsub(w, w_2)
     mat_assign(w, w_res)
-    #print_ln("Iter: %s", i)
 
 reveal_all(w, "w_final")

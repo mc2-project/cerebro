@@ -49,8 +49,8 @@ def main():
                       help="de-activates under-over flow check for sfloats")
 
     # Temporarily disable splitting since it is a work-in-progress
-    parser.add_argument("-sp", "--split", action="store_false", default=False, dest="split", help="Whether or not to split the program")
-    parser.add_argument("-ur", "--unroll", action="store_true", default=True, dest="unroll", help="Whether or not to unroll a loop")
+    parser.add_argument("-sp", "--split", action="store_true", default=False, dest="split", help="Whether or not to split the program")
+    parser.add_argument("-ur", "--unroll", action="store_true", default=False, dest="unroll", help="Whether or not to unroll a loop")
     parser.add_argument("-in", "--inline", action="store_true", default=False, dest="inline", help="Whether or not to inline functions")
 
     # Add argument for constants file

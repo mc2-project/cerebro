@@ -1,116 +1,20 @@
 Params.set_params(int_precision=64, f=32, k=64)
-dim = 10
+dim = 3
 LEVELS = dim
 TOTAL_NODES = (2 ** LEVELS) - 1
 tree = s_fix_mat.read_input(TOTAL_NODES, 3, 0)
-w = tree[0]
 x = s_fix_array.read_input(dim, 0)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(2, 3)
-for j in range(2):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 1][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(4, 3)
-for j in range(4):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 3][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(8, 3)
-for j in range(8):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 7][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(16, 3)
-for j in range(16):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 15][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(32, 3)
-for j in range(32):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 31][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(64, 3)
-for j in range(64):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 63][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(128, 3)
-for j in range(128):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 127][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(256, 3)
-for j in range(256):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 255][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
-index = w[0]
-split = w[1]
-left_child = w[2]
-right_child = left_child + 1
-f = x[index]
-cond = (f > split)
-tree_cur = sfixMatrix(512, 3)
-for j in range(512):
-	for k in range(3):
-		tree_cur[j][k] = tree[j + 511][k]
-w_res = array_index_secret_load_if(cond, tree_cur, left_child, right_child)
-mat_assign(w, w_res)
+w = tree[0]
+
+for i in range(LEVELS):    
+    index = w[0]
+    split = w[1]
+    left_child = w[2]
+    right_child = left_child + 1
+    f = x[index]
+    cond = (f > split)
+    w_res = array_index_secret_load_if(cond, tree, left_child, right_child)
+    mat_assign(w, w_res)
+
+
 reveal_all(w[1], "Final prediction class")
