@@ -17,4 +17,4 @@ test(g, c_int(12))
 if ((a >= b) and (c >= d)) or ((e >= f) and (a > e)):
 	g = c_int(25)
 
-test(g, c_int(25))
+test(g, c_int(12))

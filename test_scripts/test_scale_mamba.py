@@ -46,7 +46,7 @@ class Preprocessing:
 class TestScaleMamba(unittest.TestCase):
 	preprocessing = Preprocessing()
 
-	def test_cond(self):
+	def test_multi_cond(self):
 		test_name = 'test_multi_cond'
 		program_name = 'Programs/%s' % (test_name)
 		self.preprocessing.compile(program_name, '')
