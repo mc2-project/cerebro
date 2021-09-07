@@ -45,6 +45,14 @@ class Preprocessing:
 
 class TestScaleMamba(unittest.TestCase):
 	preprocessing = Preprocessing()
+
+	def test_cond(self):
+		test_name = 'test_multi_cond'
+		program_name = 'Programs/%s' % (test_name)
+		self.preprocessing.compile(program_name, '')
+		self.preprocessing.gen_data(program_name)
+		self.preprocessing.run_online(program_name)
+		self.preprocessing.run_test(test_name)
 	
 	def test_cond(self):
 		test_name = 'test_cond'
@@ -53,9 +61,6 @@ class TestScaleMamba(unittest.TestCase):
 		self.preprocessing.gen_data(program_name)
 		self.preprocessing.run_online(program_name)
 		self.preprocessing.run_test(test_name)
-	
-
-	
 	
 	def test_unroll(self):
 		test_name = 'test_unroll'

@@ -1,0 +1,20 @@
+# a through f are sequential 1-6
+a = s_int.read_input(0)
+b = s_int.read_input(0)
+c = s_int.read_input(0)
+d = s_int.read_input(0)
+e = s_int.read_input(0)
+f = s_int.read_input(0)
+
+g = c_int(5)
+if ((a < b) and (c >=d)) or (e != f):
+    g = c_int(12)
+
+test(g, c_int(12))
+
+
+
+if ((a >= b) and (c >= d)) or ((e >= f) and (a > e)):
+	g = c_int(25)
+
+test(g, c_int(25))

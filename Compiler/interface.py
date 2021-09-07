@@ -505,7 +505,6 @@ def test(value, lower=None, upper=None, prec=None):
                 value = library.reveal(value)
             if value.size > 1:
                 lineno *= 1000
-
             library.store_in_mem(value, lineno + 1000)
             reg_type = 'c'
 
@@ -1123,6 +1122,45 @@ class ASTChecks(ast.NodeTransformer):
         else:
             return self.negate_condition(ast.Name(id=test[0], ctx=ast.Load()))
 
+    def get_statements_from_boolop(self, ast_boolop):
+        assign_statements = []
+        assignment_names = []
+        for value in ast_boolop.values:
+            if isinstance(value, (ast.Compare, ast.Name)):
+                # turns if x --> if x != 0 since many of the multiplications assume x is either 0 or 1.
+                if isinstance(value, (ast.Name)):
+                    value = ast.Compare(left=value, ops=[ast.NotEq()], comparators=[ast.Num(n=0)])
+                test_name = self.test_name + str(self.test_counter)
+                self.test_counter += 1
+                test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=value)
+                assign_statements.append(test_assign)
+                assignment_names.append(test_name)
+            elif isinstance(value, ast.BoolOp):
+                statements, names = self.get_statements_from_boolop(value)
+                assign_statements.extend(statements)
+                assignment_names.extend(names)
+            else:
+                raise ValueError("do not support this type of node {0}".format(type(value)))
+
+        # This is created to be compatible with the merge_test_list methods.
+        lst_conditions = [(name, True) for name in assignment_names]
+        if isinstance(ast_boolop.op, ast.Or):
+            res_statement = self.merge_test_list_or(lst_conditions)
+        else:
+            res_statement = self.merge_test_list(lst_conditions)
+
+        # Only need to combine if more than 1 operand in the boolean and/or operator.
+        if len(lst_conditions) > 1:
+            test_name = self.test_name + str(self.test_counter)
+            self.test_counter += 1
+            test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=res_statement)
+            assign_statements.append(test_assign)
+            # replace the previous assignment names with just the resulting merged assignment
+            assignment_names = [test_name]
+
+
+        return assign_statements, assignment_names
+
     # Given a list of (condition_name, True/False), merge these conditions into a single condition
     # This essentially ands all the conditions together by multiplying them.
     def merge_test_list(self, test_list):
@@ -1132,6 +1170,14 @@ class ASTChecks(ast.NodeTransformer):
             ret = ast.BinOp(left=ret, op=ast.Mult(), right=self.merge_test_single(test))
 
         return ret
+
+    def merge_test_list_or(self, test_list):
+        ret = test_list[0]
+        ret = self.merge_test_single(ret)
+        for test in test_list[1:]:
+            ret = ast.BinOp(left=ret, op=ast.Add(), right=self.merge_test_single(test))
+
+        return ast.Compare(left=ret, ops=[ast.GtE()], comparators=[ast.Num(n=1)])
 
 
     def merge_or(self, lst_conds):
@@ -1191,7 +1237,7 @@ class ASTChecks(ast.NodeTransformer):
         return ast.Assign(targets=[target], value=current_sum)
 
     def visit_If(self, node):
-        if not isinstance(node.test, (ast.Compare, ast.Name)):
+        if not isinstance(node.test, (ast.Compare, ast.Name, ast.BoolOp)):
             raise ValueError("Currently, the if conditional has to be a single Compare expression")
         if len(node.body) > 1:
             raise ValueError("We also don't allow multiple statements inside an if statement")
@@ -1203,16 +1249,27 @@ class ASTChecks(ast.NodeTransformer):
             self.if_stack = []
 
         statements = []
-        if isinstance(node.test, ast.Compare):
-            test_name = self.test_name + str(self.test_counter)
-            self.test_counter += 1
-            test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
-            statements.append(test_assign)
+        # To handle multiple conditionals
+        if isinstance(node.test, ast.BoolOp):
+            statements_from_multi_cond, _ = self.get_statements_from_boolop(node.test)
+            for statement in statements_from_multi_cond:
+                print("STATEMENT: ", astunparse.unparse(statement))
+            test_name = statements_from_multi_cond[-1].targets[0].id
+            statements.extend(statements_from_multi_cond)
+            self.if_stack.append((test_name, True))
+            self.depth += 1
         else:
-            test_name = node.test.id
+            if isinstance(node.test, ast.Compare):
+                test_name = self.test_name + str(self.test_counter)
+                self.test_counter += 1
+                test_assign = ast.Assign(targets=[ast.Name(id=test_name, ctx=ast.Store())], value=node.test)
+                statements.append(test_assign)
+            else:
+                test_name = node.test.id
 
-        self.if_stack.append((test_name, True))
-        self.depth += 1
+            self.if_stack.append((test_name, True))
+            self.depth += 1
+
         for n in node.body:
             if isinstance(n, ast.If):
                 statements += self.visit(n)
@@ -2227,7 +2284,8 @@ class ASTParser(object):
         self.party = int(party)
         self.fname = fname
 
-    def parse(self, split_program=False, loop_unroll=False, inline=False):
+    # TODO Ryan: for_enabled is unused after adding in inlining.
+    def parse(self, split_program=False, loop_unroll=False, inline=False, for_enabled=False):
         # Run through a bunch of parsers
         self.tree = ASTChecks().visit(self.tree)
         if split_program:
