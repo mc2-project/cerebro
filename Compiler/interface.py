@@ -5,6 +5,7 @@ import symtable
 import re
 import numpy as np
 import inspect
+from collections import OrderedDict
 
 SPDZ = 0
 GC = 1
@@ -1109,7 +1110,9 @@ class ASTChecks(ast.NodeTransformer):
         self.test_name = "test"
         self.test_counter = 0
         self.scope_level = 0
-        self.assignments = {} # indexed by the assignment targets, along with the assigned values
+        # self.assignments = {} # indexed by the assignment targets, along with the assigned values
+        # use OrderedDict as the order in which assignment statements are made must be preserved
+        self.assignments = OrderedDict()
         self.sub_assignments = {}
         self.depth = 0
 
@@ -1239,12 +1242,10 @@ class ASTChecks(ast.NodeTransformer):
     def visit_If(self, node):
         if not isinstance(node.test, (ast.Compare, ast.Name, ast.BoolOp)):
             raise ValueError("Currently, the if conditional has to be a single Compare expression")
-        if len(node.body) > 1:
-            raise ValueError("We also don't allow multiple statements inside an if statement")
 
         # Reset the variables so that future calls won't "drag along" previous assignment variables.
         if self.depth == 0:
-            self.assignments = {}
+            self.assignments = OrderedDict()
             self.sub_assignments = {}
             self.if_stack = []
 
@@ -1252,8 +1253,6 @@ class ASTChecks(ast.NodeTransformer):
         # To handle multiple conditionals
         if isinstance(node.test, ast.BoolOp):
             statements_from_multi_cond, _ = self.get_statements_from_boolop(node.test)
-            for statement in statements_from_multi_cond:
-                print("STATEMENT: ", astunparse.unparse(statement))
             test_name = statements_from_multi_cond[-1].targets[0].id
             statements.extend(statements_from_multi_cond)
             self.if_stack.append((test_name, True))
@@ -1314,9 +1313,10 @@ class ASTChecks(ast.NodeTransformer):
         self.depth -= 1
         self.if_stack.pop()
 
-
+        print("assignments: ", self.assignments)
         if self.depth == 0:
             for (name, test_list) in self.assignments.iteritems():
+                print("BRO: ", name, test_list)
                 statement = self.assign_transform_multi(ast.Name(id=name, ctx=ast.Store), test_list, has_else=has_else)
                 if isinstance(statement, list):
                     statements += statement

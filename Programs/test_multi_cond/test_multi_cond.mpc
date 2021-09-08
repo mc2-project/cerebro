@@ -7,14 +7,24 @@ e = s_int.read_input(0)
 f = s_int.read_input(0)
 
 g = c_int(5)
+h = c_int(10)
+i = c_int(15)
+j = c_int(20)
+
+# condition evaluates to true
 if ((a < b) and (c >=d)) or (e != f):
-    g = c_int(12)
+    g = h * i
+    h = i * j
 
-test(g, c_int(12))
+test(g, c_int(150))
+test(h, c_int(300))
 
 
-
+# condition evaluates to false
 if ((a >= b) and (c >= d)) or ((e >= f) and (a > e)):
-	g = c_int(25)
+	g = h * j
+	h = i * j
 
-test(g, c_int(12))
+
+# test(g, c_int(150))
+# test(h, c_int(300))
