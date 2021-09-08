@@ -26,5 +26,5 @@ if ((a >= b) and (c >= d)) or ((e >= f) and (a > e)):
 	h = i * j
 
 
-# test(g, c_int(150))
-# test(h, c_int(300))
+test(g, c_int(150))
+test(h, c_int(300))

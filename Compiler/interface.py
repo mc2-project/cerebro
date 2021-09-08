@@ -1110,8 +1110,7 @@ class ASTChecks(ast.NodeTransformer):
         self.test_name = "test"
         self.test_counter = 0
         self.scope_level = 0
-        # self.assignments = {} # indexed by the assignment targets, along with the assigned values
-        # use OrderedDict as the order in which assignment statements are made must be preserved
+        # use OrderedDict instead of a regular dictionary as the order in which assignment statements are made must be preserved
         self.assignments = OrderedDict()
         self.sub_assignments = {}
         self.depth = 0
@@ -1189,7 +1188,6 @@ class ASTChecks(ast.NodeTransformer):
         for test in lst_conds[1:]:
             ret = ast.BinOp(left=ret, op=ast.Add(), right=test)
 
-        #cond_ret = ast.Call(func=ast.Name(id="max", ctx=ast.Load()), args=[ast.Num(n=1), ret], keywords=[], starargs=None, kwargs=None)
         if mpc_type == SPDZ:
             cond_ret = ast.Compare(left=ret, ops=[ast.GtE()], comparators=[ast.Num(n=1)])
         else:
@@ -1197,7 +1195,6 @@ class ASTChecks(ast.NodeTransformer):
             cond_ret = ast.Compare(left=ret, ops=[ast.GtE()], comparators=[num])
             print "unparse", astunparse.unparse(num)
         return cond_ret
-        #return ret
 
     # First, merge the conditions into a single condition, then negate the entire condition
     def neg_merge_test_list(self, test_list):
@@ -1349,11 +1346,6 @@ class ASTChecks(ast.NodeTransformer):
                 s.lineno = statements[0].lineno + counter
                 s.col_offset = statements[0].col_offset
                 counter += 1
-
-
-            for s in statements:
-                print "STATEMENTS[i]"
-                print astunparse.unparse(s)
         
         return statements
 
