@@ -1252,8 +1252,6 @@ class ASTChecks(ast.NodeTransformer):
             statements_from_multi_cond, _ = self.get_statements_from_boolop(node.test)
             test_name = statements_from_multi_cond[-1].targets[0].id
             statements.extend(statements_from_multi_cond)
-            self.if_stack.append((test_name, True))
-            self.depth += 1
         else:
             if isinstance(node.test, ast.Compare):
                 test_name = self.test_name + str(self.test_counter)
@@ -1263,8 +1261,8 @@ class ASTChecks(ast.NodeTransformer):
             else:
                 test_name = node.test.id
 
-            self.if_stack.append((test_name, True))
-            self.depth += 1
+        self.if_stack.append((test_name, True))
+        self.depth += 1
 
         for n in node.body:
             if isinstance(n, ast.If):
@@ -1310,7 +1308,6 @@ class ASTChecks(ast.NodeTransformer):
         self.depth -= 1
         self.if_stack.pop()
 
-        print("assignments: ", self.assignments)
         if self.depth == 0:
             for (name, test_list) in self.assignments.iteritems():
                 print("BRO: ", name, test_list)
