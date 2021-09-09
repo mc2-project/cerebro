@@ -1,0 +1,30 @@
+# a through f are sequential 1-6
+a = s_int.read_input(0)
+b = s_int.read_input(0)
+c = s_int.read_input(0)
+d = s_int.read_input(0)
+e = s_int.read_input(0)
+f = s_int.read_input(0)
+
+g = c_int(5)
+h = c_int(10)
+i = c_int(15)
+j = c_int(20)
+
+# condition evaluates to true
+if ((a < b) and (c >=d)) or (e != f):
+    g = h * i
+    h = i * j
+
+test(g, c_int(150))
+test(h, c_int(300))
+
+
+# condition evaluates to false
+if ((a >= b) and (c >= d)) or ((e >= f) and (a > e)):
+	g = h * j
+	h = i * j
+
+
+test(g, c_int(150))
+test(h, c_int(300))
